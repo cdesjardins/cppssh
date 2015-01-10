@@ -2,9 +2,10 @@ file(GLOB cppssh_LIB_SRCS
     ${SRCS}
     "*.h"
     "*.cpp"
+    "../include/*.h"
 )
 
-include_directories (${HAVE_BOTAN})
+include_directories (${HAVE_BOTAN} ../include)
 
 find_file(HAVE_GIT git)
 if (HAVE_GIT)

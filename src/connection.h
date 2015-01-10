@@ -16,3 +16,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef _CONNECTION_Hxx
+#define _CONNECTION_Hxx
+
+class CppsshConnection
+{
+public:
+    CppsshConnection(int channel);
+    int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell, const int timeout);
+private:
+};
+
+#endif
+
