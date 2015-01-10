@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 project(cppssh CXX)
 
-find_file(HAVE_BOTAN "botan/botan.h" PATHS "${BOTAN_DIR}/include" "${CMAKE_SOURCE_DIR}/botan/include")
+find_file(HAVE_BOTAN "botan/botan.h" PATHS "${BOTAN_DIR}/include" "${BOTAN_DIR}/include/botan-1.11/")
 if (NOT HAVE_BOTAN)
     MESSAGE(FATAL_ERROR "Could not find Botan includes ${BOTAN_DIR}")
 endif()
 string(FIND ${HAVE_BOTAN} "botan/botan.h" BOTAN_STR)
 string(SUBSTRING ${HAVE_BOTAN} 0 ${BOTAN_STR} HAVE_BOTAN)
-find_library(HAVE_BOTAN_LIB NAMES botan PATHS "${BOTAN_DIR}/lib" "${BOTAN_DIR}" "${CMAKE_SOURCE_DIR}/botan/lib" "${CMAKE_SOURCE_DIR}/botan/")
+find_library(HAVE_BOTAN_LIB NAMES botan-1.11 PATHS "${BOTAN_DIR}/lib" "${BOTAN_DIR}" "${CMAKE_SOURCE_DIR}/botan/lib" "${CMAKE_SOURCE_DIR}/botan/")
 if (NOT HAVE_BOTAN_LIB)
     MESSAGE(FATAL_ERROR "Could not find Botan library")
 endif()
@@ -28,8 +28,7 @@ endif()
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install")
 
 
-add_subdirectory ( src )
-add_subdirectory ( examples )
+add_subdirectory (src)
 
 ########### install files ###############
 
