@@ -57,8 +57,8 @@ void CppsshKex::constructLocalKex()
     Botan::secure_vector<Botan::byte> hostKey(hostkeyStr.begin(), hostkeyStr.end());
     Botan::secure_vector<Botan::byte> ciphers(ciphersStr.begin(), ciphersStr.end());
     Botan::secure_vector<Botan::byte> hmacs(hmacsStr.begin(), hmacsStr.end());
-    localKex.addVector(kex);
-    localKex.addVector(hostKey);
+    localKex.addVectorField(kex);
+    localKex.addVectorField(hostKey);
     localKex.addVectorField(ciphers);
     localKex.addVectorField(ciphers);
     localKex.addVectorField(hmacs);
