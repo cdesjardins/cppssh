@@ -389,7 +389,7 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte> &result, const Bot
         delete (hashIt);
     }
     
-    return true;
+    return ret;
 }
 
 bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::secure_vector<Botan::byte> &sig)

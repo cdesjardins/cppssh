@@ -107,6 +107,8 @@ bool CppsshImpl::close(int channelId)
 
 void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
 {
+    PREFERED_CIPHER = prefCipher;
+    PREFERED_MAC = prefHmac;
 }
 
 bool CppsshImpl::generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)

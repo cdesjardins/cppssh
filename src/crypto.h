@@ -81,8 +81,8 @@ public:
 private:
 
     uint32_t getMacDigestLen(uint32_t method);
-    std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vector<Botan::byte> &hostKey);
-    std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(Botan::secure_vector<Botan::byte> &hostKey);
+    std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte> &hostKey);
+    std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte> &hostKey);
 
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;

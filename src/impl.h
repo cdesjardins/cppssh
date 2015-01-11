@@ -27,14 +27,14 @@ class CppsshImpl
 {
 public:
     static std::shared_ptr<CppsshImpl> create();
+    static void destroy();
+    static void setOptions(const char* prefCipher, const char* prefHmac);
     CppsshImpl();
     ~CppsshImpl();
-    static void destroy();
     int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
     bool send(const char* data, size_t bytes, int channelId);
     size_t read(char* data, int channelId);
     bool close(int channelId);
-    void setOptions(const char* prefCipher, const char* prefHmac);
     bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
     static void vecToCommaString(const std::vector<std::string>& vec, const std::string& prefered, std::string *outstr, std::vector<std::string>* outList);
