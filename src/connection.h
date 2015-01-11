@@ -19,12 +19,21 @@
 #ifndef _CONNECTION_Hxx
 #define _CONNECTION_Hxx
 
+#include "session.h"
+#include "crypto.h"
+#include "transport.h"
+#include <memory>
+
 class CppsshConnection
 {
 public:
-    CppsshConnection(int channel);
+    CppsshConnection(int channelId);
     int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell, const int timeout);
 private:
+    int _channelId;
+    std::shared_ptr<CppsshSession> _session;
+    std::shared_ptr<CppsshCrypto> _crypto;
+    std::shared_ptr<CppsshTransport> _transport;
 };
 
 #endif

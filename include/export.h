@@ -16,8 +16,21 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _CRYPT_Hxx
-#define _CRYPT_Hxx
+#ifndef _EXPORT_Hxx
+#define _EXPORT_Hxx
 
+#if defined(WIN32) || defined(__MINGW32)
+#ifdef CPPSSH_EXPORTS
+#define CPPSSH_EXPORT __declspec(dllexport)
+#else
+#ifndef CPPSSH_STATIC
+#define CPPSSH_EXPORT __declspec(dllimport)
+#endif
+#endif
 #endif
 
+#ifndef CPPSSH_EXPORT
+#define CPPSSH_EXPORT
+#endif
+
+#endif

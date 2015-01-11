@@ -16,26 +16,10 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _TRANSPORT_Hxx
-#define _TRANSPORT_Hxx
 
-#include "session.h"
-#include <memory>
+#include "crypto.h"
 
-#if !defined(WIN32) && !defined(__MINGW32__)
-#  define SOCKET int
-#endif
-
-class CppsshTransport
+CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession> &session)
+    : _session(session)
 {
-public:
-    CppsshTransport(const std::shared_ptr<CppsshSession> &session);
-    int establish(const char* host, short port, int timeout);
-private:
-    bool setNonBlocking(bool on);
-    SOCKET _sock;
-    std::shared_ptr<CppsshSession> _session;
-};
-
-#endif
-
+}

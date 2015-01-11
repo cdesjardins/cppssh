@@ -19,5 +19,11 @@
 #ifndef _KEX_Hxx
 #define _KEX_Hxx
 
+class CppsshKex
+{
+public:
+private:
+};
+
 #endif
 

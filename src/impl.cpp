@@ -32,39 +32,39 @@ void CppsshImpl::destroy()
 
 int CppsshImpl::connectWithPassword(const char* host, const short port, const char* username, const char* password, bool shell, const int timeout)
 {
-    int channel = _connections.size();
-    std::shared_ptr<CppsshConnection> con(new CppsshConnection(channel));
+    int channelId = _connections.size();
+    std::shared_ptr<CppsshConnection> con(new CppsshConnection(channelId));
 
     if (con->connect(host, port, username, password, NULL, shell, timeout) != -1)
     {
         _connections.push_back(con);
     }
-    return channel;
+    return channelId;
 }
 
 int CppsshImpl::connectWithKey(const char* host, const short port, const char* username, const char* privKeyFileName, bool shell, const int timeout)
 {
-    int channel = _connections.size();
-    std::shared_ptr<CppsshConnection> con(new CppsshConnection(channel));
+    int channelId = _connections.size();
+    std::shared_ptr<CppsshConnection> con(new CppsshConnection(channelId));
 
     if (con->connect(host, port, username, NULL, privKeyFileName, shell, timeout) != -1)
     {
         _connections.push_back(con);
     }
-    return channel;
+    return channelId;
 }
 
-bool CppsshImpl::send(const char* data, size_t bytes, int channel)
+bool CppsshImpl::send(const char* data, size_t bytes, int channelId)
 {
     return false;
 }
 
-size_t CppsshImpl::read(char* data, int channel)
+size_t CppsshImpl::read(char* data, int channelId)
 {
     return 0;
 }
 
-bool CppsshImpl::close(int channel)
+bool CppsshImpl::close(int channelId)
 {
     return false;
 }

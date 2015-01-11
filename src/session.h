@@ -19,5 +19,11 @@
 #ifndef _SESSION_Hxx
 #define _SESSION_Hxx
 
+class CppsshSession
+{
+public:
+private:
+};
+
 #endif
 

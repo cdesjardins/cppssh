@@ -29,6 +29,7 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install")
 
 
 add_subdirectory (src)
+add_subdirectory (examples)
 
 ########### install files ###############
 

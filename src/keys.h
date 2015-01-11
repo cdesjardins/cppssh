@@ -19,5 +19,11 @@
 #ifndef _KEYS_Hxx
 #define _KEYS_Hxx
 
+class CppsshKeys
+{
+public:
+private:
+};
+
 #endif
 

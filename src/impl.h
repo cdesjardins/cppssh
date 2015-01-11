@@ -30,9 +30,9 @@ public:
     static void destroy();
     int connectWithPassword(const char* host, const short port, const char* username, const char* password, bool shell, const int timeout);
     int connectWithKey(const char* host, const short port, const char* username, const char* privKeyFileName, bool shell, const int timeout);
-    bool send(const char* data, size_t bytes, int channel);
-    size_t read(char* data, int channel);
-    bool close(int channel);
+    bool send(const char* data, size_t bytes, int channelId);
+    size_t read(char* data, int channelId);
+    bool close(int channelId);
     void setOptions(const char* prefCipher, const char* prefHmac);
     bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     
