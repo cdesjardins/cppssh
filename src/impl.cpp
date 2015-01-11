@@ -62,14 +62,19 @@ std::shared_ptr<CppsshImpl> CppsshImpl::create()
     return ret;
 }
 
+void CppsshImpl::destroy()
+{
+}
+
 CppsshImpl::CppsshImpl()
 {
     _init.reset(new Botan::LibraryInitializer("thread_safe"));
 }
 
-void CppsshImpl::destroy()
+CppsshImpl::~CppsshImpl()
 {
-
+    RNG.reset();
+    _init.reset();
 }
 
 int CppsshImpl::connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)

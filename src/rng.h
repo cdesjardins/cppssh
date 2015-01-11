@@ -33,6 +33,7 @@ public:
 
     ~CppsshRng()
     {
+        _rng.reset();
     }
 
     bool is_seeded() const

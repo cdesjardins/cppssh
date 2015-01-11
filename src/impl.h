@@ -28,6 +28,7 @@ class CppsshImpl
 public:
     static std::shared_ptr<CppsshImpl> create();
     CppsshImpl();
+    ~CppsshImpl();
     static void destroy();
     int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
     bool send(const char* data, size_t bytes, int channelId);
