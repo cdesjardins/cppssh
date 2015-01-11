@@ -31,8 +31,8 @@ CppsshKex::CppsshKex(const std::shared_ptr<CppsshSession> &session)
 void CppsshKex::constructLocalKex()
 {
     std::vector<Botan::byte> random;
-    std::string kex;
-    std::string hostkey;
+    std::string kexStr;
+    std::string hostkeyStr;
     std::string compressors;
     std::string ciphersStr;
     std::string hmacsStr;
@@ -44,8 +44,8 @@ void CppsshKex::constructLocalKex()
     CppsshImpl::RNG->randomize(random.data(), random.size());
 
     std::copy(random.begin(), random.end(), std::back_inserter(_localKex));
-    CppsshImpl::vecToCommaString(CppsshImpl::KEX_ALGORITHMS, std::string(), &kex, NULL);
-    CppsshImpl::vecToCommaString(CppsshImpl::HOSTKEY_ALGORITHMS, std::string(), &hostkey, NULL);
+    CppsshImpl::vecToCommaString(CppsshImpl::KEX_ALGORITHMS, std::string(), &kexStr, NULL);
+    CppsshImpl::vecToCommaString(CppsshImpl::HOSTKEY_ALGORITHMS, std::string(), &hostkeyStr, NULL);
 
     CppsshImpl::vecToCommaString(CppsshImpl::CIPHER_ALGORITHMS, CppsshImpl::PREFERED_CIPHER, &ciphersStr, &_ciphers);
     CppsshImpl::vecToCommaString(CppsshImpl::MAC_ALGORITHMS, CppsshImpl::PREFERED_MAC, &hmacsStr, &_hmacs);
@@ -53,9 +53,12 @@ void CppsshKex::constructLocalKex()
 
     CppsshPacket localKex(&_localKex);
 
+    Botan::secure_vector<Botan::byte> kex(kexStr.begin(), kexStr.end());
+    Botan::secure_vector<Botan::byte> hostKey(hostkeyStr.begin(), hostkeyStr.end());
     Botan::secure_vector<Botan::byte> ciphers(ciphersStr.begin(), ciphersStr.end());
     Botan::secure_vector<Botan::byte> hmacs(hmacsStr.begin(), hmacsStr.end());
-
+    localKex.addVector(kex);
+    localKex.addVector(hostKey);
     localKex.addVectorField(ciphers);
     localKex.addVectorField(ciphers);
     localKex.addVectorField(hmacs);
