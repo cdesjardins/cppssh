@@ -42,6 +42,7 @@ public:
     Botan::byte* getPayload();
 
     bool getString(Botan::secure_vector<Botan::byte>& result);
+    bool getBigInt(Botan::BigInt& result);
 
 private:
     Botan::secure_vector<Botan::byte> *_data;

@@ -30,15 +30,21 @@ public:
     bool sendInit();
     bool handleInit();
     bool sendKexDHInit();
+    bool handleKexDHReply();
 
 private:
     void constructLocalKex();
+    void makeH(Botan::secure_vector<Botan::byte> &hVector);
+
     std::shared_ptr<CppsshSession> _session;
     Botan::secure_vector<Botan::byte> _localKex;
     Botan::secure_vector<Botan::byte> _remoteKex;
+    Botan::secure_vector<Botan::byte> _hostKey;
     std::vector<std::string> _ciphers;
     std::vector<std::string> _hmacs;
     Botan::secure_vector<Botan::byte> _e;
+    Botan::secure_vector<Botan::byte> _f;
+    Botan::secure_vector<Botan::byte> _k;
 };
 
 #endif

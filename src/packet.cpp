@@ -171,3 +171,21 @@ bool CppsshPacket::getString(Botan::secure_vector<Botan::byte>& result)
     }
     return ret;
 }
+
+bool CppsshPacket::getBigInt(Botan::BigInt& result)
+{
+    bool ret = true;
+    uint32_t len = getPacketLength();
+
+    if (len > _data->size())
+    {
+        ret = false;
+    }
+    else
+    {
+        Botan::BigInt tmpBI(_data->data() + sizeof(uint32_t), len);
+        result.swap(tmpBI);
+        _data->erase(_data->begin(), _data->begin() + (sizeof(uint32_t) + len));
+    }
+    return ret;
+}

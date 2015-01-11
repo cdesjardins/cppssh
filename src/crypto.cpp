@@ -25,7 +25,7 @@
 #include "crypto.h"
 #include "packet.h"
 #include "impl.h"
-
+#include "botan/pubkey.h"
 #include <string>
 #include <sstream>
 
@@ -339,4 +339,220 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt &publicKey)
         }
     }
     return ret;
+}
+
+bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte> &result, Botan::BigInt &f)
+{
+    Botan::DH_KA_Operation dhop(*_privKexKey, *CppsshImpl::RNG);
+    std::unique_ptr<Botan::byte> buf(new Botan::byte[f.bytes()]);
+    Botan::BigInt::encode(buf.get(), f);
+    Botan::SymmetricKey negotiated = dhop.agree(buf.get(), f.bytes());
+
+    if (!negotiated.length())
+    {
+        return false;
+    }
+
+    Botan::BigInt Kint(negotiated.begin(), negotiated.length());
+    CppsshPacket::bn2vector(result, Kint);
+    _K = result;
+    _privKexKey.reset();
+    return true;
+}
+
+bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte> &result, const Botan::secure_vector<Botan::byte> &val)
+{
+    bool ret = true;
+    Botan::HashFunction* hashIt = NULL;
+
+    switch (_kexMethod)
+    {
+    case DH_GROUP1_SHA1:
+    case DH_GROUP14_SHA1:
+        hashIt = Botan::global_state().algorithm_factory().make_hash_function("SHA-1");
+        break;
+
+    default:
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Undefined DH Group: '%s' while computing H.", _kexMethod);
+        ret = false;
+        break;
+    }
+
+    if (hashIt == NULL)
+    {
+        ret = false;
+    }
+    else
+    {
+        _H = hashIt->process(val);
+        result = _H;
+        delete (hashIt);
+    }
+    
+    return true;
+}
+
+bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::secure_vector<Botan::byte> &sig)
+{
+    std::shared_ptr<Botan::DSA_PublicKey> dsaKey;
+    std::shared_ptr<Botan::RSA_PublicKey> rsaKey;
+    std::unique_ptr<Botan::PK_Verifier> verifier;
+    Botan::secure_vector<Botan::byte> sigType, sigData;
+    Botan::secure_vector<Botan::byte> signature(sig);
+    CppsshPacket signaturePacket(&signature);
+    bool result = false;
+
+    if (_H.empty() == true)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "H was not initialzed.");
+        return false;
+    }
+
+    if (signaturePacket.getString(sigType) == false)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Signature without type.");
+        return false;
+    }
+    if (signaturePacket.getString(sigData) == false)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Signature without data.");
+        return false;
+    }
+
+    switch (_hostkeyMethod)
+    {
+    case SSH_DSS:
+        dsaKey = getDSAKey(hostKey);
+        if (dsaKey == NULL)
+        {
+            //ne7ssh::errors()->push(_session->getSshChannel(), "DSA key not generated.");
+            return false;
+        }
+        break;
+
+    case SSH_RSA:
+        rsaKey = getRSAKey(hostKey);
+        if (rsaKey == NULL)
+        {
+            //ne7ssh::errors()->push(_session->getSshChannel(), "RSA key not generated.");
+            return false;
+        }
+        break;
+
+    default:
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Hostkey algorithm: %i not supported.", _hostkeyMethod);
+        return false;
+    }
+
+    switch (_kexMethod)
+    {
+    case DH_GROUP1_SHA1:
+    case DH_GROUP14_SHA1:
+        if (dsaKey)
+        {
+            verifier.reset(new Botan::PK_Verifier(*dsaKey, "EMSA1(SHA-1)"));
+        }
+        else if (rsaKey)
+        {
+            verifier.reset(new Botan::PK_Verifier(*rsaKey, "EMSA3(SHA-1)"));
+        }
+        break;
+
+    default:
+        break;
+    }
+    if (verifier == NULL)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Key Exchange algorithm: %i not supported.", _kexMethod);
+    }
+    else
+    {
+        result = verifier->verify_message(_H, sigData);
+        verifier.reset();
+    }
+    dsaKey.reset();
+    rsaKey.reset();
+
+    if (result == false)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Failure to verify host signature.");
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
+std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vector<Botan::byte> &hostKey)
+{
+    Botan::secure_vector<Botan::byte> hKey;
+    Botan::secure_vector<Botan::byte> field;
+    Botan::BigInt p, q, g, y;
+    
+    CppsshPacket hKeyPacket(&hKey);
+
+    hKeyPacket.addVector(hostKey);
+
+    if (hKeyPacket.getString(field) == false)
+    {
+        return 0;
+    }
+    if (negotiatedHostkey(field) == false)
+    {
+        return 0;
+    }
+
+    if (hKeyPacket.getBigInt(p) == false)
+    {
+        return 0;
+    }
+    if (hKeyPacket.getBigInt(q) == false)
+    {
+        return 0;
+    }
+    if (hKeyPacket.getBigInt(g) == false)
+    {
+        return 0;
+    }
+    if (hKeyPacket.getBigInt(y) == false)
+    {
+        return 0;
+    }
+
+    Botan::DL_Group keyDL(p, q, g);
+    std::shared_ptr<Botan::DSA_PublicKey> pubKey(new Botan::DSA_PublicKey(keyDL, y));
+    return pubKey;
+}
+
+std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(Botan::secure_vector<Botan::byte> &hostKey)
+{
+    Botan::secure_vector<Botan::byte> hKey;
+    Botan::secure_vector<Botan::byte> field;
+    Botan::BigInt e, n;
+
+    CppsshPacket hKeyPacket(&hKey);
+
+    hKeyPacket.addVector(hostKey);
+
+    if (hKeyPacket.getString(field) == false)
+    {
+        return 0;
+    }
+    if (negotiatedHostkey(field) == false)
+    {
+        return 0;
+    }
+
+    if (hKeyPacket.getBigInt(e) == false)
+    {
+        return 0;
+    }
+    if (hKeyPacket.getBigInt(n) == false)
+    {
+        return 0;
+    }
+    std::shared_ptr<Botan::RSA_PublicKey> pubKey(new Botan::RSA_PublicKey(n, e));
+    return pubKey;
 }

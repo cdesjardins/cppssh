@@ -19,7 +19,7 @@
 #ifndef _SESSION_Hxx
 #define _SESSION_Hxx
 
-
+#include "botan/botan.h"
 #include <string>
 #include <memory>
 
@@ -34,7 +34,7 @@ public:
         _remoteVer = remoteVer;
     }
 
-    const std::string& getRemoveVersion()
+    const std::string& getRemoteVersion()
     {
         return _remoteVer;
     }
@@ -48,11 +48,22 @@ public:
         return _localVer;
     }
 
+    void setSessionID(Botan::secure_vector<Botan::byte>& session)
+    {
+        _sessionID = session;
+    }
+
+    Botan::secure_vector<Botan::byte> &getSessionID()
+    {
+        return _sessionID;
+    }
+
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;
 private:
     std::string _remoteVer;
     std::string _localVer;
+    Botan::secure_vector<Botan::byte> _sessionID;
 };
 
 #endif

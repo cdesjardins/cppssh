@@ -24,6 +24,8 @@
 #include "botan/botan.h"
 #include "botan/hmac.h"
 #include "botan/dh.h"
+#include "botan/dsa.h"
+#include "botan/rsa.h"
 #include <memory>
 
 class CppsshCrypto
@@ -46,8 +48,13 @@ public:
     }
     bool encryptPacket(Botan::secure_vector<Botan::byte> &crypted, Botan::secure_vector<Botan::byte> &hmac, const Botan::secure_vector<Botan::byte> &packet, uint32_t seq);
     bool decryptPacket(Botan::secure_vector<Botan::byte>& decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len);
+    
     void computeMac(Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
+    bool computeH(Botan::secure_vector<Botan::byte> &result, const Botan::secure_vector<Botan::byte> &val);
+
     bool agree(Botan::secure_vector<Botan::byte>& result, const std::vector<std::string>& local, const Botan::secure_vector<Botan::byte>& remote);
+    bool verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::secure_vector<Botan::byte> &sig);
+
     bool negotiatedKex(const Botan::secure_vector<Botan::byte> &kexAlgo);
     bool negotiatedHostkey(const Botan::secure_vector<Botan::byte> &hostkeyAlgo);
     bool negotiatedCryptoC2s(const Botan::secure_vector<Botan::byte> &cryptoAlgo);
@@ -56,7 +63,9 @@ public:
     bool negotiatedMacS2c(const Botan::secure_vector<Botan::byte> &macAlgo);
     bool negotiatedCmprsC2s(Botan::secure_vector<Botan::byte> &cmprsAlgo);
     bool negotiatedCmprsS2c(Botan::secure_vector<Botan::byte> &cmprsAlgo);
+
     bool getKexPublic(Botan::BigInt &publicKey);
+    bool makeKexSecret(Botan::secure_vector<Botan::byte> &result, Botan::BigInt &f);
 
     uint32_t getMacOutLen()
     {
@@ -72,6 +81,8 @@ public:
 private:
 
     uint32_t getMacDigestLen(uint32_t method);
+    std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vector<Botan::byte> &hostKey);
+    std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(Botan::secure_vector<Botan::byte> &hostKey);
 
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;
@@ -97,6 +108,8 @@ private:
     cmprsMethods _s2cCmprsMethod;
 
     std::unique_ptr<Botan::DH_PrivateKey> _privKexKey;
+    Botan::secure_vector<Botan::byte> _K;
+    Botan::secure_vector<Botan::byte> _H;
 
     bool negotiatedCrypto(const Botan::secure_vector<Botan::byte> &cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const Botan::secure_vector<Botan::byte> &macAlgo, macMethods* macMethod);

@@ -236,6 +236,7 @@ bool CppsshKex::sendKexDHInit()
         dhInit.addChar(SSH2_MSG_KEXDH_INIT);
         dhInit.addBigInt(publicKey);
         
+        _e.clear();
         CppsshPacket::bn2vector(_e, publicKey);
 
         if (_session->_transport->sendPacket(buf) == false)
@@ -250,3 +251,83 @@ bool CppsshKex::sendKexDHInit()
     }
     return ret;
 }
+
+bool CppsshKex::handleKexDHReply()
+{
+    Botan::secure_vector<Botan::byte> packet;
+    _session->_transport->getPacket(packet);
+    Botan::secure_vector<Botan::byte> field, hSig, kVector, hVector;
+
+    if (packet.empty() == true)
+    {
+        return false;
+    }
+    Botan::secure_vector<Botan::byte> remoteKexDH(packet.begin() + 1, packet.end() - 1);
+    CppsshPacket remoteKexDHPacket(&remoteKexDH);
+    Botan::BigInt publicKey;
+
+    if (remoteKexDHPacket.getString(field) == false)
+    {
+        return false;
+    }
+    _hostKey.clear();
+    CppsshPacket hostKeyPacket(&_hostKey);
+
+    hostKeyPacket.addVector(field);
+
+    if (remoteKexDHPacket.getBigInt(publicKey) == false)
+    {
+        return false;
+    }
+    _f.clear();
+    CppsshPacket::bn2vector(_f, publicKey);
+
+    if (remoteKexDHPacket.getString(hSig) == false)
+    {
+        return false;
+    }
+
+    if (_session->_crypto->makeKexSecret(kVector, publicKey) == false)
+    {
+        return false;
+    }
+    _k.clear();
+    CppsshPacket kPacket(&_k);
+    kPacket.addVector(kVector);
+
+    makeH(hVector);
+    if (hVector.empty() == true)
+    {
+        return false;
+    }
+    
+    if (_session->_crypto->isInited() == false)
+    {
+        _session->setSessionID(hVector);
+    }
+
+    if (_session->_crypto->verifySig(_hostKey, hSig) == false)
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+void CppsshKex::makeH(Botan::secure_vector<Botan::byte> &hVector)
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket hashBytes(&buf);
+
+    hashBytes.addString(_session->getLocalVersion());
+    hashBytes.addString(_session->getRemoteVersion());
+    hashBytes.addVectorField(_localKex);
+    hashBytes.addVectorField(_remoteKex);
+    hashBytes.addVectorField(_hostKey);
+    hashBytes.addVectorField(_e);
+    hashBytes.addVectorField(_f);
+    hashBytes.addVectorField(_k);
+
+    _session->_crypto->computeH(hVector, buf);
+}
+

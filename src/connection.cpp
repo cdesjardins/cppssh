@@ -60,11 +60,11 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-    /*
     if (kex.handleKexDHReply() == 0)
     {
         return -1;
     }
+    /*
 
     if (kex.sendKexNewKeys() == 0)
     {
