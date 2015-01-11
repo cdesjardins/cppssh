@@ -84,7 +84,7 @@ bool CppsshKex::sendInit()
         ret = false;
     }
 
-    return true;
+    return ret;
 }
 
 bool CppsshKex::handleInit()

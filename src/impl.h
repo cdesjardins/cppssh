@@ -46,7 +46,7 @@ public:
     static std::string PREFERED_CIPHER;
     static std::string PREFERED_MAC;
 
-    static std::unique_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
+    static std::unique_ptr<Botan::RandomNumberGenerator> RNG;
 private:
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::unique_ptr<Botan::LibraryInitializer> _init;

@@ -27,6 +27,10 @@ add_library(cppssh STATIC ${cppssh_LIB_SRCS})
 if(MSVC)
     target_link_libraries(cppssh ws2_32)
 endif()
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_link_libraries(cppssh rt)
+endif()
+
 
 set_property(TARGET cppssh PROPERTY CXX_STANDARD 11)
 install(TARGETS cppssh DESTINATION lib)
