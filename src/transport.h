@@ -20,21 +20,39 @@
 #define _TRANSPORT_Hxx
 
 #include "session.h"
+#include "botan/botan.h"
 #include <memory>
 
 #if !defined(WIN32) && !defined(__MINGW32__)
 #  define SOCKET int
+#else
+#   include <winsock.h>
 #endif
 
 class CppsshTransport
 {
 public:
-    CppsshTransport(const std::shared_ptr<CppsshSession> &session);
-    int establish(const char* host, short port, int timeout);
+    CppsshTransport(const std::shared_ptr<CppsshSession> &session, int timeout);
+    int establish(const char* host, short port);
+
+    bool receive(Botan::secure_vector<Botan::byte>& buffer);
+    bool send(const Botan::secure_vector<Botan::byte>& buffer);
+
+    bool sendPacket(const Botan::secure_vector<Botan::byte> &buffer);
+    short waitForPacket(Botan::byte command, bool bufferOnly = false);
+    uint32_t getPacket(Botan::secure_vector<Botan::byte> &result);
+
 private:
     bool setNonBlocking(bool on);
+    bool wait(bool isWrite);
     SOCKET _sock;
     std::shared_ptr<CppsshSession> _session;
+    int _timeout;
+    uint32_t _txSeq;
+    uint32_t _rxSeq;
+    Botan::secure_vector<Botan::byte> _in;
+    Botan::secure_vector<Botan::byte> _inBuffer;
+
 };
 
 #endif

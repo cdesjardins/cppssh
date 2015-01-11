@@ -28,8 +28,11 @@ class CppsshConnection
 {
 public:
     CppsshConnection(int channelId);
-    int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell, const int timeout);
+    int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
 private:
+    bool checkRemoteVersion();
+    bool sendLocalVersion();
+
     int _channelId;
     std::shared_ptr<CppsshSession> _session;
     std::shared_ptr<CppsshCrypto> _crypto;

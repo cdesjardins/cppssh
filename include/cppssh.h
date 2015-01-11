@@ -27,10 +27,11 @@ class CppsshImpl;
 
 class Cppssh
 {
+public:
     CPPSSH_EXPORT static void create();
     CPPSSH_EXPORT static void destroy();
-    CPPSSH_EXPORT static int connectWithPassword(const char* host, const short port, const char* username, const char* password, bool shell = true, const int timeout = 0);
-    CPPSSH_EXPORT static int connectWithKey(const char* host, const short port, const char* username, const char* privKeyFileName, bool shell = true, const int timeout = 0);
+    CPPSSH_EXPORT static int connectWithPassword(const char* host, const short port, const char* username, const char* password, bool shell = true);
+    CPPSSH_EXPORT static int connectWithKey(const char* host, const short port, const char* username, const char* privKeyFileName, bool shell = true);
     CPPSSH_EXPORT static bool send(const char* data, size_t bytes, int channel);
     CPPSSH_EXPORT static size_t read(char* data, int channel);
     CPPSSH_EXPORT static bool close(int channel);

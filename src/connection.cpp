@@ -18,45 +18,49 @@
 */
 
 #include "connection.h"
+#include "kex.h"
 
 CppsshConnection::CppsshConnection(int channelId)
     : _channelId(channelId),
     _session(new CppsshSession()),
     _crypto(new CppsshCrypto(_session)),
-    _transport(new CppsshTransport(_session))
+    _transport(new CppsshTransport(_session, 5))
 {
+    _session->_transport = _transport;
+    _session->_crypto = _crypto;
 }
 
-int CppsshConnection::connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell, const int timeout)
+int CppsshConnection::connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)
 {
-    if (_transport->establish(host, port, timeout) == -1)
-    {
-        return -1;
-    }
-/*
-    if (checkRemoteVersion() == 0)
-    {
-        return -1;
-    }
-    if (sendLocalVersion() == 0)
+    if (_transport->establish(host, port) == -1)
     {
         return -1;
     }
 
-    ne7ssh_kex kex(_session);
-    if (kex.sendInit() == 0)
+    if (checkRemoteVersion() == false)
     {
         return -1;
     }
+    if (sendLocalVersion() == false)
+    {
+        return -1;
+    }
+
+    CppsshKex kex(_session);
+    if (kex.sendInit() == false)
+    {
+        return -1;
+    }
+
     if (kex.handleInit() == 0)
     {
         return -1;
     }
-
     if (kex.sendKexDHInit() == 0)
     {
         return -1;
     }
+    /*
     if (kex.handleKexDHReply() == 0)
     {
         return -1;
@@ -101,4 +105,31 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     this->_session->setSshChannel(_channelId);
 */
     return _channelId;
+}
+
+bool CppsshConnection::checkRemoteVersion()
+{
+    bool ret = false;
+    Botan::secure_vector<Botan::byte> remoteVer, tmpVar;
+    if (_transport->receive(remoteVer) == true)
+    {
+        std::string sshVer("SSH-2.0");
+        if ((remoteVer.size() >= sshVer.length()) && equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
+        {
+            ret = true;
+            _session->setRemoteVersion(sshVer);
+        }
+    }
+    return ret;
+}
+
+bool CppsshConnection::sendLocalVersion()
+{
+    const std::string localVer("SSH-2.0-cppssh_" CPPSSH_SHORT_VERSION);
+    _session->setLocalVersion(localVer);
+    Botan::secure_vector<Botan::byte> lv;
+    lv.assign(localVer.begin(), localVer.end());
+    lv.push_back('\r');
+    lv.push_back('\n');
+    return _transport->send(lv);
 }

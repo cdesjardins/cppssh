@@ -19,5 +19,32 @@
 #ifndef _PACKET_Hxx
 #define _PACKET_Hxx
 
+#include "botan/botan.h"
+#include <cstdint>
+
+class CppsshPacket
+{
+public:
+    CppsshPacket(Botan::secure_vector<Botan::byte> *data);
+    void addVectorField(const Botan::secure_vector<Botan::byte> &vec);
+    void addVector(const Botan::secure_vector<Botan::byte> &vec);
+    void addString(const std::string& str);
+    void addInt(const uint32_t var);
+    void addChar(const char ch);
+    void addBigInt(const Botan::BigInt& bn);
+    static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
+
+    CppsshPacket& operator=(Botan::secure_vector<Botan::byte> *encryptedPacket);
+    uint32_t getPacketLength();
+    uint32_t getCryptoLength();
+    Botan::byte getPadLength();
+    Botan::byte getCommand();
+    Botan::byte* getPayload();
+
+    bool getString(Botan::secure_vector<Botan::byte>& result);
+
+private:
+    Botan::secure_vector<Botan::byte> *_data;
+};
 #endif
 

@@ -19,10 +19,40 @@
 #ifndef _SESSION_Hxx
 #define _SESSION_Hxx
 
+
+#include <string>
+#include <memory>
+
+class CppsshTransport;
+class CppsshCrypto;
+
 class CppsshSession
 {
 public:
+    void setRemoteVersion(const std::string& remoteVer)
+    {
+        _remoteVer = remoteVer;
+    }
+
+    const std::string& getRemoveVersion()
+    {
+        return _remoteVer;
+    }
+    void setLocalVersion(const std::string& localVer)
+    {
+        _localVer = localVer;
+    }
+
+    const std::string& getLocalVersion()
+    {
+        return _localVer;
+    }
+
+    std::shared_ptr<CppsshTransport> _transport;
+    std::shared_ptr<CppsshCrypto> _crypto;
 private:
+    std::string _remoteVer;
+    std::string _localVer;
 };
 
 #endif

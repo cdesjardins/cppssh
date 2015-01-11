@@ -24,6 +24,9 @@ message(STATUS "Using version numbers: ${FULL_VERSION} and ${SHORT_VERSION}")
 
 add_definitions(-DCPPSSH_EXPORTS -DCPPSSH_FULL_VERSION="${FULL_VERSION}" -DCPPSSH_SHORT_VERSION="${SHORT_VERSION}")
 add_library(cppssh STATIC ${cppssh_LIB_SRCS})
+if(MSVC)
+    target_link_libraries(cppssh ws2_32)
+endif()
 
 set_property(TARGET cppssh PROPERTY CXX_STANDARD 11)
 install(TARGETS cppssh DESTINATION lib)
