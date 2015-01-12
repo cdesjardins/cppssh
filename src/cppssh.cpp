@@ -44,6 +44,7 @@ bool Cppssh::close(int channel)
 
 void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
 {
+    CppsshImpl::setOptions(prefCipher, prefHmac);
 }
 
 bool Cppssh::generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
