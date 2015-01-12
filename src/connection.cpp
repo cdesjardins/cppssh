@@ -20,6 +20,8 @@
 #include "connection.h"
 #include "kex.h"
 #include "cryptstr.h"
+#include "packet.h"
+#include "messages.h"
 
 CppsshConnection::CppsshConnection(int channelId)
     : _channelId(channelId),
@@ -69,11 +71,11 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-    /*
-    if (requestService("ssh-userauth") == 0)
+    if (requestService("ssh-userauth") == false)
     {
         return -1;
     }
+    /*
     if (password != NULL)
     {
         if (!authWithPassword(username, password))
@@ -133,4 +135,24 @@ bool CppsshConnection::sendLocalVersion()
     lv.push_back('\r');
     lv.push_back('\n');
     return _transport->send(lv);
+}
+
+bool CppsshConnection::requestService(const std::string& service)
+{
+    bool ret = true;
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+
+    packet.addChar(SSH2_MSG_SERVICE_REQUEST);
+    packet.addString(service);
+    if (_transport->sendPacket(buf) == false)
+    {
+        ret = false;
+    }
+    else if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT) <= 0)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Service request failed.");
+        ret = false;
+    }
+    return ret;
 }

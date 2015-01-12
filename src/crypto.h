@@ -116,7 +116,7 @@ private:
     bool negotiatedCrypto(const Botan::secure_vector<Botan::byte> &cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const Botan::secure_vector<Botan::byte> &macAlgo, macMethods* macMethod);
     bool negotiatedCmprs(Botan::secure_vector<Botan::byte> &cmprsAlgo, cmprsMethods* cmprsMethod);
-    const char* getCryptAlgo(cryptoMethods crypto);
+    std::string getCryptAlgo(cryptoMethods crypto);
     const char* getHashAlgo();
     const char* getHmacAlgo(macMethods method);
 
