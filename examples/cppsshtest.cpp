@@ -10,7 +10,7 @@ int main(int argc, char** argv)
     }
 
     Cppssh::create();
-    Cppssh::setOptions("aes128-cbc", "hmac-sha1");
+    Cppssh::setOptions("aes192-cbc", "hmac-md5");
     Cppssh::connectWithPassword(argv[1], 22, argv[2], argv[3]);
     Cppssh::destroy();
     return 0;

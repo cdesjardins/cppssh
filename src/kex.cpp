@@ -142,7 +142,7 @@ bool CppsshKex::handleInit()
         //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible cryptographic algorithms.");
         return false;
     }
-    if (!_session->_crypto->negotiatedCryptoC2s(agreed))
+    if (_session->_crypto->negotiatedCryptoC2s(agreed) == false)
     {
         return false;
     }

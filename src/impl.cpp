@@ -18,7 +18,7 @@
 */
 
 #include "impl.h"
-#include "rng.h"
+#include "botan/auto_rng.h"
 #include "botan/init.h"
 
 std::vector<std::string> CppsshImpl::CIPHER_ALGORITHMS;
@@ -57,7 +57,7 @@ std::shared_ptr<CppsshImpl> CppsshImpl::create()
 
     if (RNG == NULL)
     {
-        RNG.reset(new CppsshRng());
+        RNG.reset(new Botan::Serialized_RNG());
     }
     return ret;
 }
@@ -125,6 +125,10 @@ void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, const std
         if (prefIt != vec.end())
         {
             std::copy(prefered.begin(), prefered.end(), std::back_inserter(*outstr));
+            if (outList != NULL)
+            {
+                outList->push_back(prefered);
+            }
         }
     }
     for (std::vector<std::string>::const_iterator it = vec.cbegin(); it != vec.cend(); it++)

@@ -91,6 +91,8 @@ private:
     std::unique_ptr<Botan::Pipe> _decrypt;
     std::unique_ptr<Botan::HMAC> _hmacOut;
     std::unique_ptr<Botan::HMAC> _hmacIn;
+    Botan::Keyed_Filter* _encryptFilter;
+    Botan::Keyed_Filter* _decryptFilter;
 
     uint32_t _encryptBlock;
     uint32_t _decryptBlock;

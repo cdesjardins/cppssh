@@ -68,6 +68,7 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte> &crypted, Bot
 
 bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte> &decrypted, const Botan::secure_vector<Botan::byte> &packet, uint32_t len)
 {
+    bool ret = true;
     uint32_t pLen = packet.size();
 
     if (len % _decryptBlock)
@@ -80,9 +81,14 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte> &decrypted, c
         len = pLen;
     }
 
-    _decrypt->process_msg(packet);
+    _decrypt->process_msg(packet.data(), len);
     decrypted = _decrypt->read_all(_decrypt->message_count() - 1);
-    return true;
+
+    Botan::secure_vector<Botan::byte> key;
+    key = Botan::secure_vector<Botan::byte>(packet.begin(), packet.begin() + _decryptBlock);
+    Botan::InitializationVector iv(key);
+    _decryptFilter->set_iv(iv);
+    return ret;
 }
 
 uint32_t CppsshCrypto::getMacDigestLen(uint32_t method)
@@ -751,12 +757,12 @@ bool CppsshCrypto::makeNewKeys()
     Botan::Algorithm_Factory &af = Botan::global_state().algorithm_factory();
 
     const Botan::BlockCipher* block_cipher = af.prototype_block_cipher(algo);
-    std::unique_ptr<Botan::Keyed_Filter> cipher(new Botan::Transformation_Filter(
-        new Botan::CBC_Encryption(block_cipher->clone(), new Botan::Null_Padding)));
+    _encryptFilter = new Botan::Transformation_Filter(
+        new Botan::CBC_Encryption(block_cipher->clone(), new Botan::Null_Padding));
 
-    cipher->set_key(c2s_key);
-    cipher->set_iv(c2s_iv);
-    _encrypt.reset(new Botan::Pipe(cipher.release()));
+    _encryptFilter->set_key(c2s_key);
+    _encryptFilter->set_iv(c2s_iv);
+    _encrypt.reset(new Botan::Pipe(_encryptFilter));
 
     if (macLen)
     {
@@ -806,12 +812,12 @@ bool CppsshCrypto::makeNewKeys()
     Botan::SymmetricKey s2c_mac(key);
 
     block_cipher = af.prototype_block_cipher(algo);
-    cipher.reset(new Botan::Transformation_Filter(
-        new Botan::CBC_Decryption(block_cipher->clone(), new Botan::Null_Padding)));
+    _decryptFilter = new Botan::Transformation_Filter(
+        new Botan::CBC_Decryption(block_cipher->clone(), new Botan::Null_Padding));
 
-    cipher->set_key(s2c_key);
-    cipher->set_iv(s2c_iv);
-    _decrypt.reset(new Botan::Pipe(cipher.release()));
+    _decryptFilter->set_key(s2c_key);
+    _decryptFilter->set_iv(s2c_iv);
+    _decrypt.reset(new Botan::Pipe(_decryptFilter));
 
     if (macLen)
     {

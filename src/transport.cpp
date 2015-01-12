@@ -338,7 +338,7 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
         if (cryptoLen > _session->_crypto->getDecryptBlock())
         {
             Botan::secure_vector<Botan::byte> tmpVar;
-            tmpVar = Botan::secure_vector<Botan::byte>(_in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + (cryptoLen - _session->_crypto->getDecryptBlock()));
+            tmpVar = Botan::secure_vector<Botan::byte>(_in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
             _session->_crypto->decryptPacket(tmpVar, tmpVar, tmpVar.size());
             decrypted += tmpVar;
         }
@@ -346,7 +346,7 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
         {
             Botan::secure_vector<Botan::byte> ourMac, hMac;
             _session->_crypto->computeMac(ourMac, decrypted, _rxSeq);
-            hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + _session->_crypto->getMacInLen());
+            hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + cryptoLen + _session->_crypto->getMacInLen());
             if (hMac != ourMac)
             {
                 //ne7ssh::errors()->push(_session->getSshChannel(), "Mismatched HMACs.");
