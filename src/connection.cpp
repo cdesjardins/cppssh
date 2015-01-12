@@ -19,6 +19,7 @@
 
 #include "connection.h"
 #include "kex.h"
+#include "cryptstr.h"
 
 CppsshConnection::CppsshConnection(int channelId)
     : _channelId(channelId),
@@ -52,15 +53,15 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
         return -1;
     }
 
-    if (kex.handleInit() == 0)
+    if (kex.handleInit() == false)
     {
         return -1;
     }
-    if (kex.sendKexDHInit() == 0)
+    if (kex.sendKexDHInit() == false)
     {
         return -1;
     }
-    if (kex.handleKexDHReply() == 0)
+    if (kex.handleKexDHReply() == false)
     {
         return -1;
     }
@@ -117,7 +118,9 @@ bool CppsshConnection::checkRemoteVersion()
         if ((remoteVer.size() >= sshVer.length()) && equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
         {
             ret = true;
-            _session->setRemoteVersion(sshVer);
+            std::string rv(remoteVer.begin(), remoteVer.end());
+            trim(rv);
+            _session->setRemoteVersion(rv);
         }
     }
     return ret;

@@ -81,7 +81,7 @@ bool CppsshKex::sendInit()
     {
         ret = false;
     }
-    else if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT) == 0)
+    else if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT) <= 0)
     {
         //ne7ssh::errors()->push(_session->getSshChannel(), "Timeout while waiting for key exchange init reply");
         ret = false;

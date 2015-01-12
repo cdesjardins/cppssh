@@ -25,9 +25,9 @@
 #include "crypto.h"
 #include "packet.h"
 #include "impl.h"
+#include "cryptstr.h"
 #include "botan/pubkey.h"
 #include <string>
-#include <sstream>
 
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession> &session)
     : _session(session),
@@ -118,13 +118,6 @@ void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte> &hmac, const Bot
     }
 }
 
-void split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-}
 bool CppsshCrypto::agree(Botan::secure_vector<Botan::byte> &result, const std::vector<std::string>& local, const Botan::secure_vector<Botan::byte> &remote)
 {
     bool ret = false;
@@ -476,12 +469,8 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
     if (result == false)
     {
         //ne7ssh::errors()->push(_session->getSshChannel(), "Failure to verify host signature.");
-        return false;
     }
-    else
-    {
-        return true;
-    }
+    return result;
 }
 
 
