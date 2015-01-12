@@ -132,14 +132,14 @@ void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, const std
         std::string kex = *it;
         if (it != prefIt)
         {
+            if (outstr->length() > 0)
+            {
+                outstr->push_back(',');
+            }
             std::copy(kex.begin(), kex.end(), std::back_inserter(*outstr));
             if (outList != NULL)
             {
                 outList->push_back(kex);
-            }
-            if ((it + 1) != vec.end())
-            {
-                outstr->push_back(',');
             }
         }
     }
