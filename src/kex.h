@@ -31,6 +31,7 @@ public:
     bool handleInit();
     bool sendKexDHInit();
     bool handleKexDHReply();
+    bool sendKexNewKeys();
 
 private:
     void constructLocalKex();

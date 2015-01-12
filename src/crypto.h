@@ -66,6 +66,7 @@ public:
 
     bool getKexPublic(Botan::BigInt &publicKey);
     bool makeKexSecret(Botan::secure_vector<Botan::byte> &result, Botan::BigInt &f);
+    bool makeNewKeys();
 
     uint32_t getMacOutLen()
     {
@@ -83,6 +84,7 @@ private:
     uint32_t getMacDigestLen(uint32_t method);
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte> &hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte> &hostKey);
+    bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
 
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;
@@ -114,7 +116,12 @@ private:
     bool negotiatedCrypto(const Botan::secure_vector<Botan::byte> &cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const Botan::secure_vector<Botan::byte> &macAlgo, macMethods* macMethod);
     bool negotiatedCmprs(Botan::secure_vector<Botan::byte> &cmprsAlgo, cmprsMethods* cmprsMethod);
+    const char* getCryptAlgo(cryptoMethods crypto);
+    const char* getHashAlgo();
+    const char* getHmacAlgo(macMethods method);
 
+    uint32_t getMacKeyLen(macMethods method);
+    size_t maxKeyLengthOf(const std::string& name);
 };
 
 #endif

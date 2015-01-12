@@ -65,13 +65,11 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-    /*
-
     if (kex.sendKexNewKeys() == 0)
     {
         return -1;
     }
-
+    /*
     if (requestService("ssh-userauth") == 0)
     {
         return -1;

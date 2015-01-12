@@ -27,6 +27,8 @@
 #include "impl.h"
 #include "cryptstr.h"
 #include "botan/pubkey.h"
+#include "botan/cbc.h"
+#include "botan/transform_filter.h"
 #include <string>
 
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession> &session)
@@ -544,4 +546,274 @@ std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(Botan::secure_vect
     }
     std::shared_ptr<Botan::RSA_PublicKey> pubKey(new Botan::RSA_PublicKey(n, e));
     return pubKey;
+}
+
+const char* CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
+{
+    switch (crypto)
+    {
+    case TDES_CBC:
+        return "TripleDES";
+
+    case AES128_CBC:
+        return "AES-128";
+
+    case AES192_CBC:
+        return "AES-192";
+
+    case AES256_CBC:
+        return "AES-256";
+
+    case BLOWFISH_CBC:
+        return "Blowfish";
+
+    case CAST128_CBC:
+        return "CAST-128";
+
+    case TWOFISH_CBC:
+        return "Twofish";
+
+    default:
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Cryptographic algorithm: %i was not defined.", crypto);
+        return NULL;
+    }
+}
+
+size_t CppsshCrypto::maxKeyLengthOf(const std::string& name)
+{
+    Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
+
+    if (const Botan::BlockCipher* bc = af.prototype_block_cipher(name))
+    {
+        return bc->key_spec().maximum_keylength();
+    }
+
+    if (const Botan::StreamCipher* sc = af.prototype_stream_cipher(name))
+    {
+        return sc->key_spec().maximum_keylength();
+    }
+
+    if (const Botan::MessageAuthenticationCode* mac = af.prototype_mac(name))
+    {
+        return mac->key_spec().maximum_keylength();
+    }
+
+    return 0;
+}
+
+uint32_t CppsshCrypto::getMacKeyLen(macMethods method)
+{
+    switch (method)
+    {
+    case HMAC_SHA1:
+        return 20;
+
+    case HMAC_MD5:
+        return 16;
+
+    case HMAC_NONE:
+        return 0;
+
+    default:
+        //ne7ssh::errors()->push(_session->getSshChannel(), "HMAC algorithm: %i was not defined.", method);
+        return 0;
+    }
+}
+
+const char* CppsshCrypto::getHmacAlgo(macMethods method)
+{
+    switch (method)
+    {
+    case HMAC_SHA1:
+        return "SHA-1";
+
+    case HMAC_MD5:
+        return "MD5";
+
+    case HMAC_NONE:
+        return NULL;
+
+    default:
+        //ne7ssh::errors()->push(_session->getSshChannel(), "HMAC algorithm: %i was not defined.", method);
+        return NULL;
+    }
+}
+
+
+const char* CppsshCrypto::getHashAlgo()
+{
+    switch (_kexMethod)
+    {
+    case DH_GROUP1_SHA1:
+    case DH_GROUP14_SHA1:
+        return "SHA-1";
+
+    default:
+        //ne7ssh::errors()->push(_session->getSshChannel(), "DH Group: %i was not defined.", _kexMethod);
+        return NULL;
+    }
+}
+
+bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes)
+{
+    Botan::secure_vector<Botan::byte> hash;
+    Botan::secure_vector<Botan::byte> hashBytes;
+    CppsshPacket hashBytesPacket(&hashBytes);
+    Botan::HashFunction* hashIt;
+    const char* algo = getHashAlgo();
+    uint32_t len;
+
+    if (algo == NULL)
+    {
+        return false;
+    }
+
+    hashIt = Botan::global_state().algorithm_factory().make_hash_function(algo);
+
+    if (hashIt == NULL)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Undefined HASH algorithm encountered while computing the key.");
+        return false;
+    }
+
+    hashBytesPacket.addVectorField(_K);
+    hashBytesPacket.addVector(_H);
+    hashBytesPacket.addChar(ID);
+    hashBytesPacket.addVector(_session->getSessionID());
+
+    hash = hashIt->process(hashBytes);
+    key = hash;
+    len = key.size();
+
+    while (len < nBytes)
+    {
+        hashBytes.clear();
+        hashBytesPacket.addVectorField(_K);
+        hashBytesPacket.addVector(_H);
+        hashBytesPacket.addVector(key);
+        hash = hashIt->process(hashBytes);
+        key += hash;
+        len = key.size();
+    }
+    delete (hashIt);
+    return true;
+}
+
+bool CppsshCrypto::makeNewKeys()
+{
+    const char* algo;
+    uint32_t key_len, iv_len, macLen;
+    Botan::secure_vector<Botan::byte> key;
+    const Botan::BlockCipher* cipher;
+    const Botan::HashFunction* hash_algo;
+
+    algo = getCryptAlgo(_c2sCryptoMethod);
+    key_len = maxKeyLengthOf(algo);
+    if (key_len == 0)
+    {
+        return false;
+    }
+    if (_c2sCryptoMethod == BLOWFISH_CBC)
+    {
+        key_len = 16;
+    }
+    else if (_c2sCryptoMethod == TWOFISH_CBC)
+    {
+        key_len = 32;
+    }
+    _encryptBlock = iv_len = Botan::block_size_of(algo);
+    macLen = getMacKeyLen(_c2sMacMethod);
+    if (!algo)
+    {
+        return false;
+    }
+
+    if (!computeKey(key, 'A', iv_len))
+    {
+        return false;
+    }
+    Botan::InitializationVector c2s_iv(key);
+
+    if (!computeKey(key, 'C', key_len))
+    {
+        return false;
+    }
+    Botan::SymmetricKey c2s_key(key);
+
+    if (!computeKey(key, 'E', macLen))
+    {
+        return false;
+    }
+    Botan::SymmetricKey c2s_mac(key);
+
+    Botan::Algorithm_Factory &af = Botan::global_state().algorithm_factory();
+    cipher = af.prototype_block_cipher(algo);
+    // FIXME: need to set key and iv
+    //cipher->set_key(c2s_key);
+    Botan::Transformation_Filter *encryptFilter = new Botan::Transformation_Filter(new Botan::CBC_Encryption(cipher->clone(), new Botan::Null_Padding));
+    //_encrypt.reset(new Botan::Pipe(Botan::CBC_Encryption(cipher->clone(), new Botan::Null_Padding, c2s_key, c2s_iv));
+    _encrypt.reset(new Botan::Pipe(encryptFilter));
+    if (macLen)
+    {
+        hash_algo = af.prototype_hash_function(getHmacAlgo(_c2sMacMethod));
+        _hmacOut.reset(new Botan::HMAC(hash_algo->clone()));
+        _hmacOut->set_key(c2s_mac);
+    }
+    //  if (c2sCmprsMethod == ZLIB) compress = new Pipe (new Zlib_Compression(9));
+
+    algo = getCryptAlgo(_s2cCryptoMethod);
+    key_len = maxKeyLengthOf(algo);
+    if (key_len == 0)
+    {
+        return false;
+    }
+    if (_s2cCryptoMethod == BLOWFISH_CBC)
+    {
+        key_len = 16;
+    }
+    else if (_s2cCryptoMethod == TWOFISH_CBC)
+    {
+        key_len = 32;
+    }
+    _decryptBlock = iv_len = Botan::block_size_of(algo);
+    macLen = getMacKeyLen(_c2sMacMethod);
+    if (!algo)
+    {
+        return false;
+    }
+
+    if (!computeKey(key, 'B', iv_len))
+    {
+        return false;
+    }
+    Botan::InitializationVector s2c_iv(key);
+
+    if (!computeKey(key, 'D', key_len))
+    {
+        return false;
+    }
+    Botan::SymmetricKey s2c_key(key);
+
+    if (!computeKey(key, 'F', macLen))
+    {
+        return false;
+    }
+    Botan::SymmetricKey s2c_mac(key);
+
+    cipher = af.prototype_block_cipher(algo);
+    // FIXME: need to set key and iv
+    Botan::Transformation_Filter *decryptFilter = new Botan::Transformation_Filter(new Botan::CBC_Decryption(cipher->clone(), new Botan::Null_Padding));
+    //_decrypt.reset(new Botan::Pipe(new Botan::CBC_Decryption(cipher->clone(), new Botan::Null_Padding, s2c_key, s2c_iv)));
+    _decrypt.reset(new Botan::Pipe(decryptFilter));
+
+    if (macLen)
+    {
+        hash_algo = af.prototype_hash_function(getHmacAlgo(_s2cMacMethod));
+        _hmacIn.reset(new Botan::HMAC(hash_algo->clone()));
+        _hmacIn->set_key(s2c_mac);
+    }
+    //  if (s2cCmprsMethod == ZLIB) decompress = new Pipe (new Zlib_Decompression);
+
+    _inited = true;
+    return true;
 }

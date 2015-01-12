@@ -331,3 +331,33 @@ void CppsshKex::makeH(Botan::secure_vector<Botan::byte> &hVector)
     _session->_crypto->computeH(hVector, buf);
 }
 
+bool CppsshKex::sendKexNewKeys()
+{
+    bool ret = true;
+
+    if (_session->_transport->waitForPacket(SSH2_MSG_NEWKEYS) <= 0)
+    {
+        //ne7ssh::errors()->push(_session->getSshChannel(), "Timeout while waiting for key exchange newkeys reply.");
+        ret = false;
+    }
+    else
+    {
+        Botan::secure_vector<Botan::byte> newKeys;
+        CppsshPacket newKeysPacket(&newKeys);
+        newKeysPacket.addChar(SSH2_MSG_NEWKEYS);
+        if (_session->_transport->sendPacket(newKeys) == false)
+        {
+            ret = false;
+        }
+        else
+        {
+            if (_session->_crypto->makeNewKeys() == false)
+            {
+                //ne7ssh::errors()->push(_session->getSshChannel(), "Could not make keys.");
+                ret = false;
+            }
+        }
+    }
+
+    return ret;
+}
