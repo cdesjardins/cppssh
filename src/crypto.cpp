@@ -64,8 +64,8 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte> &crypted, Bot
         hmac = _hmacOut->process(macStr);
     }
 
-    // set the IV (nonce) to the first block of the encrypted packet
-    _encryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>(crypted.begin(), crypted.begin() + _encryptBlock)));
+    // set the IV (nonce) to the last block of the encrypted packet
+    _encryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>(crypted.end() - _encryptBlock, crypted.end())));
     return ret;
 }
 
