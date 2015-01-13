@@ -75,14 +75,14 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-    /*
     if (password != NULL)
     {
-        if (!authWithPassword(username, password))
+        if (authWithPassword(username, password) == false)
         {
             return -1;
         }
     }
+    /*
     else if (privKeyFileName != NULL)
     {
         if (!authWithKey(username, privKeyFileName))
@@ -153,6 +153,72 @@ bool CppsshConnection::requestService(const std::string& service)
     {
         //ne7ssh::errors()->push(_session->getSshChannel(), "Service request failed.");
         ret = false;
+    }
+    return ret;
+}
+
+bool CppsshConnection::authWithPassword(const std::string& username, const std::string& password)
+{
+    bool ret = false;
+    short cmd;
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+
+    packet.addChar(SSH2_MSG_USERAUTH_REQUEST);
+    packet.addString(username);
+    packet.addString("ssh-connection");
+    packet.addString("password");
+    packet.addChar('\0');
+    packet.addString(password);
+
+    if (_transport->sendPacket(buf) == false)
+    {
+        ret = false;
+    }
+    else
+    {
+        cmd = _transport->waitForPacket(0);
+        if (cmd <= 0)
+        {
+            ret = false;
+        }
+        else
+        {
+            if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
+            {
+                ret = true;
+            }
+            else if (cmd == SSH2_MSG_USERAUTH_BANNER)
+            {
+                buf.clear();
+                packet.addString(password);
+                if (!_transport->sendPacket(buf))
+                {
+                    ret = false;
+                }
+                else
+                {
+                    cmd = _transport->waitForPacket(0);
+                    if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
+                    {
+                        ret = true;
+                    }
+                }
+            }
+
+            if (cmd == SSH2_MSG_USERAUTH_FAILURE)
+            {
+                Botan::secure_vector<Botan::byte> response;
+                Botan::secure_vector<Botan::byte> methods;
+
+                _transport->getPacket(response);
+                CppsshPacket message(&Botan::secure_vector<Botan::byte>(response.begin() + 1, response.end()));
+                message.getString(methods);
+                //message.getByte();
+                //ne7ssh::errors()->push(-1, "Authentication failed. Supported authentication methods: %B", &methods);
+                ret = false;
+            }
+        }
     }
     return ret;
 }

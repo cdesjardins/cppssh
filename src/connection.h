@@ -33,6 +33,7 @@ private:
     bool checkRemoteVersion();
     bool sendLocalVersion();
     bool requestService(const std::string& service);
+    bool authWithPassword(const std::string& username, const std::string& password);
 
     int _channelId;
     std::shared_ptr<CppsshSession> _session;
