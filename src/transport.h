@@ -29,6 +29,8 @@
 #   include <winsock.h>
 #endif
 
+#define MAX_PACKET_LEN 34816
+
 class CppsshTransport
 {
 public:

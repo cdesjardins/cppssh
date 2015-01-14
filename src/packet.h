@@ -21,11 +21,13 @@
 
 #include "botan/botan.h"
 #include <cstdint>
+#include <cstddef>
 
 class CppsshPacket
 {
 public:
     CppsshPacket(Botan::secure_vector<Botan::byte> *data);
+
     void addVectorField(const Botan::secure_vector<Botan::byte> &vec);
     void addVector(const Botan::secure_vector<Botan::byte> &vec);
     void addString(const std::string& str);
@@ -43,6 +45,7 @@ public:
 
     bool getString(Botan::secure_vector<Botan::byte>& result);
     bool getBigInt(Botan::BigInt& result);
+    uint32_t getInt();
 
 private:
     Botan::secure_vector<Botan::byte> *_data;

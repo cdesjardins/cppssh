@@ -184,8 +184,17 @@ bool CppsshPacket::getBigInt(Botan::BigInt& result)
     else
     {
         Botan::BigInt tmpBI(_data->data() + sizeof(uint32_t), len);
+
         result.swap(tmpBI);
         _data->erase(_data->begin(), _data->begin() + (sizeof(uint32_t) + len));
     }
     return ret;
+}
+
+uint32_t CppsshPacket::getInt()
+{
+    uint32_t result = getPacketLength();
+
+    _data->erase(_data->begin(), _data->begin() + (sizeof(uint32_t)));
+    return result;
 }

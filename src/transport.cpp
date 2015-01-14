@@ -182,7 +182,6 @@ bool CppsshTransport::wait(bool isWrite)
 
 bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>& buffer)
 {
-    const int MAX_PACKET_LEN = 1024;
     int len = 0;
     buffer.resize(MAX_PACKET_LEN);
 

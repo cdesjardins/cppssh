@@ -29,6 +29,13 @@ class CppsshCrypto;
 class CppsshSession
 {
 public:
+    CppsshSession()
+        : _sendChannel(0),
+        _maxPacket(0)
+    {
+
+    }
+
     void setRemoteVersion(const std::string& remoteVer)
     {
         _remoteVer = remoteVer;
@@ -58,12 +65,35 @@ public:
         return _sessionID;
     }
 
+    void setSendChannel(uint32_t channel)
+    {
+        _sendChannel = channel;
+    }
+
+    uint32_t getSendChannel() const
+    {
+        return _sendChannel;
+    }
+
+    void setMaxPacket(uint32_t size)
+    {
+        _maxPacket = size;
+    }
+
+    uint32_t getMaxPacket()
+    {
+        return _maxPacket;
+    }
+
+
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;
 private:
     std::string _remoteVer;
     std::string _localVer;
     Botan::secure_vector<Botan::byte> _sessionID;
+    uint32_t _sendChannel;
+    uint32_t _maxPacket;
 };
 
 #endif

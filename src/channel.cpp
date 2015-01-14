@@ -17,3 +17,96 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "channel.h"
+#include "messages.h"
+#include "transport.h"
+#include "packet.h"
+
+CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession> &session)
+    : _session(session),
+    _windowRecv(0),
+    _windowSend(0),
+    _channelOpened(false)
+{
+
+}
+
+bool CppsshChannel::open(uint32_t channelID)
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+
+    _windowSend = 0;
+    _windowRecv = MAX_PACKET_LEN - 2400;
+
+    packet.addChar(SSH2_MSG_CHANNEL_OPEN);
+    packet.addString("session");
+    packet.addInt(channelID);
+
+    packet.addInt(_windowRecv);
+    packet.addInt(MAX_PACKET_LEN);
+
+    if (_session->_transport->sendPacket(buf) == true)
+    {
+        if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION) <= 0)
+        {
+            //ne7ssh::errors()->push(-1, "New channel: %i could not be open.", channelID);
+        }
+        else
+        {
+            _channelOpened = handleChannelConfirm();
+        }
+    }
+    return _channelOpened;
+}
+
+bool CppsshChannel::handleChannelConfirm()
+{
+    Botan::secure_vector<Botan::byte> buf;
+
+    _session->_transport->getPacket(buf);
+
+    Botan::secure_vector<Botan::byte> tmp(buf.begin() + 1, buf.end() - 1);
+    CppsshPacket packet(&tmp);
+    uint32_t field;
+
+    // Receive Channel
+    packet.getInt();
+    // Send Channel
+    field = packet.getInt();
+    _session->setSendChannel(field);
+
+    // Window Size
+    field = packet.getInt();
+    _windowSend = field;
+
+    // Max Packet
+    field = packet.getInt();
+    _session->setMaxPacket(field);
+    return true;
+}
+
+void CppsshChannel::getShell()
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+
+    packet.addChar(SSH2_MSG_CHANNEL_REQUEST);
+    packet.addInt(_session->getSendChannel());
+    packet.addString("pty-req");
+    packet.addChar(0);
+    packet.addString("dumb");
+    packet.addInt(80);
+    packet.addInt(24);
+    packet.addInt(0);
+    packet.addInt(0);
+    packet.addString("");
+    if (_session->_transport->sendPacket(buf) == true)
+    {
+        buf.clear();
+        packet.addChar(SSH2_MSG_CHANNEL_REQUEST);
+        packet.addInt(_session->getSendChannel());
+        packet.addString("shell");
+        packet.addChar(0);
+        _session->_transport->sendPacket(buf);
+    }
+}

@@ -19,10 +19,23 @@
 #ifndef _CHANNEL_Hxx
 #define _CHANNEL_Hxx
 
+#include "packet.h"
+#include "session.h"
+
 class CppsshChannel
 {
 public:
+    CppsshChannel(const std::shared_ptr<CppsshSession> &session);
+    bool open(uint32_t channelID);
+    void getShell();
+
 private:
+    bool handleChannelConfirm();
+
+    std::shared_ptr<CppsshSession> _session;
+    uint32_t _windowRecv;
+    uint32_t _windowSend;
+    bool _channelOpened;
 };
 
 #endif

@@ -22,6 +22,7 @@
 #include "session.h"
 #include "crypto.h"
 #include "transport.h"
+#include "channel.h"
 #include <memory>
 
 class CppsshConnection
@@ -34,11 +35,14 @@ private:
     bool sendLocalVersion();
     bool requestService(const std::string& service);
     bool authWithPassword(const std::string& username, const std::string& password);
+    bool authWithKey(const std::string& username, const std::string& privKeyFileName);
 
     int _channelId;
     std::shared_ptr<CppsshSession> _session;
     std::shared_ptr<CppsshCrypto> _crypto;
     std::shared_ptr<CppsshTransport> _transport;
+    std::shared_ptr<CppsshChannel> _channel;
+    bool _connected;
 };
 
 #endif

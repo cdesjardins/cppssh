@@ -27,7 +27,9 @@ CppsshConnection::CppsshConnection(int channelId)
     : _channelId(channelId),
     _session(new CppsshSession()),
     _crypto(new CppsshCrypto(_session)),
-    _transport(new CppsshTransport(_session, 5))
+    _transport(new CppsshTransport(_session, 5)),
+    _channel(new CppsshChannel(_session)),
+    _connected(false)
 {
     _session->_transport = _transport;
     _session->_crypto = _crypto;
@@ -82,29 +84,22 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
             return -1;
         }
     }
-    /*
     else if (privKeyFileName != NULL)
     {
-        if (!authWithKey(username, privKeyFileName))
+        if (authWithKey(username, privKeyFileName) == false)
         {
             return -1;
         }        
     }
-
-    _channel->open(_channelId);
-    if (_channel->open(_channelId) == 0)
+    if (_channel->open(_channelId) == false)
     {
         return -1;
     }
-
     if (shell == true)
     {
         _channel->getShell();
     }
-
     _connected = true;
-    this->_session->setSshChannel(_channelId);
-*/
     return _channelId;
 }
 
@@ -212,7 +207,8 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
                 Botan::secure_vector<Botan::byte> methods;
 
                 _transport->getPacket(response);
-                CppsshPacket message(&Botan::secure_vector<Botan::byte>(response.begin() + 1, response.end()));
+                Botan::secure_vector<Botan::byte> tmp(response.begin() + 1, response.end());
+                CppsshPacket message(&tmp);
                 message.getString(methods);
                 //message.getByte();
                 //ne7ssh::errors()->push(-1, "Authentication failed. Supported authentication methods: %B", &methods);
@@ -221,4 +217,10 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
         }
     }
     return ret;
+}
+
+
+bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName)
+{
+    return false;
 }
