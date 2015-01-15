@@ -114,7 +114,7 @@ bool CppsshConnection::checkRemoteVersion()
         {
             ret = true;
             std::string rv(remoteVer.begin(), remoteVer.end());
-            trim(rv);
+            CppsshCryptstr::trim(rv);
             _session->setRemoteVersion(rv);
         }
     }
