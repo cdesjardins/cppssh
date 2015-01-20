@@ -27,6 +27,10 @@ int main(int argc, char** argv)
     {
         reportErrors("Connect", channel);
     }
+    else
+    {
+        std::cout << "Connected" << std::endl;
+    }
     Cppssh::close(channel);
 
     Cppssh::destroy();

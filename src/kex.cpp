@@ -146,7 +146,6 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-
     if (remoteKexAlgosPacket.getString(algos) == false)
     {
         return false;
@@ -169,12 +168,10 @@ bool CppsshKex::handleInit()
         _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
         return false;
     }
-
     if (_session->_crypto->negotiatedMacC2s(agreed) == false)
     {
         return false;
     }
-
     if (remoteKexAlgosPacket.getString(algos) == false)
     {
         return false;
@@ -188,7 +185,6 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-
     if (remoteKexAlgosPacket.getString(algos) == false)
     {
         return false;
@@ -198,12 +194,10 @@ bool CppsshKex::handleInit()
         _session->_logger->pushMessage(std::stringstream() << "No compatible compression algorithms.");
         return false;
     }
-
     if (_session->_crypto->negotiatedCmprsC2s(agreed) == false)
     {
         return false;
     }
-
     if (remoteKexAlgosPacket.getString(algos) == false)
     {
         return false;

@@ -47,7 +47,6 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-
     if (checkRemoteVersion() == false)
     {
         return -1;
@@ -56,13 +55,11 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-
     CppsshKex kex(_session);
     if (kex.sendInit() == false)
     {
         return -1;
     }
-
     if (kex.handleInit() == false)
     {
         return -1;
