@@ -336,6 +336,8 @@ bool CppsshKex::sendKexNewKeys()
     }
     else
     {
+        Botan::secure_vector<Botan::byte> buf;
+        _session->_transport->getPacket(buf);
         Botan::secure_vector<Botan::byte> newKeys;
         CppsshPacket newKeysPacket(&newKeys);
         newKeysPacket.addChar(SSH2_MSG_NEWKEYS);

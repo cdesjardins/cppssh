@@ -364,7 +364,8 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
         cmd = packet.getCommand();
         if ((command == cmd) || (command == 0))
         {
-            _inBuffer = decrypted;
+            std::unique_lock<std::recursive_mutex> lock(_inBufferMutex);
+            _inBuffer.push(decrypted);
             if (_in.size() == cryptoLen)
             {
                 _in.clear();
@@ -386,21 +387,24 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
 
 uint32_t CppsshTransport::getPacket(Botan::secure_vector<Botan::byte> &result)
 {
-    CppsshPacket packet(&_inBuffer);
-    uint32_t len = packet.getPacketLength();
-    Botan::byte padLen = packet.getPadLength();
-    uint32_t macLen = _session->_crypto->getMacInLen();
-
+    std::unique_lock<std::recursive_mutex> lock(_inBufferMutex);
     if (_inBuffer.empty())
     {
         result.clear();
         return 0;
     }
 
+    Botan::secure_vector<Botan::byte> inBuffer = _inBuffer.front();
+    _inBuffer.pop();
+    CppsshPacket packet(&inBuffer);
+    uint32_t len = packet.getPacketLength();
+    Botan::byte padLen = packet.getPadLength();
+    uint32_t macLen = _session->_crypto->getMacInLen();
+
     if (_session->_crypto->isInited())
     {
         len += macLen;
-        if (len > _inBuffer.size())
+        if (len > inBuffer.size())
         {
             len -= macLen;
         }
@@ -410,7 +414,6 @@ uint32_t CppsshTransport::getPacket(Botan::secure_vector<Botan::byte> &result)
     result = Botan::secure_vector<Botan::byte>(payload, payload + len);
     //_session->_crypto->decompressData(result);
 
-    _inBuffer.clear();
     return padLen;
 
 }

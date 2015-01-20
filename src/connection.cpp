@@ -157,6 +157,10 @@ bool CppsshConnection::requestService(const std::string& service)
         _session->_logger->pushMessage(std::stringstream() << "Service request failed.");
         ret = false;
     }
+    else
+    {
+        _transport->getPacket(buf);
+    }
     return ret;
 }
 
@@ -187,6 +191,7 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
         }
         else
         {
+            _transport->getPacket(buf);
             if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
             {
                 ret = true;

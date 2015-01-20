@@ -53,8 +53,8 @@ private:
     uint32_t _txSeq;
     uint32_t _rxSeq;
     Botan::secure_vector<Botan::byte> _in;
-    Botan::secure_vector<Botan::byte> _inBuffer;
-
+    std::queue<Botan::secure_vector<Botan::byte> > _inBuffer;
+    std::recursive_mutex _inBufferMutex;
 };
 
 #endif
