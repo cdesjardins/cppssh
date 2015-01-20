@@ -124,7 +124,7 @@ void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte> &hmac, const Bot
     }
 }
 
-bool CppsshCrypto::agree(Botan::secure_vector<Botan::byte> &result, const std::vector<std::string>& local, const Botan::secure_vector<Botan::byte> &remote)
+bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& local, const std::string &remote)
 {
     bool ret = false;
     std::vector<std::string>::const_iterator it;
@@ -139,7 +139,8 @@ bool CppsshCrypto::agree(Botan::secure_vector<Botan::byte> &result, const std::v
         agreedAlgo = std::find(remoteVec.begin(), remoteVec.end(), *it);
         if (agreedAlgo != remoteVec.end())
         {
-            result = Botan::secure_vector<Botan::byte>((*agreedAlgo).begin(), (*agreedAlgo).end());
+            result->clear();
+            result->append((*agreedAlgo).data(), (*agreedAlgo).size());
             ret = true;
             break;
         }
@@ -147,7 +148,7 @@ bool CppsshCrypto::agree(Botan::secure_vector<Botan::byte> &result, const std::v
     return ret;
 }
 
-bool CppsshCrypto::negotiatedKex(const Botan::secure_vector<Botan::byte> &kexAlgo)
+bool CppsshCrypto::negotiatedKex(const std::string &kexAlgo)
 {
     bool ret = false;
     if (equal(kexAlgo.begin(), kexAlgo.end(), "diffie-hellman-group1-sha1") == true)
@@ -162,12 +163,12 @@ bool CppsshCrypto::negotiatedKex(const Botan::secure_vector<Botan::byte> &kexAlg
     }
     if (ret == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "KEX algorithm: '%B' not defined.", &kexAlgo);
+        _session->_logger->pushMessage(std::stringstream() << "KEX algorithm: '" << kexAlgo << "' not defined.");
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedHostkey(const Botan::secure_vector<Botan::byte> &hostkeyAlgo)
+bool CppsshCrypto::negotiatedHostkey(const std::string &hostkeyAlgo)
 {
     bool ret = false;
     if (equal(hostkeyAlgo.begin(), hostkeyAlgo.end(), "ssh-dss") == true)
@@ -182,12 +183,12 @@ bool CppsshCrypto::negotiatedHostkey(const Botan::secure_vector<Botan::byte> &ho
     }
     if (ret == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "KEX algorithm: '%B' not defined.", &kexAlgo);
+        _session->_logger->pushMessage(std::stringstream() << "Host key algorithm: '" << hostkeyAlgo << "' not defined.");
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCrypto(const Botan::secure_vector<Botan::byte> &cryptoAlgo, cryptoMethods* cryptoMethod)
+bool CppsshCrypto::negotiatedCrypto(const std::string &cryptoAlgo, cryptoMethods* cryptoMethod)
 {
     bool ret = false;
     if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "3des-cbc") == true)
@@ -227,22 +228,22 @@ bool CppsshCrypto::negotiatedCrypto(const Botan::secure_vector<Botan::byte> &cry
     }
     if (ret == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Cryptographic algorithm: '%B' not defined.", &cryptoAlgo);
+        _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.");
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCryptoC2s(const Botan::secure_vector<Botan::byte> &cryptoAlgo)
+bool CppsshCrypto::negotiatedCryptoC2s(const std::string &cryptoAlgo)
 {
     return negotiatedCrypto(cryptoAlgo, &_c2sCryptoMethod);
 }
 
-bool CppsshCrypto::negotiatedCryptoS2c(const Botan::secure_vector<Botan::byte> &cryptoAlgo)
+bool CppsshCrypto::negotiatedCryptoS2c(const std::string &cryptoAlgo)
 {
     return negotiatedCrypto(cryptoAlgo, &_s2cCryptoMethod);
 }
 
-bool CppsshCrypto::negotiatedMac(const Botan::secure_vector<Botan::byte> &macAlgo, macMethods* macMethod)
+bool CppsshCrypto::negotiatedMac(const std::string &macAlgo, macMethods* macMethod)
 {
     bool ret = false;
     if (equal(macAlgo.begin(), macAlgo.end(), "hmac-sha1") == true)
@@ -262,22 +263,22 @@ bool CppsshCrypto::negotiatedMac(const Botan::secure_vector<Botan::byte> &macAlg
     }
     if (ret == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "HMAC algorithm: '%B' not defined.", &macAlgo);
+        _session->_logger->pushMessage(std::stringstream() << "Mac algorithm: '" << macAlgo << "' not defined.");
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedMacC2s(const Botan::secure_vector<Botan::byte> &macAlgo)
+bool CppsshCrypto::negotiatedMacC2s(const std::string &macAlgo)
 {
     return negotiatedMac(macAlgo, &_c2sMacMethod);
 }
 
-bool CppsshCrypto::negotiatedMacS2c(const Botan::secure_vector<Botan::byte> &macAlgo)
+bool CppsshCrypto::negotiatedMacS2c(const std::string &macAlgo)
 {
     return negotiatedMac(macAlgo, &_s2cMacMethod);
 }
 
-bool CppsshCrypto::negotiatedCmprs(Botan::secure_vector<Botan::byte> &cmprsAlgo, cmprsMethods* cmprsMethod)
+bool CppsshCrypto::negotiatedCmprs(const std::string &cmprsAlgo, cmprsMethods* cmprsMethod)
 {
     bool ret = false;
     if (equal(cmprsAlgo.begin(), cmprsAlgo.end(), "none") == true)
@@ -292,17 +293,17 @@ bool CppsshCrypto::negotiatedCmprs(Botan::secure_vector<Botan::byte> &cmprsAlgo,
     }
     if (ret == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Compression algorithm: '%B' not defined.", &cmprsAlgo);
+        _session->_logger->pushMessage(std::stringstream() << "Compression algorithm: '" << cmprsAlgo << "' not defined.");
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCmprsC2s(Botan::secure_vector<Botan::byte> &cmprsAlgo)
+bool CppsshCrypto::negotiatedCmprsC2s(const std::string &cmprsAlgo)
 {
     return negotiatedCmprs(cmprsAlgo, &_c2sCmprsMethod);
 }
 
-bool CppsshCrypto::negotiatedCmprsS2c(Botan::secure_vector<Botan::byte> &cmprsAlgo)
+bool CppsshCrypto::negotiatedCmprsS2c(const std::string &cmprsAlgo)
 {
     return negotiatedCmprs(cmprsAlgo, &_s2cCmprsMethod);
 }
@@ -322,7 +323,7 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt &publicKey)
         break;
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Undefined DH Group: '%s'.", _kexMethod);
+        _session->_logger->pushMessage(std::stringstream() << "Undefined DH Group: '" << _kexMethod << "'.");
         ret = false;
         break;
     }
@@ -372,7 +373,7 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte> &result, const Bot
         break;
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Undefined DH Group: '%s' while computing H.", _kexMethod);
+        _session->_logger->pushMessage(std::stringstream() << "Undefined DH Group: '" << _kexMethod << "' while computing H.");
         ret = false;
         break;
     }
@@ -403,18 +404,18 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
 
     if (_H.empty() == true)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "H was not initialzed.");
+        _session->_logger->pushMessage(std::stringstream() << "H was not initialzed.");
         return false;
     }
 
     if (signaturePacket.getString(sigType) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Signature without type.");
+        _session->_logger->pushMessage(std::stringstream() << "Signature without type.");
         return false;
     }
     if (signaturePacket.getString(sigData) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Signature without data.");
+        _session->_logger->pushMessage(std::stringstream() << "Signature without data.");
         return false;
     }
 
@@ -424,7 +425,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
         dsaKey = getDSAKey(hostKey);
         if (dsaKey == NULL)
         {
-            //ne7ssh::errors()->push(_session->getSshChannel(), "DSA key not generated.");
+            _session->_logger->pushMessage(std::stringstream() << "DSA key not generated.");
             return false;
         }
         break;
@@ -433,13 +434,13 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
         rsaKey = getRSAKey(hostKey);
         if (rsaKey == NULL)
         {
-            //ne7ssh::errors()->push(_session->getSshChannel(), "RSA key not generated.");
+            _session->_logger->pushMessage(std::stringstream() << "RSA key not generated.");
             return false;
         }
         break;
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Hostkey algorithm: %i not supported.", _hostkeyMethod);
+        _session->_logger->pushMessage(std::stringstream() << "Hostkey algorithm: " << _hostkeyMethod << " not supported.");
         return false;
     }
 
@@ -462,7 +463,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
     }
     if (verifier == NULL)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Key Exchange algorithm: %i not supported.", _kexMethod);
+        _session->_logger->pushMessage(std::stringstream() << "Key Exchange algorithm: " << _kexMethod << " not supported.");
     }
     else
     {
@@ -474,7 +475,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
 
     if (result == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Failure to verify host signature.");
+        _session->_logger->pushMessage(std::stringstream() << "Failure to verify host signature.");
     }
     return result;
 }
@@ -483,7 +484,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::
 std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vector<Botan::byte> &hostKey)
 {
     Botan::secure_vector<Botan::byte> hKey;
-    Botan::secure_vector<Botan::byte> field;
+    std::string field;
     Botan::BigInt p, q, g, y;
     
     CppsshPacket hKeyPacket(&hKey);
@@ -524,7 +525,7 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vect
 std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(Botan::secure_vector<Botan::byte> &hostKey)
 {
     Botan::secure_vector<Botan::byte> hKey;
-    Botan::secure_vector<Botan::byte> field;
+    std::string field;
     Botan::BigInt e, n;
 
     CppsshPacket hKeyPacket(&hKey);
@@ -578,7 +579,7 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
         return "Twofish";
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Cryptographic algorithm: %i was not defined.", crypto);
+        _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: " << crypto << " was not defined.");
         return NULL;
     }
 }
@@ -619,7 +620,7 @@ uint32_t CppsshCrypto::getMacKeyLen(macMethods method)
         return 0;
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "HMAC algorithm: %i was not defined.", method);
+        _session->_logger->pushMessage(std::stringstream() << "HMAC algorithm: " << method << " was not defined.");
         return 0;
     }
 }
@@ -638,7 +639,7 @@ const char* CppsshCrypto::getHmacAlgo(macMethods method)
         return NULL;
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "HMAC algorithm: %i was not defined.", method);
+        _session->_logger->pushMessage(std::stringstream() << "HMAC algorithm: " << method << " was not defined.");
         return NULL;
     }
 }
@@ -653,7 +654,7 @@ const char* CppsshCrypto::getHashAlgo()
         return "SHA-1";
 
     default:
-        //ne7ssh::errors()->push(_session->getSshChannel(), "DH Group: %i was not defined.", _kexMethod);
+        _session->_logger->pushMessage(std::stringstream() << "DH Group: " << _kexMethod << " was not defined.");
         return NULL;
     }
 }
@@ -676,7 +677,7 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byt
 
     if (hashIt == NULL)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Undefined HASH algorithm encountered while computing the key.");
+        _session->_logger->pushMessage(std::stringstream() << "Undefined HASH algorithm encountered while computing the key.");
         return false;
     }
 

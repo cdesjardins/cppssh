@@ -23,13 +23,18 @@
 #include "crypto.h"
 #include "transport.h"
 #include "channel.h"
+#include "logger.h"
+#include "cppssh.h"
 #include <memory>
 
 class CppsshConnection
 {
 public:
     CppsshConnection(int channelId);
+    ~CppsshConnection();
     int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
+
+    bool getLogMessage(CppsshLogMessage* message);
 private:
     bool checkRemoteVersion();
     bool sendLocalVersion();

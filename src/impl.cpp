@@ -77,32 +77,41 @@ CppsshImpl::~CppsshImpl()
     _init.reset();
 }
 
-int CppsshImpl::connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)
+bool CppsshImpl::connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)
 {
-    int channelId = _connections.size();
-    std::shared_ptr<CppsshConnection> con(new CppsshConnection(channelId));
+    bool ret = false;
+    int channel;
+    *channelId = _connections.size();
+    std::shared_ptr<CppsshConnection> con(new CppsshConnection(*channelId));
+    _connections.push_back(con);
 
-    channelId = con->connect(host, port, username, password, privKeyFileName, shell);
-    if (channelId != -1)
+    channel = con->connect(host, port, username, password, privKeyFileName, shell);
+    if (channel != -1)
     {
-        _connections.push_back(con);
+        _activeConnections[channel] = con;
+        ret = true;
     }
-    return channelId;
+    return ret;
 }
 
-bool CppsshImpl::send(const char* data, size_t bytes, int channelId)
+bool CppsshImpl::send(const int channelId, const char* data, size_t bytes)
 {
     return false;
 }
 
-size_t CppsshImpl::read(char* data, int channelId)
+size_t CppsshImpl::read(const int channelId, char* data)
 {
     return 0;
 }
 
 bool CppsshImpl::close(int channelId)
 {
-    return false;
+    _connections[channelId].reset();
+    if (_activeConnections.find(channelId) != _activeConnections.end())
+    {
+        _activeConnections[channelId].reset();
+    }
+    return true;
 }
 
 void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
@@ -114,6 +123,11 @@ void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
 bool CppsshImpl::generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
     return false;
+}
+
+bool CppsshImpl::getLogMessage(const int channelId, CppsshLogMessage* message)
+{
+    return _connections[channelId]->getLogMessage(message);
 }
 
 void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, const std::string& prefered, std::string *outstr, std::vector<std::string>* outList)

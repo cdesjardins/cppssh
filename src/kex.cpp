@@ -83,7 +83,7 @@ bool CppsshKex::sendInit()
     }
     else if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT) <= 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Timeout while waiting for key exchange init reply");
+        _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange init reply.");
         ret = false;
     }
 
@@ -95,8 +95,8 @@ bool CppsshKex::handleInit()
     Botan::secure_vector<Botan::byte> packet;
     uint32_t padLen = _session->_transport->getPacket(packet);
     Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.begin() + 17, packet.end() - 17);
-    Botan::secure_vector<Botan::byte> algos;
-    Botan::secure_vector<Botan::byte> agreed;
+    std::string algos;
+    std::string agreed;
 
     if ((_session->_transport == NULL) || (_session->_crypto == NULL))
     {
@@ -111,9 +111,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, CppsshImpl::KEX_ALGORITHMS, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::KEX_ALGORITHMS, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible key exchange algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible key exchange algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedKex(agreed) == false)
@@ -124,9 +124,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, CppsshImpl::HOSTKEY_ALGORITHMS, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::HOSTKEY_ALGORITHMS, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible Hostkey algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible Hostkey algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedHostkey(agreed) == false)
@@ -137,9 +137,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, _ciphers, algos) == false)
+    if (_session->_crypto->agree(&agreed, _ciphers, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible cryptographic algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible cryptographic algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCryptoC2s(agreed) == false)
@@ -151,9 +151,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, _ciphers, algos) == false)
+    if (_session->_crypto->agree(&agreed, _ciphers, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible cryptographic algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible cryptographic algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCryptoS2c(agreed) == false)
@@ -164,9 +164,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, _hmacs, algos) == false)
+    if (_session->_crypto->agree(&agreed, _hmacs, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible HMAC algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
         return false;
     }
 
@@ -179,9 +179,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, _hmacs, algos) == false)
+    if (_session->_crypto->agree(&agreed, _hmacs, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible HMAC algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedMacS2c(agreed) == false)
@@ -193,9 +193,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible compression algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible compression algorithms.");
         return false;
     }
 
@@ -208,9 +208,9 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "No compatible compression algorithms.");
+        _session->_logger->pushMessage(std::stringstream() << "No compatible compression algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCmprsS2c(agreed) == false)
@@ -245,7 +245,7 @@ bool CppsshKex::sendKexDHInit()
         }
         else if (_session->_transport->waitForPacket(SSH2_MSG_KEXDH_REPLY) <= 0)
         {
-            //ne7ssh::errors()->push(_session->getSshChannel(), "Timeout while waiting for key exchange dh reply.");
+            _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange DH reply.");
             ret = false;
         }
     }
@@ -337,7 +337,7 @@ bool CppsshKex::sendKexNewKeys()
 
     if (_session->_transport->waitForPacket(SSH2_MSG_NEWKEYS) <= 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Timeout while waiting for key exchange newkeys reply.");
+        _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange newkeys reply.");
         ret = false;
     }
     else
@@ -353,7 +353,7 @@ bool CppsshKex::sendKexNewKeys()
         {
             if (_session->_crypto->makeNewKeys() == false)
             {
-                //ne7ssh::errors()->push(_session->getSshChannel(), "Could not make keys.");
+                _session->_logger->pushMessage(std::stringstream() << "Could not make keys.");
                 ret = false;
             }
         }

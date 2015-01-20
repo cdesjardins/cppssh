@@ -172,6 +172,16 @@ bool CppsshPacket::getString(Botan::secure_vector<Botan::byte>& result)
     return ret;
 }
 
+bool CppsshPacket::getString(std::string& result)
+{
+    bool ret;
+    Botan::secure_vector<Botan::byte> str;
+    ret = getString(str);
+    result.clear();
+    result.append((char*)str.data(), str.size());
+    return ret;
+}
+
 bool CppsshPacket::getBigInt(Botan::BigInt& result)
 {
     bool ret = true;

@@ -22,6 +22,7 @@
 #include "cryptstr.h"
 #include "packet.h"
 #include "messages.h"
+#include "cppssh.h"
 
 CppsshConnection::CppsshConnection(int channelId)
     : _channelId(channelId),
@@ -33,6 +34,11 @@ CppsshConnection::CppsshConnection(int channelId)
 {
     _session->_transport = _transport;
     _session->_crypto = _crypto;
+}
+
+CppsshConnection::~CppsshConnection()
+{
+
 }
 
 int CppsshConnection::connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)
@@ -103,6 +109,11 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     return _channelId;
 }
 
+bool CppsshConnection::getLogMessage(CppsshLogMessage* message)
+{
+    return _session->_logger->popMessage(message);
+}
+
 bool CppsshConnection::checkRemoteVersion()
 {
     bool ret = false;
@@ -146,7 +157,7 @@ bool CppsshConnection::requestService(const std::string& service)
     }
     else if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT) <= 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Service request failed.");
+        _session->_logger->pushMessage(std::stringstream() << "Service request failed.");
         ret = false;
     }
     return ret;
@@ -204,21 +215,19 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
             if (cmd == SSH2_MSG_USERAUTH_FAILURE)
             {
                 Botan::secure_vector<Botan::byte> response;
-                Botan::secure_vector<Botan::byte> methods;
+                std::string methods;
 
                 _transport->getPacket(response);
                 Botan::secure_vector<Botan::byte> tmp(response.begin() + 1, response.end());
                 CppsshPacket message(&tmp);
                 message.getString(methods);
-                //message.getByte();
-                //ne7ssh::errors()->push(-1, "Authentication failed. Supported authentication methods: %B", &methods);
+                _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
                 ret = false;
             }
         }
     }
     return ret;
 }
-
 
 bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName)
 {

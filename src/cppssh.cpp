@@ -17,29 +17,29 @@ void Cppssh::destroy()
     s_cppsshInst.reset();
 }
 
-int Cppssh::connectWithPassword(const char* host, const short port, const char* username, const char* password, bool shell)
+bool Cppssh::connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, bool shell)
 {
-    return s_cppsshInst->connect(host, port, username, password, NULL, shell);
+    return s_cppsshInst->connect(channelId, host, port, username, password, NULL, shell);
 }
 
-int Cppssh::connectWithKey(const char* host, const short port, const char* username, const char* privKeyFileName, bool shell)
+bool Cppssh::connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, bool shell)
 {
-    return s_cppsshInst->connect(host, port, username, NULL, privKeyFileName, shell);
+    return s_cppsshInst->connect(channelId, host, port, username, NULL, privKeyFileName, shell);
 }
 
-bool Cppssh::send(const char* data, size_t bytes, int channel)
+bool Cppssh::send(const int channelId, const char* data, size_t bytes)
 {
     return false;
 }
 
-size_t Cppssh::read(char* data, int channel)
+size_t Cppssh::read(const int channelId, char* data)
 {
     return 0;
 }
 
-bool Cppssh::close(int channel)
+bool Cppssh::close(const int channelId)
 {
-    return false;
+    return s_cppsshInst->close(channelId);
 }
 
 void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
@@ -52,3 +52,22 @@ bool Cppssh::generateKeyPair(const char* type, const char* fqdn, const char* pri
     return false;
 }
 
+bool Cppssh::getLogMessage(const int channelId, CppsshLogMessage* message)
+{
+    return s_cppsshInst->getLogMessage(channelId, message);
+}
+
+CppsshLogMessage::CppsshLogMessage()
+{
+
+}
+
+CppsshLogMessage::~CppsshLogMessage()
+{
+
+}
+
+const char* const CppsshLogMessage::message() const
+{
+    return _message.get();
+}

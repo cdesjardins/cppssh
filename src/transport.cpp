@@ -67,7 +67,7 @@ int CppsshTransport::establish(const char* host, short port)
     remoteHost = gethostbyname(host);
     if (!remoteHost || remoteHost->h_length == 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Host: '%s' not found.", host);
+        _session->_logger->pushMessage(std::stringstream() << "Host" << host << "not found.");
         return -1;
     }
     remoteAddr.sin_family = AF_INET;
@@ -77,12 +77,12 @@ int CppsshTransport::establish(const char* host, short port)
     _sock = socket(AF_INET, SOCK_STREAM, 0);
     if (_sock < 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Failure to bind to socket.");
+        _session->_logger->pushMessage(std::stringstream() << "Failure to bind to socket.");
         return -1;
     }
     if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Unable to connect to remote server: '%s'.", host);
+        _session->_logger->pushMessage(std::stringstream() << "Unable to connect to remote server: '" << host << "'.");
         return -1;
     }
 
@@ -100,7 +100,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     int options;
     if ((options = fcntl(_sock, F_GETFL)) < 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Cannot read options of the socket: %i.", (int)_sock);
+        _session->_logger->pushMessage(std::stringstream() << "Cannot read options of the socket.");
         return false;
     }
 
@@ -117,7 +117,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     unsigned long options = on;
     if (ioctlsocket(_sock, FIONBIO, &options))
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Cannot set asynch I/O on the socket: %i.", (int)_sock);
+        _session->_logger->pushMessage(std::stringstream() << "Cannot set asynch I/O on the socket.");
         return false;
     }
 #endif
@@ -200,13 +200,13 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>& buffer)
 
     if (len == 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Received a packet of zero length.");
+        _session->_logger->pushMessage(std::stringstream() << "Received a packet of zero length.");
         return false;
     }
 
     if (len < 0)
     {
-        //ne7ssh::errors()->push(_session->getSshChannel(), "Connection dropped");
+        _session->_logger->pushMessage(std::stringstream() << "Connection dropped.");
         return false;
     }
 
@@ -271,7 +271,7 @@ bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte> &buffer
         Botan::secure_vector<Botan::byte> hmac;
         if (_session->_crypto->encryptPacket(crypted, hmac, buf, _txSeq) == false)
         {
-            //ne7ssh::errors()->push(_session->getSshChannel(), "Failure to encrypt the payload.");
+            _session->_logger->pushMessage(std::stringstream() << "Failure to encrypt the payload.");
             return false;
         }
         crypted += hmac;
@@ -348,7 +348,7 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
             hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + cryptoLen + _session->_crypto->getMacInLen());
             if (hMac != ourMac)
             {
-                //ne7ssh::errors()->push(_session->getSshChannel(), "Mismatched HMACs.");
+                _session->_logger->pushMessage(std::stringstream() << "Mismatched HMACs.");
                 return -1;
             }
             cryptoLen += _session->_crypto->getMacInLen();

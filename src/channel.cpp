@@ -20,6 +20,8 @@
 #include "messages.h"
 #include "transport.h"
 #include "packet.h"
+#include "logger.h"
+#include <sstream>
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession> &session)
     : _session(session),
@@ -49,7 +51,7 @@ bool CppsshChannel::open(uint32_t channelID)
     {
         if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION) <= 0)
         {
-            //ne7ssh::errors()->push(-1, "New channel: %i could not be open.", channelID);
+            _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << "could not be open.");
         }
         else
         {

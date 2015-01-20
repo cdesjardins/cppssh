@@ -22,28 +22,43 @@
 #include "export.h"
 #include <cstdlib>
 #include <memory>
+#include <string>
 
 class CppsshImpl;
+class CppsshLogMessage;
+class CppsshLogger;
 
 class Cppssh
 {
 public:
     CPPSSH_EXPORT static void create();
     CPPSSH_EXPORT static void destroy();
-    CPPSSH_EXPORT static int connectWithPassword(const char* host, const short port, const char* username, const char* password, bool shell = true);
-    CPPSSH_EXPORT static int connectWithKey(const char* host, const short port, const char* username, const char* privKeyFileName, bool shell = true);
-    CPPSSH_EXPORT static bool send(const char* data, size_t bytes, int channel);
-    CPPSSH_EXPORT static size_t read(char* data, int channel);
-    CPPSSH_EXPORT static bool close(int channel);
+    CPPSSH_EXPORT static bool connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, bool shell = true);
+    CPPSSH_EXPORT static bool connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, bool shell = true);
+    CPPSSH_EXPORT static bool send(const int channelId, const char* data, size_t bytes);
+    CPPSSH_EXPORT static size_t read(const int channelId, char* data);
+    CPPSSH_EXPORT static bool close(const int channelId);
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize = 0);
+    CPPSSH_EXPORT static bool getLogMessage(const int channelId, CppsshLogMessage* message);
 
 private:
     static std::shared_ptr<CppsshImpl> s_cppsshInst;
     Cppssh();
     Cppssh(const Cppssh&);
     Cppssh& operator=(const Cppssh&);
+};
 
+class CppsshLogMessage
+{
+public:
+    CppsshLogMessage();
+    ~CppsshLogMessage();
+    CPPSSH_EXPORT const char* const message() const;
+    friend class CppsshLogger;
+private:
+    std::shared_ptr<char> _message;
 };
 
 #endif
+

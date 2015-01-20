@@ -19,6 +19,7 @@
 #ifndef _SESSION_Hxx
 #define _SESSION_Hxx
 
+#include "logger.h"
 #include "botan/botan.h"
 #include <string>
 #include <memory>
@@ -31,7 +32,8 @@ class CppsshSession
 public:
     CppsshSession()
         : _sendChannel(0),
-        _maxPacket(0)
+        _maxPacket(0),
+        _logger(new CppsshLogger())
     {
 
     }
@@ -88,6 +90,7 @@ public:
 
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;
+    std::shared_ptr<CppsshLogger> _logger;
 private:
     std::string _remoteVer;
     std::string _localVer;

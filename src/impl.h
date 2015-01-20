@@ -20,6 +20,7 @@
 #define _IMPL_Hxx
 
 #include "connection.h"
+#include "cppssh.h"
 #include <memory>
 #include <vector>
 
@@ -31,11 +32,12 @@ public:
     static void setOptions(const char* prefCipher, const char* prefHmac);
     CppsshImpl();
     ~CppsshImpl();
-    int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
-    bool send(const char* data, size_t bytes, int channelId);
-    size_t read(char* data, int channelId);
-    bool close(int channelId);
+    bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
+    bool send(const int channelId, const char* data, size_t bytes);
+    size_t read(const int channelId, char* data);
+    bool close(const int channelId);
     bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+    bool getLogMessage(const int channelId, CppsshLogMessage* message);
 
     static void vecToCommaString(const std::vector<std::string>& vec, const std::string& prefered, std::string *outstr, std::vector<std::string>* outList);
 
@@ -50,8 +52,8 @@ public:
     static std::unique_ptr<Botan::RandomNumberGenerator> RNG;
 private:
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
+    std::map<int, std::shared_ptr<CppsshConnection> > _activeConnections;
     std::unique_ptr<Botan::LibraryInitializer> _init;
-
 };
 
 #endif
