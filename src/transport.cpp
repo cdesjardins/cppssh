@@ -180,21 +180,21 @@ bool CppsshTransport::wait(bool isWrite)
     }
 }
 
-bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
 {
     int len = 0;
-    buffer.resize(MAX_PACKET_LEN);
+    buffer->resize(MAX_PACKET_LEN);
 
     if (wait(false) == true)
     {
-        len = ::recv(_sock, (char*)buffer.data(), MAX_PACKET_LEN, 0);
+        len = ::recv(_sock, (char*)buffer->data(), MAX_PACKET_LEN, 0);
         if (len > 0)
         {
-            buffer.resize(len);
+            buffer->resize(len);
         }
         else
         {
-            buffer.clear();
+            buffer->clear();
         }
     }
 
@@ -308,7 +308,7 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
         }
         while (_in.size() < size)
         {
-            if (receive(_in) == false)
+            if (receive(&_in) == false)
             {
                 return -1;
             }
@@ -325,7 +325,7 @@ short CppsshTransport::waitForPacket(Botan::byte command, bool bufferOnly)
     {
         while ((cryptoLen + macLen) > _in.size())
         {
-            if (receive(_in) == false)
+            if (receive(&_in) == false)
             {
                 return -1;
             }

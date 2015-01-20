@@ -115,7 +115,7 @@ bool CppsshConnection::checkRemoteVersion()
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> remoteVer, tmpVar;
-    if (_transport->receive(remoteVer) == true)
+    if (_transport->receive(&remoteVer) == true)
     {
         std::string sshVer("SSH-2.0");
         if ((remoteVer.size() >= sshVer.length()) && equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))

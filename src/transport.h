@@ -37,7 +37,7 @@ public:
     CppsshTransport(const std::shared_ptr<CppsshSession> &session, int timeout);
     int establish(const char* host, short port);
 
-    bool receive(Botan::secure_vector<Botan::byte>& buffer);
+    bool receive(Botan::secure_vector<Botan::byte>* buffer);
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
     bool sendPacket(const Botan::secure_vector<Botan::byte> &buffer);
