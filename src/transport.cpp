@@ -397,17 +397,22 @@ void CppsshTransport::rxThread()
 short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)
 {
     Botan::byte cmd;
+    std::unique_lock<std::mutex> lock(_inBufferMutex);
     std::chrono::monotonic_clock::time_point t0 = std::chrono::monotonic_clock::now();
     while ((_running == true) && (std::chrono::monotonic_clock::now() < (t0 + std::chrono::seconds(_timeout))))
     {
-        std::unique_lock<std::mutex> lock(_inBufferMutex);
         if (_inBuffer.size() > 0)
         {
             break;
         }
         _inBufferCondVar.wait_for(lock, std::chrono::microseconds(1));
     }
-    getPacket(packet);
+    packet->clear();
+    if (_inBuffer.empty() == false)
+    {
+        packet->copy(_inBuffer.front());
+        _inBuffer.pop();
+    }
     if (packet->size() != 0)
     {
         cmd = packet->getCommand();
@@ -421,18 +426,4 @@ short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)
         }
     }
     return command;
-}
-
-void CppsshTransport::getPacket(CppsshPacket *packet)
-{
-    std::unique_lock<std::mutex> lock(_inBufferMutex);
-    if (_inBuffer.empty())
-    {
-        packet->clear();
-    }
-    else
-    {
-        packet->copy(_inBuffer.front());
-        _inBuffer.pop();
-    }
 }

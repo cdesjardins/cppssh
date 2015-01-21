@@ -48,7 +48,6 @@ public:
     short waitForPacket(Botan::byte command, CppsshPacket *packet);
 
 private:
-    void getPacket(CppsshPacket *header);
     bool setNonBlocking(bool on);
     bool wait(bool isWrite);
     void rxThread();
