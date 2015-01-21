@@ -20,7 +20,7 @@
 #include "transport.h"
 #include "crypto.h"
 #include "packet.h"
-
+#include <iostream>
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
 #   define close closesocket
@@ -140,38 +140,34 @@ bool CppsshTransport::setNonBlocking(bool on)
     return true;
 }
 
-bool CppsshTransport::wait(bool isWrite)
+void CppsshTransport::setupFd(fd_set *fd)
 {
-    int status;
-    fd_set rfds, wfds;
-    struct timeval waitTime;
-
-    waitTime.tv_sec = 1;
-    waitTime.tv_usec = 0;
-
 #if defined(WIN32)
 #pragma warning(push)
 #pragma warning(disable : 4127)
 #endif
-    if (isWrite == false)
-    {
-        FD_ZERO(&rfds);
-        FD_SET(_sock, &rfds);
-    }
-    else
-    {
-        FD_ZERO(&wfds);
-        FD_SET(_sock, &wfds);
-    }
+    FD_ZERO(fd);
+    FD_SET(_sock, fd);
 #if defined(WIN32)
 #pragma warning(pop)
 #endif
+}
+
+bool CppsshTransport::wait(bool isWrite)
+{
+    int status;
 
     if (isWrite == false)
     {
         std::chrono::monotonic_clock::time_point t0 = std::chrono::monotonic_clock::now();
         while ((_running == true) && (std::chrono::monotonic_clock::now() < (t0 + std::chrono::seconds(_timeout))))
         {
+            fd_set rfds;
+            struct timeval waitTime;
+
+            waitTime.tv_sec = 0;
+            waitTime.tv_usec = 1000;
+            setupFd(&rfds);
             status = select(_sock + 1, &rfds, NULL, NULL, &waitTime);
             if (status > 0)
             {
@@ -181,17 +177,12 @@ bool CppsshTransport::wait(bool isWrite)
     }
     else
     {
+        fd_set wfds;
+        setupFd(&wfds);
         status = select(_sock + 1, NULL, &wfds, NULL, NULL);
     }
 
-    if (status > 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return (status > 0) ? true : false;
 }
 
 bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
@@ -203,6 +194,7 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
     if (wait(false) == true)
     {
         len = ::recv(_sock, (char*)buffer->data(), MAX_PACKET_LEN, 0);
+        std::cout << "got: " << len << std::endl;
         if (len > 0)
         {
             buffer->resize(len);
@@ -393,6 +385,8 @@ void CppsshTransport::rxThread()
             }
         }
     }
+
+    std::cout << "thread exit" << std::endl;
 }
 
 short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)
