@@ -38,7 +38,12 @@ CppsshConnection::CppsshConnection(int channelId)
 
 CppsshConnection::~CppsshConnection()
 {
-
+    _channel.reset();
+    _transport.reset();
+    _crypto.reset();
+    _session->_transport.reset();
+    _session->_crypto.reset();
+    _session.reset();
 }
 
 int CppsshConnection::connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)

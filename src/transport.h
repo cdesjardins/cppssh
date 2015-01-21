@@ -36,7 +36,8 @@
 class CppsshTransport
 {
 public:
-    CppsshTransport(const std::shared_ptr<CppsshSession> &session, int timeout);
+    CppsshTransport(const std::shared_ptr<CppsshSession> &session, unsigned int timeout);
+    ~CppsshTransport();
     int establish(const char* host, short port);
     bool start();
 
@@ -54,7 +55,7 @@ private:
 
     SOCKET _sock;
     std::shared_ptr<CppsshSession> _session;
-    int _timeout;
+    unsigned int _timeout;
     uint32_t _txSeq;
     uint32_t _rxSeq;
     Botan::secure_vector<Botan::byte> _in;

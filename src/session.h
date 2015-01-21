@@ -37,6 +37,10 @@ public:
     {
 
     }
+    
+    ~CppsshSession()
+    {
+    }
 
     void setRemoteVersion(const std::string& remoteVer)
     {

@@ -51,13 +51,22 @@ WSockInitializer _wsock32_;
 #   include <fcntl.h>
 #endif
 
-CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession> &session, int timeout)
+CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession> &session, unsigned int timeout)
     : _session(session),
     _timeout(timeout),
     _txSeq(0),
     _rxSeq(0),
     _running(true)
 {
+}
+
+CppsshTransport::~CppsshTransport()
+{
+    _running = false;
+    if (_rxThread.joinable() == true)
+    {
+        _rxThread.join();
+    }
 }
 
 int CppsshTransport::establish(const char* host, short port)
@@ -137,11 +146,8 @@ bool CppsshTransport::wait(bool isWrite)
     fd_set rfds, wfds;
     struct timeval waitTime;
 
-    if (_timeout > -1)
-    {
-        waitTime.tv_sec = _timeout;
-        waitTime.tv_usec = 0;
-    }
+    waitTime.tv_sec = 1;
+    waitTime.tv_usec = 0;
 
 #if defined(WIN32)
 #pragma warning(push)
@@ -163,13 +169,14 @@ bool CppsshTransport::wait(bool isWrite)
 
     if (isWrite == false)
     {
-        if (_timeout > -1)
+        std::chrono::monotonic_clock::time_point t0 = std::chrono::monotonic_clock::now();
+        while ((_running == true) && (std::chrono::monotonic_clock::now() < (t0 + std::chrono::seconds(_timeout))))
         {
             status = select(_sock + 1, &rfds, NULL, NULL, &waitTime);
-        }
-        else
-        {
-            status = select(_sock + 1, &rfds, NULL, NULL, NULL);
+            if (status > 0)
+            {
+                break;
+            }
         }
     }
     else
@@ -427,19 +434,5 @@ void CppsshTransport::getPacket(CppsshPacket *packet)
     {
         packet->copy(_inBuffer.front());
         _inBuffer.pop();
-
-        uint32_t len = packet->getPacketLength();
-        Botan::byte padLen = packet->getPadLength();
-        uint32_t macLen = _session->_crypto->getMacInLen();
-
-        if (_session->_crypto->isInited())
-        {
-            len += macLen;
-            if (len > packet->size())
-            {
-                len -= macLen;
-            }
-        }
     }
-    //_session->_crypto->decompressData(result);
 }
