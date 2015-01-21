@@ -196,6 +196,7 @@ bool CppsshTransport::wait(bool isWrite)
 
 bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
 {
+    bool ret = true;
     int len = 0;
     buffer->resize(MAX_PACKET_LEN);
 
@@ -215,16 +216,16 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
     if (len == 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Received a packet of zero length.");
-        return false;
+        ret = false;
     }
 
     if (len < 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Connection dropped.");
-        return false;
+        ret = false;
     }
 
-    return true;
+    return ret;
 }
 
 bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
