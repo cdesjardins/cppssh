@@ -31,9 +31,9 @@ class CppsshSession
 {
 public:
     CppsshSession()
-        : _sendChannel(0),
-        _maxPacket(0),
-        _logger(new CppsshLogger())
+        : _logger(new CppsshLogger()),
+        _sendChannel(0),
+        _maxPacket(0)
     {
 
     }
