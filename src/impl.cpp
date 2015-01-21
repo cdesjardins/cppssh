@@ -77,19 +77,26 @@ CppsshImpl::~CppsshImpl()
     _init.reset();
 }
 
-bool CppsshImpl::connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell)
+bool CppsshImpl::connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell)
 {
     bool ret = false;
     int channel;
-    *channelId = _connections.size();
-    std::shared_ptr<CppsshConnection> con(new CppsshConnection(*channelId));
-    _connections.push_back(con);
-
-    channel = con->connect(host, port, username, password, privKeyFileName, shell);
-    if (channel != -1)
+    std::shared_ptr<CppsshConnection> con;
+    {// new scope for mutex
+        std::unique_lock<std::mutex> lock(_connectionsMutex);
+        *channelId = _connections.size();
+        con.reset(new CppsshConnection(*channelId, timeout));
+        _connections.push_back(con);
+    }
+    if (con != NULL)
     {
-        _activeConnections[channel] = con;
-        ret = true;
+        channel = con->connect(host, port, username, password, privKeyFileName, shell);
+        if (channel != -1)
+        {
+            std::unique_lock<std::mutex> lock(_connectionsMutex);
+            _activeConnections[channel] = con;
+            ret = true;
+        }
     }
     return ret;
 }

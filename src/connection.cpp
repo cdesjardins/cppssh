@@ -24,11 +24,11 @@
 #include "messages.h"
 #include "cppssh.h"
 
-CppsshConnection::CppsshConnection(int channelId)
+CppsshConnection::CppsshConnection(int channelId, unsigned int timeout)
     : _channelId(channelId),
     _session(new CppsshSession()),
     _crypto(new CppsshCrypto(_session)),
-    _transport(new CppsshTransport(_session, 5)),
+    _transport(new CppsshTransport(_session, timeout)),
     _channel(new CppsshChannel(_session)),
     _connected(false)
 {

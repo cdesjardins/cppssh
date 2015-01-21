@@ -32,7 +32,7 @@ public:
     static void setOptions(const char* prefCipher, const char* prefHmac);
     CppsshImpl();
     ~CppsshImpl();
-    bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
+    bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell);
     bool send(const int channelId, const char* data, size_t bytes);
     size_t read(const int channelId, char* data);
     bool close(const int channelId);
@@ -54,6 +54,7 @@ private:
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::map<int, std::shared_ptr<CppsshConnection> > _activeConnections;
     std::unique_ptr<Botan::LibraryInitializer> _init;
+    std::mutex _connectionsMutex;
 };
 
 #endif

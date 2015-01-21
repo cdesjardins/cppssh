@@ -17,14 +17,14 @@ void Cppssh::destroy()
     s_cppsshInst.reset();
 }
 
-bool Cppssh::connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, bool shell)
+bool Cppssh::connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, unsigned int timeout, bool shell)
 {
-    return s_cppsshInst->connect(channelId, host, port, username, password, NULL, shell);
+    return s_cppsshInst->connect(channelId, host, port, username, password, NULL, timeout, shell);
 }
 
-bool Cppssh::connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, bool shell)
+bool Cppssh::connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, unsigned int timeout, bool shell)
 {
-    return s_cppsshInst->connect(channelId, host, port, username, NULL, privKeyFileName, shell);
+    return s_cppsshInst->connect(channelId, host, port, username, NULL, privKeyFileName, timeout, shell);
 }
 
 bool Cppssh::send(const int channelId, const char* data, size_t bytes)

@@ -155,34 +155,33 @@ void CppsshTransport::setupFd(fd_set *fd)
 
 bool CppsshTransport::wait(bool isWrite)
 {
-    int status;
+    bool ret = false;
+    int status = 0;
+    struct timeval waitTime;
+    waitTime.tv_sec = 0;
+    waitTime.tv_usec = 1000;
 
-    if (isWrite == false)
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
     {
-        std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-        while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
+        fd_set fds;
+        setupFd(&fds);
+        if (isWrite == false)
         {
-            fd_set rfds;
-            struct timeval waitTime;
-
-            waitTime.tv_sec = 0;
-            waitTime.tv_usec = 1000;
-            setupFd(&rfds);
-            status = select(_sock + 1, &rfds, NULL, NULL, &waitTime);
-            if (status > 0)
-            {
-                break;
-            }
+            status = select(_sock + 1, &fds, NULL, NULL, &waitTime);
+        }
+        else
+        {
+            status = select(_sock + 1, NULL, &fds, NULL, &waitTime);
+        }
+        if ((status > 0) && (FD_ISSET(_sock, &fds)))
+        {
+            ret = true;
+            break;
         }
     }
-    else
-    {
-        fd_set wfds;
-        setupFd(&wfds);
-        status = select(_sock + 1, NULL, &wfds, NULL, NULL);
-    }
 
-    return (status > 0) ? true : false;
+    return ret;
 }
 
 bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
