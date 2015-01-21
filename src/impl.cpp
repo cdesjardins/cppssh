@@ -26,8 +26,6 @@ std::vector<std::string> CppsshImpl::MAC_ALGORITHMS;
 std::vector<std::string> CppsshImpl::KEX_ALGORITHMS;
 std::vector<std::string> CppsshImpl::HOSTKEY_ALGORITHMS;
 std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
-std::string CppsshImpl::PREFERED_CIPHER;
-std::string CppsshImpl::PREFERED_MAC;
 
 std::unique_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
@@ -93,8 +91,6 @@ bool CppsshImpl::connect(int* channelId, const char* host, const short port, con
         channel = con->connect(host, port, username, password, privKeyFileName, shell);
         if (channel != -1)
         {
-            std::unique_lock<std::mutex> lock(_connectionsMutex);
-            _activeConnections[channel] = con;
             ret = true;
         }
     }
@@ -114,17 +110,26 @@ size_t CppsshImpl::read(const int channelId, char* data)
 bool CppsshImpl::close(int channelId)
 {
     _connections[channelId].reset();
-    if (_activeConnections.find(channelId) != _activeConnections.end())
-    {
-        _activeConnections[channelId].reset();
-    }
     return true;
+}
+
+void CppsshImpl::setPref(const char* pref, std::vector<std::string> *list)
+{
+    std::vector<std::string>::iterator it = std::find(list->begin(), list->end(), pref);
+    if (it != list->end())
+    {
+        list->erase(it);
+        list->insert(list->begin(), pref);
+    }
+
 }
 
 void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
 {
-    PREFERED_CIPHER = prefCipher;
-    PREFERED_MAC = prefHmac;
+    static std::mutex optionsMutex;
+    std::unique_lock<std::mutex> lock(optionsMutex);
+    setPref(prefCipher, &CIPHER_ALGORITHMS);
+    setPref(prefHmac, &MAC_ALGORITHMS);
 }
 
 bool CppsshImpl::generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
@@ -137,21 +142,9 @@ bool CppsshImpl::getLogMessage(const int channelId, CppsshLogMessage* message)
     return _connections[channelId]->getLogMessage(message);
 }
 
-void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, const std::string& prefered, std::string *outstr, std::vector<std::string>* outList)
+void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string *outstr)
 {
     std::vector<std::string>::const_iterator prefIt = vec.end();
-    if (prefered.length() > 0)
-    {
-        prefIt = std::find(vec.begin(), vec.end(), prefered);
-        if (prefIt != vec.end())
-        {
-            std::copy(prefered.begin(), prefered.end(), std::back_inserter(*outstr));
-            if (outList != NULL)
-            {
-                outList->push_back(prefered);
-            }
-        }
-    }
     for (std::vector<std::string>::const_iterator it = vec.cbegin(); it != vec.cend(); it++)
     {
         std::string kex = *it;
@@ -162,10 +155,6 @@ void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, const std
                 outstr->push_back(',');
             }
             std::copy(kex.begin(), kex.end(), std::back_inserter(*outstr));
-            if (outList != NULL)
-            {
-                outList->push_back(kex);
-            }
         }
     }
 }

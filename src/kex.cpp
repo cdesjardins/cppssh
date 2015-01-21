@@ -44,12 +44,12 @@ void CppsshKex::constructLocalKex()
     CppsshImpl::RNG->randomize(random.data(), random.size());
 
     std::copy(random.begin(), random.end(), std::back_inserter(_localKex));
-    CppsshImpl::vecToCommaString(CppsshImpl::KEX_ALGORITHMS, std::string(), &kexStr, NULL);
-    CppsshImpl::vecToCommaString(CppsshImpl::HOSTKEY_ALGORITHMS, std::string(), &hostkeyStr, NULL);
+    CppsshImpl::vecToCommaString(CppsshImpl::KEX_ALGORITHMS, &kexStr);
+    CppsshImpl::vecToCommaString(CppsshImpl::HOSTKEY_ALGORITHMS, &hostkeyStr);
 
-    CppsshImpl::vecToCommaString(CppsshImpl::CIPHER_ALGORITHMS, CppsshImpl::PREFERED_CIPHER, &ciphersStr, &_ciphers);
-    CppsshImpl::vecToCommaString(CppsshImpl::MAC_ALGORITHMS, CppsshImpl::PREFERED_MAC, &hmacsStr, &_hmacs);
-    CppsshImpl::vecToCommaString(CppsshImpl::COMPRESSION_ALGORITHMS, std::string(), &compressors, NULL);
+    CppsshImpl::vecToCommaString(CppsshImpl::CIPHER_ALGORITHMS, &ciphersStr);
+    CppsshImpl::vecToCommaString(CppsshImpl::MAC_ALGORITHMS, &hmacsStr);
+    CppsshImpl::vecToCommaString(CppsshImpl::COMPRESSION_ALGORITHMS, &compressors);
 
     CppsshPacket localKex(&_localKex);
 
@@ -141,7 +141,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(&agreed, _ciphers, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
         _session->_logger->pushMessage(std::stringstream() << "No compatible cryptographic algorithms.");
         return false;
@@ -154,7 +154,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(&agreed, _ciphers, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
         _session->_logger->pushMessage(std::stringstream() << "No compatible cryptographic algorithms.");
         return false;
@@ -167,7 +167,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(&agreed, _hmacs, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
         _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
         return false;
@@ -180,7 +180,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (_session->_crypto->agree(&agreed, _hmacs, algos) == false)
+    if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
         _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
         return false;
