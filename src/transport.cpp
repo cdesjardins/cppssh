@@ -20,7 +20,7 @@
 #include "transport.h"
 #include "crypto.h"
 #include "packet.h"
-#include <iostream>
+
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
 #   define close closesocket
@@ -194,7 +194,6 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
     if (wait(false) == true)
     {
         len = ::recv(_sock, (char*)buffer->data(), MAX_PACKET_LEN, 0);
-        std::cout << "got: " << len << std::endl;
         if (len > 0)
         {
             buffer->resize(len);
@@ -385,8 +384,6 @@ void CppsshTransport::rxThread()
             }
         }
     }
-
-    std::cout << "thread exit" << std::endl;
 }
 
 short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)

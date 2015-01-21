@@ -49,6 +49,7 @@ public:
 
 private:
     bool setNonBlocking(bool on);
+    void setupFd(fd_set *fd);
     bool wait(bool isWrite);
     void rxThread();
 
