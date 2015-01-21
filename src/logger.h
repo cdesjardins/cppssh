@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>
 #include <queue>
 #include <sstream>
+#include <string.h>
 
 class CppsshLogger
 {

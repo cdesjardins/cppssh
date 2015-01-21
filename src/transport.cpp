@@ -159,8 +159,8 @@ bool CppsshTransport::wait(bool isWrite)
 
     if (isWrite == false)
     {
-        std::chrono::monotonic_clock::time_point t0 = std::chrono::monotonic_clock::now();
-        while ((_running == true) && (std::chrono::monotonic_clock::now() < (t0 + std::chrono::seconds(_timeout))))
+        std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+        while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
         {
             fd_set rfds;
             struct timeval waitTime;
@@ -393,8 +393,8 @@ short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)
 {
     Botan::byte cmd;
     std::unique_lock<std::mutex> lock(_inBufferMutex);
-    std::chrono::monotonic_clock::time_point t0 = std::chrono::monotonic_clock::now();
-    while ((_running == true) && (std::chrono::monotonic_clock::now() < (t0 + std::chrono::seconds(_timeout))))
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
     {
         if (_inBuffer.size() > 0)
         {
