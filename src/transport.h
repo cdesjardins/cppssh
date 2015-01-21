@@ -20,8 +20,10 @@
 #define _TRANSPORT_Hxx
 
 #include "session.h"
+#include "packet.h"
 #include "botan/botan.h"
 #include <memory>
+#include <condition_variable>
 
 #if !defined(WIN32) && !defined(__MINGW32__)
 #  define SOCKET int
@@ -36,17 +38,20 @@ class CppsshTransport
 public:
     CppsshTransport(const std::shared_ptr<CppsshSession> &session, int timeout);
     int establish(const char* host, short port);
+    bool start();
 
     bool receive(Botan::secure_vector<Botan::byte>* buffer);
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
     bool sendPacket(const Botan::secure_vector<Botan::byte> &buffer);
-    short waitForPacket(Botan::byte command, bool bufferOnly = false);
-    uint32_t getPacket(Botan::secure_vector<Botan::byte> &result);
+    short waitForPacket(Botan::byte command, CppsshPacket *packet);
 
 private:
+    void getPacket(CppsshPacket *header);
     bool setNonBlocking(bool on);
     bool wait(bool isWrite);
+    void rxThread();
+
     SOCKET _sock;
     std::shared_ptr<CppsshSession> _session;
     int _timeout;
@@ -54,7 +59,10 @@ private:
     uint32_t _rxSeq;
     Botan::secure_vector<Botan::byte> _in;
     std::queue<Botan::secure_vector<Botan::byte> > _inBuffer;
-    std::recursive_mutex _inBufferMutex;
+    std::mutex _inBufferMutex;
+    std::thread _rxThread;
+    volatile bool _running;
+    std::condition_variable _inBufferCondVar;
 };
 
 #endif

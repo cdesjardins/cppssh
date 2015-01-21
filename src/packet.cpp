@@ -145,14 +145,19 @@ Botan::byte CppsshPacket::getCommand()
     return ret;
 }
 
-Botan::byte* CppsshPacket::getPayload()
+Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadBegin()
 {
-    Botan::byte* ret = NULL;
+    Botan::secure_vector<Botan::byte>::iterator ret = _data->end();
     if (_data->size() > NE7SSH_PACKET_PAYLOAD_OFFS)
     {
-        ret = _data->data() + NE7SSH_PACKET_PAYLOAD_OFFS;
+        ret = _data->begin() + NE7SSH_PACKET_PAYLOAD_OFFS;
     }
     return ret;
+}
+
+Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadEnd()
+{
+    return getPayloadBegin() + (getPacketLength() - 1);
 }
 
 bool CppsshPacket::getString(Botan::secure_vector<Botan::byte>& result)
@@ -207,4 +212,19 @@ uint32_t CppsshPacket::getInt()
 
     _data->erase(_data->begin(), _data->begin() + (sizeof(uint32_t)));
     return result;
+}
+
+void CppsshPacket::copy(const Botan::secure_vector<Botan::byte> &src)
+{
+    *_data = src;
+}
+
+void CppsshPacket::clear()
+{
+    _data->clear();
+}
+
+size_t CppsshPacket::size()
+{
+    return _data->size();
 }

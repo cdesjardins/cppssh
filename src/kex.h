@@ -20,6 +20,7 @@
 #define _KEX_Hxx
 
 #include "session.h"
+#include "packet.h"
 #include "botan/botan.h"
 #include <memory>
 
@@ -27,13 +28,13 @@ class CppsshKex
 {
 public:
     CppsshKex(const std::shared_ptr<CppsshSession> &session);
-    bool sendInit();
     bool handleInit();
-    bool sendKexDHInit();
     bool handleKexDHReply();
     bool sendKexNewKeys();
 
 private:
+    bool sendInit(CppsshPacket *packet);
+    bool sendKexDHInit(CppsshPacket *packet);
     void constructLocalKex();
     void makeH(Botan::secure_vector<Botan::byte> &hVector);
 

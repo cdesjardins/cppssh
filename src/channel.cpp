@@ -49,24 +49,20 @@ bool CppsshChannel::open(uint32_t channelID)
 
     if (_session->_transport->sendPacket(buf) == true)
     {
-        if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION) <= 0)
+        if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &packet) <= 0)
         {
             _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << "could not be open.");
         }
         else
         {
-            _channelOpened = handleChannelConfirm();
+            _channelOpened = handleChannelConfirm(buf);
         }
     }
     return _channelOpened;
 }
 
-bool CppsshChannel::handleChannelConfirm()
+bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte> &buf)
 {
-    Botan::secure_vector<Botan::byte> buf;
-
-    _session->_transport->getPacket(buf);
-
     Botan::secure_vector<Botan::byte> tmp(buf.begin() + 1, buf.end() - 1);
     CppsshPacket packet(&tmp);
     uint32_t field;

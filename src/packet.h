@@ -41,12 +41,17 @@ public:
     uint32_t getCryptoLength();
     Botan::byte getPadLength();
     Botan::byte getCommand();
-    Botan::byte* getPayload();
+    Botan::secure_vector<Botan::byte>::iterator getPayloadBegin();
+    Botan::secure_vector<Botan::byte>::iterator getPayloadEnd();
 
     bool getString(Botan::secure_vector<Botan::byte>& result);
     bool getString(std::string& result);
     bool getBigInt(Botan::BigInt& result);
     uint32_t getInt();
+
+    void copy(const Botan::secure_vector<Botan::byte> &src);
+    void clear();
+    size_t size();
 
 private:
     Botan::secure_vector<Botan::byte> *_data;

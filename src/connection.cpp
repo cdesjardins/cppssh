@@ -55,16 +55,13 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
+    if (_transport->start() == false)
+    {
+        return -1;
+    }
     CppsshKex kex(_session);
-    if (kex.sendInit() == false)
-    {
-        return -1;
-    }
+
     if (kex.handleInit() == false)
-    {
-        return -1;
-    }
-    if (kex.sendKexDHInit() == false)
     {
         return -1;
     }
@@ -152,14 +149,10 @@ bool CppsshConnection::requestService(const std::string& service)
     {
         ret = false;
     }
-    else if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT) <= 0)
+    else if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) <= 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Service request failed.");
         ret = false;
-    }
-    else
-    {
-        _transport->getPacket(buf);
     }
     return ret;
 }
@@ -184,14 +177,13 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     }
     else
     {
-        cmd = _transport->waitForPacket(0);
+        cmd = _transport->waitForPacket(0, &packet);
         if (cmd <= 0)
         {
             ret = false;
         }
         else
         {
-            _transport->getPacket(buf);
             if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
             {
                 ret = true;
@@ -206,7 +198,7 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
                 }
                 else
                 {
-                    cmd = _transport->waitForPacket(0);
+                    cmd = _transport->waitForPacket(0, &packet);
                     if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
                     {
                         ret = true;
@@ -216,11 +208,9 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
 
             if (cmd == SSH2_MSG_USERAUTH_FAILURE)
             {
-                Botan::secure_vector<Botan::byte> response;
                 std::string methods;
 
-                _transport->getPacket(response);
-                Botan::secure_vector<Botan::byte> tmp(response.begin() + 1, response.end());
+                Botan::secure_vector<Botan::byte> tmp(buf.begin() + 1, buf.end());
                 CppsshPacket message(&tmp);
                 message.getString(methods);
                 _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());

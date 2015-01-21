@@ -30,7 +30,7 @@ public:
     void getShell();
 
 private:
-    bool handleChannelConfirm();
+    bool handleChannelConfirm(const Botan::secure_vector<Botan::byte> &buf);
 
     std::shared_ptr<CppsshSession> _session;
     uint32_t _windowRecv;
