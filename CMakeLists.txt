@@ -20,7 +20,7 @@ if(MSVC)
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4512")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4512 /wd4100")
     # Use static runtime on windows
     foreach(flag_var
         CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE

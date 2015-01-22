@@ -176,53 +176,30 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     packet.addChar('\0');
     packet.addString(password);
 
-    if (_transport->sendPacket(buf) == false)
-    {
-        ret = false;
-    }
-    else
+    if (_transport->sendPacket(buf) == true)
     {
         cmd = _transport->waitForPacket(0, &packet);
-        if (cmd <= 0)
+        if (cmd == SSH2_MSG_USERAUTH_BANNER)
         {
-            ret = false;
+            buf.clear();
+            packet.addString(password);
+            if (_transport->sendPacket(buf) == true)
+            {
+                cmd = _transport->waitForPacket(0, &packet);
+            }
         }
-        else
+        if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
         {
-            if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
-            {
-                ret = true;
-            }
-            else if (cmd == SSH2_MSG_USERAUTH_BANNER)
-            {
-                buf.clear();
-                packet.addString(password);
-                if (!_transport->sendPacket(buf))
-                {
-                    ret = false;
-                }
-                else
-                {
-                    cmd = _transport->waitForPacket(0, &packet);
-                    if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
-                    {
-                        ret = true;
-                    }
-                }
-            }
-
-            if (cmd == SSH2_MSG_USERAUTH_FAILURE)
-            {
-                std::string methods;
-
-                CppsshPacket message(&buf);
-                Botan::secure_vector<Botan::byte> authBuf(Botan::secure_vector<Botan::byte>(message.getPayloadBegin() + 1, message.getPayloadEnd()));
-                CppsshPacket auth(&authBuf);
-                auth.getString(methods);
-
-                _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
-                ret = false;
-            }
+            ret = true;
+        }
+        else if (cmd == SSH2_MSG_USERAUTH_FAILURE)
+        {
+            std::string methods;
+            CppsshPacket message(&buf);
+            Botan::secure_vector<Botan::byte> authBuf(Botan::secure_vector<Botan::byte>(message.getPayloadBegin() + 1, message.getPayloadEnd()));
+            CppsshPacket auth(&authBuf);
+            auth.getString(methods);
+            _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
         }
     }
     return ret;

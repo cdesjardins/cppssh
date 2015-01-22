@@ -121,7 +121,6 @@ void CppsshImpl::setPref(const char* pref, std::vector<std::string> *list)
         list->erase(it);
         list->insert(list->begin(), pref);
     }
-
 }
 
 void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
