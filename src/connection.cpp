@@ -144,20 +144,22 @@ bool CppsshConnection::sendLocalVersion()
 
 bool CppsshConnection::requestService(const std::string& service)
 {
-    bool ret = true;
+    bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
     packet.addChar(SSH2_MSG_SERVICE_REQUEST);
     packet.addString(service);
-    if (_transport->sendPacket(buf) == false)
+    if (_transport->sendPacket(buf) == true)
     {
-        ret = false;
-    }
-    else if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) <= 0)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "Service request failed.");
-        ret = false;
+        if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) <= 0)
+        {
+            _session->_logger->pushMessage(std::stringstream() << "Service request failed.");
+        }
+        else
+        {
+            ret = true;
+        }
     }
     return ret;
 }

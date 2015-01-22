@@ -72,18 +72,20 @@ void CppsshKex::constructLocalKex()
 
 bool CppsshKex::sendInit(CppsshPacket* packet)
 {
-    bool ret = true;
+    bool ret = false;
 
     constructLocalKex();
 
-    if (_session->_transport->sendPacket(_localKex) == false)
+    if (_session->_transport->sendPacket(_localKex) == true)
     {
-        ret = false;
-    }
-    else if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT, packet) <= 0)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange init reply.");
-        ret = false;
+        if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT, packet) <= 0)
+        {
+            _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange init reply.");
+        }
+        else
+        {
+            ret = true;
+        }
     }
 
     return ret;
@@ -219,14 +221,10 @@ bool CppsshKex::handleInit()
 
 bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
 {
-    bool ret = true;
+    bool ret = false;
     Botan::BigInt publicKey;
 
-    if (_session->_crypto->getKexPublic(publicKey) == false)
-    {
-        ret = false;
-    }
-    else
+    if (_session->_crypto->getKexPublic(publicKey) == true)
     {
         Botan::secure_vector<Botan::byte> buf;
         CppsshPacket dhInit(&buf);
@@ -236,14 +234,16 @@ bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
         _e.clear();
         CppsshPacket::bn2vector(_e, publicKey);
 
-        if (_session->_transport->sendPacket(buf) == false)
+        if (_session->_transport->sendPacket(buf) == true)
         {
-            ret = false;
-        }
-        else if (_session->_transport->waitForPacket(SSH2_MSG_KEXDH_REPLY, packet) <= 0)
-        {
-            _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange DH reply.");
-            ret = false;
+            if (_session->_transport->waitForPacket(SSH2_MSG_KEXDH_REPLY, packet) <= 0)
+            {
+                _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange DH reply.");
+            }
+            else
+            {
+                ret = true;
+            }
         }
     }
     return ret;
@@ -334,30 +334,28 @@ void CppsshKex::makeH(Botan::secure_vector<Botan::byte>& hVector)
 
 bool CppsshKex::sendKexNewKeys()
 {
-    bool ret = true;
+    bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
     if (_session->_transport->waitForPacket(SSH2_MSG_NEWKEYS, &packet) <= 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange newkeys reply.");
-        ret = false;
     }
     else
     {
         Botan::secure_vector<Botan::byte> newKeys;
         CppsshPacket newKeysPacket(&newKeys);
         newKeysPacket.addChar(SSH2_MSG_NEWKEYS);
-        if (_session->_transport->sendPacket(newKeys) == false)
-        {
-            ret = false;
-        }
-        else
+        if (_session->_transport->sendPacket(newKeys) == true)
         {
             if (_session->_crypto->makeNewKeys() == false)
             {
                 _session->_logger->pushMessage(std::stringstream() << "Could not make keys.");
-                ret = false;
+            }
+            else
+            {
+                ret = true;
             }
         }
     }
