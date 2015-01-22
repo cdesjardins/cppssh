@@ -94,7 +94,7 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
         if (authWithKey(username, privKeyFileName) == false)
         {
             return -1;
-        }        
+        }
     }
     if (_channel->open(_channelId) == false)
     {
@@ -209,3 +209,4 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
 {
     return false;
 }
+

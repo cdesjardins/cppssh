@@ -59,15 +59,14 @@ bool Cppssh::getLogMessage(const int channelId, CppsshLogMessage* message)
 
 CppsshLogMessage::CppsshLogMessage()
 {
-
 }
 
 CppsshLogMessage::~CppsshLogMessage()
 {
-
 }
 
 const char* const CppsshLogMessage::message() const
 {
     return _message.get();
 }
+

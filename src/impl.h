@@ -39,7 +39,7 @@ public:
     bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     bool getLogMessage(const int channelId, CppsshLogMessage* message);
 
-    static void vecToCommaString(const std::vector<std::string>& vec, std::string *outstr);
+    static void vecToCommaString(const std::vector<std::string>& vec, std::string* outstr);
 
     static std::vector<std::string> CIPHER_ALGORITHMS;
     static std::vector<std::string> MAC_ALGORITHMS;
@@ -49,7 +49,7 @@ public:
 
     static std::unique_ptr<Botan::RandomNumberGenerator> RNG;
 private:
-    static void setPref(const char* pref, std::vector<std::string> *list);
+    static void setPref(const char* pref, std::vector<std::string>* list);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::unique_ptr<Botan::LibraryInitializer> _init;
     std::mutex _connectionsMutex;

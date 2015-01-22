@@ -22,10 +22,9 @@
 #include "impl.h"
 #include "packet.h"
 
-CppsshKex::CppsshKex(const std::shared_ptr<CppsshSession> &session)
+CppsshKex::CppsshKex(const std::shared_ptr<CppsshSession>& session)
     : _session(session)
 {
-
 }
 
 void CppsshKex::constructLocalKex()
@@ -36,7 +35,7 @@ void CppsshKex::constructLocalKex()
     std::string compressors;
     std::string ciphersStr;
     std::string hmacsStr;
-    
+
     _localKex.clear();
     _localKex.push_back(SSH2_MSG_KEXINIT);
 
@@ -71,12 +70,12 @@ void CppsshKex::constructLocalKex()
     localKex.addInt(0);
 }
 
-bool CppsshKex::sendInit(CppsshPacket *packet)
+bool CppsshKex::sendInit(CppsshPacket* packet)
 {
     bool ret = true;
 
     constructLocalKex();
-    
+
     if (_session->_transport->sendPacket(_localKex) == false)
     {
         ret = false;
@@ -213,12 +212,12 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->negotiatedCmprsS2c(agreed) == false)
     {
-        return false; 
+        return false;
     }
     return true;
 }
 
-bool CppsshKex::sendKexDHInit(CppsshPacket *packet)
+bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
 {
     bool ret = true;
     Botan::BigInt publicKey;
@@ -233,7 +232,7 @@ bool CppsshKex::sendKexDHInit(CppsshPacket *packet)
         CppsshPacket dhInit(&buf);
         dhInit.addChar(SSH2_MSG_KEXDH_INIT);
         dhInit.addBigInt(publicKey);
-        
+
         _e.clear();
         CppsshPacket::bn2vector(_e, publicKey);
 
@@ -302,7 +301,7 @@ bool CppsshKex::handleKexDHReply()
     {
         return false;
     }
-    
+
     if (_session->_crypto->isInited() == false)
     {
         _session->setSessionID(hVector);
@@ -312,11 +311,11 @@ bool CppsshKex::handleKexDHReply()
     {
         return false;
     }
-    
+
     return true;
 }
 
-void CppsshKex::makeH(Botan::secure_vector<Botan::byte> &hVector)
+void CppsshKex::makeH(Botan::secure_vector<Botan::byte>& hVector)
 {
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket hashBytes(&buf);
@@ -365,3 +364,4 @@ bool CppsshKex::sendKexNewKeys()
 
     return ret;
 }
+

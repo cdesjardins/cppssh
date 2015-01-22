@@ -51,7 +51,7 @@ WSockInitializer _wsock32_;
 #   include <fcntl.h>
 #endif
 
-CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession> &session, unsigned int timeout)
+CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
     : _session(session),
     _timeout(timeout),
     _txSeq(0),
@@ -140,7 +140,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     return true;
 }
 
-void CppsshTransport::setupFd(fd_set *fd)
+void CppsshTransport::setupFd(fd_set* fd)
 {
 #if defined(WIN32)
 #pragma warning(push)
@@ -244,7 +244,7 @@ bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
     return ret;
 }
 
-bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte> &buffer)
+bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer)
 {
     bool ret = true;
     size_t length = buffer.size();
@@ -336,7 +336,7 @@ void CppsshTransport::rxThread()
             {
                 if (receive(&_in) == false)
                 {
-                    return; //-1;
+                    return;//-1;
                 }
             }
         }
@@ -385,7 +385,7 @@ void CppsshTransport::rxThread()
     }
 }
 
-short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)
+short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
 {
     Botan::byte cmd;
     std::unique_lock<std::mutex> lock(_inBufferMutex);
@@ -418,3 +418,4 @@ short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket *packet)
     }
     return command;
 }
+

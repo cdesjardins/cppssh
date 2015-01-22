@@ -7,7 +7,7 @@
 #define NUM_THREADS 50
 std::mutex _outputMutex;
 
-void reportErrors(const std::string &tag, const int channel)
+void reportErrors(const std::string& tag, const int channel)
 {
     CppsshLogMessage logMessage;
     while (Cppssh::getLogMessage(channel, &logMessage))
@@ -29,7 +29,6 @@ void runConnectionTest(char* hostname, char* username, char* password)
         reportErrors("Connect", channel);
     }
     Cppssh::close(channel);
-
 }
 
 int main(int argc, char** argv)
@@ -55,3 +54,4 @@ int main(int argc, char** argv)
     Cppssh::destroy();
     return 0;
 }
+

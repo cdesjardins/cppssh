@@ -49,6 +49,7 @@ public:
         }
         return ret;
     }
+
 private:
     std::recursive_mutex _mutex;
     std::queue<std::string> _messages;

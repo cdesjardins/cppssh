@@ -25,12 +25,12 @@
 class CppsshChannel
 {
 public:
-    CppsshChannel(const std::shared_ptr<CppsshSession> &session);
+    CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     bool open(uint32_t channelID);
     void getShell();
 
 private:
-    bool handleChannelConfirm(const Botan::secure_vector<Botan::byte> &buf);
+    bool handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf);
 
     std::shared_ptr<CppsshSession> _session;
     uint32_t _windowRecv;

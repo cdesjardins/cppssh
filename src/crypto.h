@@ -31,7 +31,7 @@
 class CppsshCrypto
 {
 public:
-    CppsshCrypto(const std::shared_ptr<CppsshSession> &session);
+    CppsshCrypto(const std::shared_ptr<CppsshSession>& session);
 
     uint32_t getEncryptBlock()
     {
@@ -42,30 +42,32 @@ public:
     {
         return _decryptBlock;
     }
+
     bool isInited()
     {
         return _inited;
     }
-    bool encryptPacket(Botan::secure_vector<Botan::byte> &crypted, Botan::secure_vector<Botan::byte> &hmac, const Botan::secure_vector<Botan::byte> &packet, uint32_t seq);
+
+    bool encryptPacket(Botan::secure_vector<Botan::byte>& crypted, Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
     bool decryptPacket(Botan::secure_vector<Botan::byte>& decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len);
-    
+
     void computeMac(Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
-    bool computeH(Botan::secure_vector<Botan::byte> &result, const Botan::secure_vector<Botan::byte> &val);
+    bool computeH(Botan::secure_vector<Botan::byte>& result, const Botan::secure_vector<Botan::byte>& val);
 
     bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote);
-    bool verifySig(Botan::secure_vector<Botan::byte> &hostKey, Botan::secure_vector<Botan::byte> &sig);
+    bool verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::secure_vector<Botan::byte>& sig);
 
-    bool negotiatedKex(const std::string &kexAlgo);
-    bool negotiatedHostkey(const std::string &hostkeyAlgo);
-    bool negotiatedCryptoC2s(const std::string &cryptoAlgo);
-    bool negotiatedCryptoS2c(const std::string &cryptoAlgo);
-    bool negotiatedMacC2s(const std::string &macAlgo);
-    bool negotiatedMacS2c(const std::string &macAlgo);
-    bool negotiatedCmprsC2s(const std::string &cmprsAlgo);
-    bool negotiatedCmprsS2c(const std::string &cmprsAlgo);
+    bool negotiatedKex(const std::string& kexAlgo);
+    bool negotiatedHostkey(const std::string& hostkeyAlgo);
+    bool negotiatedCryptoC2s(const std::string& cryptoAlgo);
+    bool negotiatedCryptoS2c(const std::string& cryptoAlgo);
+    bool negotiatedMacC2s(const std::string& macAlgo);
+    bool negotiatedMacS2c(const std::string& macAlgo);
+    bool negotiatedCmprsC2s(const std::string& cmprsAlgo);
+    bool negotiatedCmprsS2c(const std::string& cmprsAlgo);
 
-    bool getKexPublic(Botan::BigInt &publicKey);
-    bool makeKexSecret(Botan::secure_vector<Botan::byte> &result, Botan::BigInt &f);
+    bool getKexPublic(Botan::BigInt& publicKey);
+    bool makeKexSecret(Botan::secure_vector<Botan::byte>& result, Botan::BigInt& f);
     bool makeNewKeys();
 
     uint32_t getMacOutLen()
@@ -78,12 +80,11 @@ public:
         return getMacDigestLen(_s2cMacMethod);
     }
 
-
 private:
 
     uint32_t getMacDigestLen(uint32_t method);
-    std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte> &hostKey);
-    std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte> &hostKey);
+    std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte>& hostKey);
+    std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte>& hostKey);
     bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
 
     std::shared_ptr<CppsshSession> _session;
@@ -115,9 +116,9 @@ private:
     Botan::secure_vector<Botan::byte> _K;
     Botan::secure_vector<Botan::byte> _H;
 
-    bool negotiatedCrypto(const std::string &cryptoAlgo, cryptoMethods* cryptoMethod);
-    bool negotiatedMac(const std::string  &macAlgo, macMethods* macMethod);
-    bool negotiatedCmprs(const std::string  &cmprsAlgo, cmprsMethods* cmprsMethod);
+    bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
+    bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
+    bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod);
     std::string getCryptAlgo(cryptoMethods crypto);
     const char* getHashAlgo();
     const char* getHmacAlgo(macMethods method);

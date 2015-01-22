@@ -35,9 +35,8 @@ public:
         _sendChannel(0),
         _maxPacket(0)
     {
-
     }
-    
+
     ~CppsshSession()
     {
     }
@@ -51,6 +50,7 @@ public:
     {
         return _remoteVer;
     }
+
     void setLocalVersion(const std::string& localVer)
     {
         _localVer = localVer;
@@ -66,7 +66,7 @@ public:
         _sessionID = session;
     }
 
-    Botan::secure_vector<Botan::byte> &getSessionID()
+    Botan::secure_vector<Botan::byte>& getSessionID()
     {
         return _sessionID;
     }
@@ -90,7 +90,6 @@ public:
     {
         return _maxPacket;
     }
-
 
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;

@@ -23,13 +23,12 @@
 #include "logger.h"
 #include <sstream>
 
-CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession> &session)
+CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _windowRecv(0),
     _windowSend(0),
     _channelOpened(false)
 {
-
 }
 
 bool CppsshChannel::open(uint32_t channelID)
@@ -61,7 +60,7 @@ bool CppsshChannel::open(uint32_t channelID)
     return _channelOpened;
 }
 
-bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte> &buf)
+bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf)
 {
     Botan::secure_vector<Botan::byte> tmp(buf.begin() + 1, buf.end() - 1);
     CppsshPacket packet(&tmp);
@@ -108,3 +107,4 @@ void CppsshChannel::getShell()
         _session->_transport->sendPacket(buf);
     }
 }
+

@@ -27,16 +27,16 @@
 class CppsshKex
 {
 public:
-    CppsshKex(const std::shared_ptr<CppsshSession> &session);
+    CppsshKex(const std::shared_ptr<CppsshSession>& session);
     bool handleInit();
     bool handleKexDHReply();
     bool sendKexNewKeys();
 
 private:
-    bool sendInit(CppsshPacket *packet);
-    bool sendKexDHInit(CppsshPacket *packet);
+    bool sendInit(CppsshPacket* packet);
+    bool sendKexDHInit(CppsshPacket* packet);
     void constructLocalKex();
-    void makeH(Botan::secure_vector<Botan::byte> &hVector);
+    void makeH(Botan::secure_vector<Botan::byte>& hVector);
 
     std::shared_ptr<CppsshSession> _session;
     Botan::secure_vector<Botan::byte> _localKex;

@@ -36,7 +36,7 @@
 class CppsshTransport
 {
 public:
-    CppsshTransport(const std::shared_ptr<CppsshSession> &session, unsigned int timeout);
+    CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
     ~CppsshTransport();
     int establish(const char* host, short port);
     bool start();
@@ -44,12 +44,12 @@ public:
     bool receive(Botan::secure_vector<Botan::byte>* buffer);
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
-    bool sendPacket(const Botan::secure_vector<Botan::byte> &buffer);
-    short waitForPacket(Botan::byte command, CppsshPacket *packet);
+    bool sendPacket(const Botan::secure_vector<Botan::byte>& buffer);
+    short waitForPacket(Botan::byte command, CppsshPacket* packet);
 
 private:
     bool setNonBlocking(bool on);
-    void setupFd(fd_set *fd);
+    void setupFd(fd_set* fd);
     bool wait(bool isWrite);
     void rxThread();
 

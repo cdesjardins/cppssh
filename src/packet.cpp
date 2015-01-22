@@ -34,19 +34,18 @@
 #define NE7SSH_PACKET_PAYLOAD_OFFS  5
 #define NE7SSH_PACKET_CMD_SIZE      1
 
-CppsshPacket::CppsshPacket(Botan::secure_vector<Botan::byte> *data)
+CppsshPacket::CppsshPacket(Botan::secure_vector<Botan::byte>* data)
     : _data(data)
 {
-
 }
 
-void CppsshPacket::addVectorField(const Botan::secure_vector<Botan::byte> &vec)
+void CppsshPacket::addVectorField(const Botan::secure_vector<Botan::byte>& vec)
 {
     addInt(vec.size());
     (*_data) += vec;
 }
 
-void CppsshPacket::addVector(const Botan::secure_vector<Botan::byte> &vec)
+void CppsshPacket::addVector(const Botan::secure_vector<Botan::byte>& vec)
 {
     (*_data) += vec;
 }
@@ -60,8 +59,8 @@ void CppsshPacket::addString(const std::string& str)
 void CppsshPacket::addInt(const uint32_t var)
 {
     uint32_t data = htonl(var);
-    Botan::byte *p;
-    p = (Botan::byte *)&data;
+    Botan::byte* p;
+    p = (Botan::byte*)&data;
     (*_data).push_back(p[0]);
     (*_data).push_back(p[1]);
     (*_data).push_back(p[2]);
@@ -99,7 +98,7 @@ void CppsshPacket::bn2vector(Botan::secure_vector<Botan::byte>& result, const Bo
     result += strVector;
 }
 
-CppsshPacket& CppsshPacket::operator=(Botan::secure_vector<Botan::byte> *encryptedPacket)
+CppsshPacket& CppsshPacket::operator=(Botan::secure_vector<Botan::byte>* encryptedPacket)
 {
     _data = encryptedPacket;
     return *this;
@@ -214,7 +213,7 @@ uint32_t CppsshPacket::getInt()
     return result;
 }
 
-void CppsshPacket::copy(const Botan::secure_vector<Botan::byte> &src)
+void CppsshPacket::copy(const Botan::secure_vector<Botan::byte>& src)
 {
     *_data = src;
 }
@@ -228,3 +227,4 @@ size_t CppsshPacket::size()
 {
     return _data->size();
 }
+

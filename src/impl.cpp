@@ -113,7 +113,7 @@ bool CppsshImpl::close(int channelId)
     return true;
 }
 
-void CppsshImpl::setPref(const char* pref, std::vector<std::string> *list)
+void CppsshImpl::setPref(const char* pref, std::vector<std::string>* list)
 {
     std::vector<std::string>::iterator it = std::find(list->begin(), list->end(), pref);
     if (it != list->end())
@@ -141,7 +141,7 @@ bool CppsshImpl::getLogMessage(const int channelId, CppsshLogMessage* message)
     return _connections[channelId]->getLogMessage(message);
 }
 
-void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string *outstr)
+void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string* outstr)
 {
     std::vector<std::string>::const_iterator prefIt = vec.end();
     for (std::vector<std::string>::const_iterator it = vec.cbegin(); it != vec.cend(); it++)
@@ -157,3 +157,4 @@ void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::stri
         }
     }
 }
+
