@@ -72,17 +72,16 @@ public:
 
     uint32_t getMacOutLen()
     {
-        return getMacDigestLen(_c2sMacMethod);
+        return _c2sMacDigestLen;
     }
 
     uint32_t getMacInLen()
     {
-        return getMacDigestLen(_s2cMacMethod);
+        return _s2cMacDigestLen;
     }
 
 private:
-
-    uint32_t getMacDigestLen(uint32_t method);
+    
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte>& hostKey);
     bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
@@ -97,6 +96,8 @@ private:
 
     uint32_t _encryptBlock;
     uint32_t _decryptBlock;
+    uint32_t _c2sMacDigestLen;
+    uint32_t _s2cMacDigestLen;
     bool _inited;
     enum macMethods { HMAC_SHA1, HMAC_MD5, HMAC_NONE };
     macMethods _c2sMacMethod;
@@ -123,8 +124,8 @@ private:
     const char* getHashAlgo();
     const char* getHmacAlgo(macMethods method);
 
-    uint32_t getMacKeyLen(macMethods method);
     size_t maxKeyLengthOf(const std::string& name);
+    uint32_t getMacKeyLen(macMethods method);
 };
 
 #endif

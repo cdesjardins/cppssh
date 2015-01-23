@@ -148,7 +148,7 @@ bool CppsshConnection::requestService(const std::string& service)
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addChar(SSH2_MSG_SERVICE_REQUEST);
+    packet.addByte(SSH2_MSG_SERVICE_REQUEST);
     packet.addString(service);
     if (_transport->sendPacket(buf) == true)
     {
@@ -171,11 +171,11 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addChar(SSH2_MSG_USERAUTH_REQUEST);
+    packet.addByte(SSH2_MSG_USERAUTH_REQUEST);
     packet.addString(username);
     packet.addString("ssh-connection");
     packet.addString("password");
-    packet.addChar('\0');
+    packet.addByte('\0');
     packet.addString(password);
 
     if (_transport->sendPacket(buf) == true)
@@ -183,12 +183,8 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
         cmd = _transport->waitForPacket(0, &packet);
         if (cmd == SSH2_MSG_USERAUTH_BANNER)
         {
-            buf.clear();
-            packet.addString(password);
-            if (_transport->sendPacket(buf) == true)
-            {
-                cmd = _transport->waitForPacket(0, &packet);
-            }
+            // FIXME: Add the banner to the rx queue
+            cmd = _transport->waitForPacket(0, &packet);
         }
         if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
         {

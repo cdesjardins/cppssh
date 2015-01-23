@@ -32,7 +32,7 @@ public:
     void addVector(const Botan::secure_vector<Botan::byte>& vec);
     void addString(const std::string& str);
     void addInt(const uint32_t var);
-    void addChar(const char ch);
+    void addByte(const uint8_t ch);
     void addBigInt(const Botan::BigInt& bn);
     static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
 

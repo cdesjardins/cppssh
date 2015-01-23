@@ -39,7 +39,7 @@ bool CppsshChannel::open(uint32_t channelID)
     _windowSend = 0;
     _windowRecv = MAX_PACKET_LEN - 2400;
 
-    packet.addChar(SSH2_MSG_CHANNEL_OPEN);
+    packet.addByte(SSH2_MSG_CHANNEL_OPEN);
     packet.addString("session");
     packet.addInt(channelID);
 
@@ -50,7 +50,16 @@ bool CppsshChannel::open(uint32_t channelID)
     {
         if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &packet) <= 0)
         {
-            _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << "could not be open.");
+            std::string err;
+            if (packet.size() > 0)
+            {
+                CppsshPacket message(&buf);
+                Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(message.getPayloadBegin() + 1, message.getPayloadEnd()));
+                CppsshPacket payloadPacket(&payload);
+                payloadPacket.getInt();
+                payloadPacket.getString(err);
+            }
+            _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << " could not be open. " << err);
         }
         else
         {
@@ -87,10 +96,10 @@ void CppsshChannel::getShell()
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addChar(SSH2_MSG_CHANNEL_REQUEST);
+    packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
     packet.addInt(_session->getSendChannel());
     packet.addString("pty-req");
-    packet.addChar(0);
+    packet.addByte(0);
     packet.addString("dumb");
     packet.addInt(80);
     packet.addInt(24);
@@ -100,10 +109,10 @@ void CppsshChannel::getShell()
     if (_session->_transport->sendPacket(buf) == true)
     {
         buf.clear();
-        packet.addChar(SSH2_MSG_CHANNEL_REQUEST);
+        packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
         packet.addInt(_session->getSendChannel());
         packet.addString("shell");
-        packet.addChar(0);
+        packet.addByte(0);
         _session->_transport->sendPacket(buf);
     }
 }

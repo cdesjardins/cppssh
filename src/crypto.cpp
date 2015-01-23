@@ -35,6 +35,8 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _encryptBlock(0),
     _decryptBlock(0),
+    _c2sMacDigestLen(0),
+    _s2cMacDigestLen(0),
     _inited(false),
     _c2sMacMethod(HMAC_MD5),
     _s2cMacMethod(HMAC_MD5),
@@ -87,24 +89,6 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>& decrypted, c
     // reset the IV (nonce)
     _decryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
     return ret;
-}
-
-uint32_t CppsshCrypto::getMacDigestLen(uint32_t method)
-{
-    switch (method)
-    {
-        case HMAC_SHA1:
-            return 20;
-
-        case HMAC_MD5:
-            return 16;
-
-        case HMAC_NONE:
-            return 0;
-
-        default:
-            return 0;
-    }
 }
 
 void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
@@ -681,7 +665,7 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byt
 
     hashBytesPacket.addVectorField(_K);
     hashBytesPacket.addVector(_H);
-    hashBytesPacket.addChar(ID);
+    hashBytesPacket.addByte(ID);
     hashBytesPacket.addVector(_session->getSessionID());
 
     hash = hashIt->process(hashBytes);
@@ -748,7 +732,7 @@ bool CppsshCrypto::makeNewKeys()
     {
         return false;
     }
-    Botan::SymmetricKey c2s_mac(key);
+    Botan::SymmetricKey c2sMac(key);
 
     Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
 
@@ -764,7 +748,8 @@ bool CppsshCrypto::makeNewKeys()
     {
         hashAlgo = af.prototype_hash_function(getHmacAlgo(_c2sMacMethod));
         _hmacOut.reset(new Botan::HMAC(hashAlgo->clone()));
-        _hmacOut->set_key(c2s_mac);
+        _hmacOut->set_key(c2sMac);
+        _c2sMacDigestLen = hashAlgo->output_length();
     }
     //  if (c2sCmprsMethod == ZLIB) compress = new Pipe (new Zlib_Compression(9));
 
@@ -805,7 +790,7 @@ bool CppsshCrypto::makeNewKeys()
     {
         return false;
     }
-    Botan::SymmetricKey s2c_mac(key);
+    Botan::SymmetricKey s2cMac(key);
 
     block_cipher = af.prototype_block_cipher(algo);
     _decryptFilter = new Botan::Transformation_Filter(
@@ -819,7 +804,8 @@ bool CppsshCrypto::makeNewKeys()
     {
         hashAlgo = af.prototype_hash_function(getHmacAlgo(_s2cMacMethod));
         _hmacIn.reset(new Botan::HMAC(hashAlgo->clone()));
-        _hmacIn->set_key(s2c_mac);
+        _hmacIn->set_key(s2cMac);
+        _s2cMacDigestLen = hashAlgo->output_length();
     }
     //  if (s2cCmprsMethod == ZLIB) decompress = new Pipe (new Zlib_Decompression);
 

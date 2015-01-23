@@ -4,7 +4,7 @@
 #include <thread>
 #include <mutex>
 
-#define NUM_THREADS 50
+#define NUM_THREADS 1
 std::mutex _outputMutex;
 
 void reportErrors(const std::string& tag, const int channel)
@@ -19,7 +19,7 @@ void reportErrors(const std::string& tag, const int channel)
 void runConnectionTest(char* hostname, char* username, char* password)
 {
     int channel;
-    bool connected = Cppssh::connectWithPassword(&channel, hostname, 22, username, password, NUM_THREADS * 4);
+    bool connected = Cppssh::connectWithPassword(&channel, hostname, 22, username, password, NUM_THREADS * 10);
     {
         std::unique_lock<std::mutex> lock(_outputMutex);
         if (connected == true)

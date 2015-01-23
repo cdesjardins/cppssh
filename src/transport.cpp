@@ -202,17 +202,24 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
             buffer->clear();
         }
     }
-
-    if (len == 0)
+    else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Received a packet of zero length.");
-        ret = false;
+        buffer->clear();
     }
 
-    if (len < 0)
+    if (_running == true)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Connection dropped.");
-        ret = false;
+        if (len == 0)
+        {
+            //_session->_logger->pushMessage(std::stringstream() << "Received a packet of zero length.");
+            //ret = false;
+        }
+
+        if (len < 0)
+        {
+            _session->_logger->pushMessage(std::stringstream() << "Connection dropped.");
+            ret = false;
+        }
     }
 
     return ret;
@@ -223,7 +230,7 @@ bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
     int byteCount;
     size_t sent = 0;
     bool ret = true;
-    while (sent < buffer.size())
+    while ((sent < buffer.size()) && (_running == true))
     {
         if (wait(true) == true)
         {
@@ -263,7 +270,7 @@ bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer
     packetLen = 1 + length + padLen;
 
     out.addInt(packetLen);
-    out.addChar(padLen);
+    out.addByte(padLen);
     out.addVector(buffer);
 
     Botan::secure_vector<Botan::byte> padBytes;
@@ -314,11 +321,11 @@ void CppsshTransport::rxThread()
             {
                 size = _session->_crypto->getDecryptBlock();
             }
-            while (_in.size() < size)
+            while ((_in.size() < size) && (_running == true))
             {
                 if (receive(&_in) == false)
                 {
-                    return;// -1;
+                    return;
                 }
             }
         }
@@ -332,11 +339,11 @@ void CppsshTransport::rxThread()
         //if ((bufferOnly == false) || ((_session->_crypto->isInited() == true) && (packet.getCommand() > 0) && (packet.getCommand() < 0xff)))
         if ((_session->_crypto->isInited() == true) && (packet.getCommand() > 0) && (packet.getCommand() < 0xff))
         {
-            while ((cryptoLen + macLen) > _in.size())
+            while (((cryptoLen + macLen) > _in.size()) && (_running == true))
             {
                 if (receive(&_in) == false)
                 {
-                    return;//-1;
+                    return;
                 }
             }
         }
@@ -358,7 +365,7 @@ void CppsshTransport::rxThread()
                 if (hMac != ourMac)
                 {
                     _session->_logger->pushMessage(std::stringstream() << "Mismatched HMACs.");
-                    return;// -1;
+                    return;
                 }
                 cryptoLen += _session->_crypto->getMacInLen();
             }
@@ -387,7 +394,7 @@ void CppsshTransport::rxThread()
 
 short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
 {
-    Botan::byte cmd;
+    Botan::byte cmd = 0;
     std::unique_lock<std::mutex> lock(_inBufferMutex);
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
@@ -416,6 +423,6 @@ short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
             return 0;
         }
     }
-    return command;
+    return cmd;
 }
 

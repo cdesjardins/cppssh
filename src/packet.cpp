@@ -67,7 +67,7 @@ void CppsshPacket::addInt(const uint32_t var)
     (*_data).push_back(p[3]);
 }
 
-void CppsshPacket::addChar(const char ch)
+void CppsshPacket::addByte(const uint8_t ch)
 {
     (*_data).push_back(ch);
 }
