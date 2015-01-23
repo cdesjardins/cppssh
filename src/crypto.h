@@ -125,7 +125,6 @@ private:
     const char* getHmacAlgo(macMethods method);
 
     size_t maxKeyLengthOf(const std::string& name);
-    uint32_t getMacKeyLen(macMethods method);
 };
 
 #endif
