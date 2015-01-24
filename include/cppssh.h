@@ -25,8 +25,9 @@
 #include <string>
 
 class CppsshImpl;
-class CppsshLogMessage;
+class CppsshMessage;
 class CppsshLogger;
+class CppsshTransport;
 
 class Cppssh
 {
@@ -35,12 +36,13 @@ public:
     CPPSSH_EXPORT static void destroy();
     CPPSSH_EXPORT static bool connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, unsigned int timeout = 1, bool shell = true);
     CPPSSH_EXPORT static bool connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, unsigned int timeout = 1, bool shell = true);
+    CPPSSH_EXPORT static bool isConnected(const int channelId);
     CPPSSH_EXPORT static bool send(const int channelId, const char* data, size_t bytes);
-    CPPSSH_EXPORT static size_t read(const int channelId, char* data);
+    CPPSSH_EXPORT static bool read(const int channelId, CppsshMessage* data);
     CPPSSH_EXPORT static bool close(const int channelId);
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize = 0);
-    CPPSSH_EXPORT static bool getLogMessage(const int channelId, CppsshLogMessage* message);
+    CPPSSH_EXPORT static bool getLogMessage(const int channelId, CppsshMessage* message);
 
 private:
     static std::shared_ptr<CppsshImpl> s_cppsshInst;
@@ -49,13 +51,14 @@ private:
     Cppssh& operator=(const Cppssh&);
 };
 
-class CppsshLogMessage
+class CppsshMessage
 {
 public:
-    CppsshLogMessage();
-    ~CppsshLogMessage();
+    CppsshMessage();
+    ~CppsshMessage();
     CPPSSH_EXPORT const char* const message() const;
     friend class CppsshLogger;
+    friend class CppsshTransport;
 private:
     std::shared_ptr<char> _message;
 };

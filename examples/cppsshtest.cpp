@@ -9,7 +9,7 @@ std::mutex _outputMutex;
 
 void reportErrors(const std::string& tag, const int channel)
 {
-    CppsshLogMessage logMessage;
+    CppsshMessage logMessage;
     while (Cppssh::getLogMessage(channel, &logMessage))
     {
         std::cout << tag << " " << channel << " " << logMessage.message() << std::endl;
@@ -25,6 +25,15 @@ void runConnectionTest(char* hostname, char* username, char* password)
         if (connected == true)
         {
             std::cout << "Connected " << channel << std::endl;
+            std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+            while ((std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(5))) && (Cppssh::isConnected(channel) == true))
+            {
+                CppsshMessage message;
+                if (Cppssh::read(channel, &message) == true)
+                {
+                    std::cout << "got data " << message.message() << std::endl;
+                }
+            }
         }
         reportErrors("Connect", channel);
     }

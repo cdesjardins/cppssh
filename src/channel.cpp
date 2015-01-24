@@ -73,8 +73,14 @@ void CppsshChannel::handleDisconnect(const CppsshPacket& packet)
             payloadPacket.getInt();
             payloadPacket.getString(err);
             _session->_logger->pushMessage(err);
+            _channelOpened = false;
         }
     }
+}
+
+bool CppsshChannel::isConnected()
+{
+    return _channelOpened;
 }
 
 bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf)

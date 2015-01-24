@@ -97,18 +97,36 @@ bool CppsshImpl::connect(int* channelId, const char* host, const short port, con
     return ret;
 }
 
+bool CppsshImpl::isConnected(const int channelId)
+{
+    bool ret = false;
+    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    if (con != NULL)
+    {
+        ret = con->isConnected();
+    }
+    return ret;
+}
+
 bool CppsshImpl::send(const int channelId, const char* data, size_t bytes)
 {
     return false;
 }
 
-size_t CppsshImpl::read(const int channelId, char* data)
+bool CppsshImpl::read(const int channelId, CppsshMessage* data)
 {
-    return 0;
+    bool ret = false;
+    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    if (con != NULL)
+    {
+        ret = con->read(data);
+    }
+    return ret;
 }
 
 bool CppsshImpl::close(int channelId)
 {
+    std::unique_lock<std::mutex> lock(_connectionsMutex);
     _connections[channelId].reset();
     return true;
 }
@@ -136,9 +154,10 @@ bool CppsshImpl::generateKeyPair(const char* type, const char* fqdn, const char*
     return false;
 }
 
-bool CppsshImpl::getLogMessage(const int channelId, CppsshLogMessage* message)
+bool CppsshImpl::getLogMessage(const int channelId, CppsshMessage* message)
 {
-    return _connections[channelId]->getLogMessage(message);
+    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    return con->getLogMessage(message);
 }
 
 void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string* outstr)
@@ -158,3 +177,12 @@ void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::stri
     }
 }
 
+std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int channelId)
+{
+    std::shared_ptr<CppsshConnection> con;
+    {
+        std::unique_lock<std::mutex> lock(_connectionsMutex);
+        con = _connections[channelId];
+    }
+    return con;
+}

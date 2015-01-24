@@ -34,7 +34,9 @@ public:
     ~CppsshConnection();
     int connect(const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, bool shell);
 
-    bool getLogMessage(CppsshLogMessage* message);
+    bool read(CppsshMessage* data);
+    bool isConnected();
+    bool getLogMessage(CppsshMessage* message);
 private:
     bool checkRemoteVersion();
     bool sendLocalVersion();

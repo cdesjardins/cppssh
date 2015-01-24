@@ -110,7 +110,17 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     return _channelId;
 }
 
-bool CppsshConnection::getLogMessage(CppsshLogMessage* message)
+bool CppsshConnection::read(CppsshMessage* data)
+{
+    return _transport->read(data);
+}
+
+bool CppsshConnection::isConnected()
+{
+    return _channel->isConnected();
+}
+
+bool CppsshConnection::getLogMessage(CppsshMessage* message)
 {
     return _session->_logger->popMessage(message);
 }

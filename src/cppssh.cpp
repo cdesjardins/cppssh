@@ -46,15 +46,22 @@ bool Cppssh::connectWithKey(int* channelId, const char* host, const short port, 
     return s_cppsshInst->connect(channelId, host, port, username, NULL, privKeyFileName, timeout, shell);
 }
 
+bool Cppssh::isConnected(const int channelId)
+{
+    return s_cppsshInst->isConnected(channelId);
+}
+
 bool Cppssh::send(const int channelId, const char* data, size_t bytes)
 {
     return false;
 }
 
-size_t Cppssh::read(const int channelId, char* data)
+bool Cppssh::read(const int channelId, CppsshMessage* data)
 {
-    return 0;
+    return s_cppsshInst->read(channelId, data);
 }
+
+
 
 bool Cppssh::close(const int channelId)
 {
@@ -71,20 +78,20 @@ bool Cppssh::generateKeyPair(const char* type, const char* fqdn, const char* pri
     return false;
 }
 
-bool Cppssh::getLogMessage(const int channelId, CppsshLogMessage* message)
+bool Cppssh::getLogMessage(const int channelId, CppsshMessage* message)
 {
     return s_cppsshInst->getLogMessage(channelId, message);
 }
 
-CppsshLogMessage::CppsshLogMessage()
+CppsshMessage::CppsshMessage()
 {
 }
 
-CppsshLogMessage::~CppsshLogMessage()
+CppsshMessage::~CppsshMessage()
 {
 }
 
-const char* const CppsshLogMessage::message() const
+const char* const CppsshMessage::message() const
 {
     return _message.get();
 }

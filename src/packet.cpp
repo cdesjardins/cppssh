@@ -34,6 +34,8 @@
 #define NE7SSH_PACKET_PAYLOAD_OFFS  5
 #define NE7SSH_PACKET_CMD_SIZE      1
 
+#define NE7SSH_PACKET_HEADER_SIZE   (NE7SSH_PACKET_PAYLOAD_OFFS + NE7SSH_PACKET_CMD_SIZE)
+
 CppsshPacket::CppsshPacket(Botan::secure_vector<Botan::byte>* data)
     : _data(data)
 {
@@ -228,3 +230,13 @@ size_t CppsshPacket::size() const
     return _data->size();
 }
 
+CppsshPacketHeader::CppsshPacketHeader(const Botan::secure_vector<Botan::byte>& data)
+    : CppsshPacket(&_buf),
+    _buf(Botan::secure_vector<Botan::byte>(data.data(), data.data() + NE7SSH_PACKET_HEADER_SIZE))
+{
+}
+
+CppsshPacketHeader::~CppsshPacketHeader()
+{
+
+}

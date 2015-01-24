@@ -41,7 +41,7 @@ public:
         _messages.push(message);
     }
 
-    bool popMessage(CppsshLogMessage* message)
+    bool popMessage(CppsshMessage* message)
     {
         bool ret = false;
         std::unique_lock<std::recursive_mutex> lock(_mutex);

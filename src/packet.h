@@ -56,5 +56,16 @@ public:
 private:
     Botan::secure_vector<Botan::byte>* _data;
 };
+
+// This class makes a copy of just the header bytes, for quick error checking etc...
+class CppsshPacketHeader : public CppsshPacket
+{
+public:
+    CppsshPacketHeader(const Botan::secure_vector<Botan::byte>& data);
+    ~CppsshPacketHeader();
+private:
+    Botan::secure_vector<Botan::byte> _buf;
+};
+
 #endif
 

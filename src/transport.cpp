@@ -19,7 +19,9 @@
 
 #include "transport.h"
 #include "crypto.h"
+#include "channel.h"
 #include "packet.h"
+#include "messages.h"
 
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
@@ -420,3 +422,26 @@ Botan::byte CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* pa
     return cmd;
 }
 
+bool CppsshTransport::read(CppsshMessage* data)
+{
+    bool ret = false;
+    std::unique_lock<std::mutex> lock(_inBufferMutex);
+    if (_inBuffer.empty() == false)
+    {
+        CppsshPacketHeader header(_inBuffer.front());
+        if (header.getCommand() == SSH2_MSG_DISCONNECT)
+        {
+            _session->_channel->handleDisconnect(CppsshPacket(&_inBuffer.front()));
+        }
+        else
+        {
+            data->_message.reset(new char[_inBuffer.front().size() + 1]);
+            strcpy(data->_message.get(), (const char*)_inBuffer.front().data());
+
+            _inBuffer.front();
+            _inBuffer.pop();
+            ret = true;
+        }
+    }
+    return ret;
+}

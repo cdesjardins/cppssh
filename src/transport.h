@@ -41,6 +41,9 @@ public:
     int establish(const char* host, short port);
     bool start();
 
+    bool read(CppsshMessage* data);
+
+
     bool receive(Botan::secure_vector<Botan::byte>* buffer);
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 

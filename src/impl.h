@@ -33,11 +33,12 @@ public:
     CppsshImpl();
     ~CppsshImpl();
     bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell);
+    bool isConnected(const int channelId);
     bool send(const int channelId, const char* data, size_t bytes);
-    size_t read(const int channelId, char* data);
+    bool read(const int channelId, CppsshMessage* data);
     bool close(const int channelId);
     bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-    bool getLogMessage(const int channelId, CppsshLogMessage* message);
+    bool getLogMessage(const int channelId, CppsshMessage* message);
 
     static void vecToCommaString(const std::vector<std::string>& vec, std::string* outstr);
 
@@ -49,6 +50,7 @@ public:
 
     static std::unique_ptr<Botan::RandomNumberGenerator> RNG;
 private:
+    std::shared_ptr<CppsshConnection> getConnection(const int channelId);
     static void setPref(const char* pref, std::vector<std::string>* list);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::unique_ptr<Botan::LibraryInitializer> _init;

@@ -27,6 +27,7 @@ class CppsshChannel
 public:
     CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     bool open(uint32_t channelID);
+    bool isConnected();
     void getShell();
     void handleDisconnect(const CppsshPacket& packet);
 
