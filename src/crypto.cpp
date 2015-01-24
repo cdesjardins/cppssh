@@ -31,6 +31,12 @@
 #include "botan/transform_filter.h"
 #include <string>
 
+SMART_ENUM_DEFINE(macMethods);
+SMART_ENUM_DEFINE(kexMethods);
+SMART_ENUM_DEFINE(hostkeyMethods);
+SMART_ENUM_DEFINE(cmprsMethods);
+SMART_ENUM_DEFINE(cryptoMethods);
+
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _encryptBlock(0),
@@ -38,12 +44,12 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     _c2sMacDigestLen(0),
     _s2cMacDigestLen(0),
     _inited(false),
-    _c2sMacMethod(HMAC_MD5),
-    _s2cMacMethod(HMAC_MD5),
-    _kexMethod(DH_GROUP1_SHA1),
-    _hostkeyMethod(SSH_DSS),
-    _c2sCryptoMethod(AES128_CBC),
-    _s2cCryptoMethod(AES128_CBC)
+    _c2sMacMethod(macMethods::HMAC_MD5),
+    _s2cMacMethod(macMethods::HMAC_MD5),
+    _kexMethod(kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1),
+    _hostkeyMethod(hostkeyMethods::SSH_DSS),
+    _c2sCryptoMethod(cryptoMethods::AES128_CBC),
+    _s2cCryptoMethod(cryptoMethods::AES128_CBC)
 {
 }
 
@@ -135,19 +141,29 @@ bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& lo
 bool CppsshCrypto::negotiatedKex(const std::string& kexAlgo)
 {
     bool ret = false;
-    if (equal(kexAlgo.begin(), kexAlgo.end(), "diffie-hellman-group1-sha1") == true)
+    _kexMethod = SEkexMethods::string2SmrtEnum(kexAlgo);
+    if ((long)_kexMethod != -1)
     {
-        _kexMethod = DH_GROUP1_SHA1;
         ret = true;
     }
-    else if (equal(kexAlgo.begin(), kexAlgo.end(), "diffie-hellman-group14-sha1") == true)
-    {
-        _kexMethod = DH_GROUP14_SHA1;
-        ret = true;
-    }
-    if (ret == false)
+    else
     {
         _session->_logger->pushMessage(std::stringstream() << "KEX algorithm: '" << kexAlgo << "' not defined.");
+    }
+    return ret;
+}
+
+bool CppsshCrypto::negotiatedMac(const std::string& macAlgo, macMethods* macMethod)
+{
+    bool ret = false;
+    *macMethod = SEmacMethods::string2SmrtEnum(macAlgo);
+    if ((long)*macMethod != -1)
+    {
+        ret = true;
+    }
+    else
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Mac algorithm: '" << macAlgo << "' not defined.");
     }
     return ret;
 }
@@ -155,19 +171,29 @@ bool CppsshCrypto::negotiatedKex(const std::string& kexAlgo)
 bool CppsshCrypto::negotiatedHostkey(const std::string& hostkeyAlgo)
 {
     bool ret = false;
-    if (equal(hostkeyAlgo.begin(), hostkeyAlgo.end(), "ssh-dss") == true)
+    _hostkeyMethod = SEhostkeyMethods::string2SmrtEnum(hostkeyAlgo);
+    if ((long)_hostkeyMethod != -1)
     {
-        _hostkeyMethod = SSH_DSS;
         ret = true;
     }
-    else if (equal(hostkeyAlgo.begin(), hostkeyAlgo.end(), "ssh-rsa") == true)
-    {
-        _hostkeyMethod = SSH_RSA;
-        ret = true;
-    }
-    if (ret == false)
+    else
     {
         _session->_logger->pushMessage(std::stringstream() << "Host key algorithm: '" << hostkeyAlgo << "' not defined.");
+    }
+    return ret;
+}
+
+bool CppsshCrypto::negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod)
+{
+    bool ret = false;
+    *cmprsMethod = SEcmprsMethods::string2SmrtEnum(cmprsAlgo);
+    if ((long)*cmprsMethod != -1)
+    {
+        ret = true;
+    }
+    else
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Compression algorithm: '" << cmprsAlgo << "' not defined.");
     }
     return ret;
 }
@@ -175,6 +201,16 @@ bool CppsshCrypto::negotiatedHostkey(const std::string& hostkeyAlgo)
 bool CppsshCrypto::negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod)
 {
     bool ret = false;
+    *cryptoMethod = SEcryptoMethods::string2SmrtEnum(cryptoAlgo);
+    if ((long)*cryptoMethod != -1)
+    {
+        ret = true;
+    }
+    else
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.");
+    }
+    /*
     if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "3des-cbc") == true)
     {
         *cryptoMethod = TDES_CBC;
@@ -213,7 +249,7 @@ bool CppsshCrypto::negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods
     if (ret == false)
     {
         _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.");
-    }
+    }*/
     return ret;
 }
 
@@ -227,31 +263,6 @@ bool CppsshCrypto::negotiatedCryptoS2c(const std::string& cryptoAlgo)
     return negotiatedCrypto(cryptoAlgo, &_s2cCryptoMethod);
 }
 
-bool CppsshCrypto::negotiatedMac(const std::string& macAlgo, macMethods* macMethod)
-{
-    bool ret = false;
-    if (equal(macAlgo.begin(), macAlgo.end(), "hmac-sha1") == true)
-    {
-        *macMethod = HMAC_SHA1;
-        ret = true;
-    }
-    else if (equal(macAlgo.begin(), macAlgo.end(), "hmac-md5") == true)
-    {
-        *macMethod = HMAC_MD5;
-        ret = true;
-    }
-    else if (equal(macAlgo.begin(), macAlgo.end(), "none") == true)
-    {
-        *macMethod = HMAC_NONE;
-        ret = true;
-    }
-    if (ret == false)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "Mac algorithm: '" << macAlgo << "' not defined.");
-    }
-    return ret;
-}
-
 bool CppsshCrypto::negotiatedMacC2s(const std::string& macAlgo)
 {
     return negotiatedMac(macAlgo, &_c2sMacMethod);
@@ -260,26 +271,6 @@ bool CppsshCrypto::negotiatedMacC2s(const std::string& macAlgo)
 bool CppsshCrypto::negotiatedMacS2c(const std::string& macAlgo)
 {
     return negotiatedMac(macAlgo, &_s2cMacMethod);
-}
-
-bool CppsshCrypto::negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod)
-{
-    bool ret = false;
-    if (equal(cmprsAlgo.begin(), cmprsAlgo.end(), "none") == true)
-    {
-        *cmprsMethod = NONE;
-        ret = true;
-    }
-    else if (equal(cmprsAlgo.begin(), cmprsAlgo.end(), "zlib") == true)
-    {
-        *cmprsMethod = ZLIB;
-        ret = true;
-    }
-    if (ret == false)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "Compression algorithm: '" << cmprsAlgo << "' not defined.");
-    }
-    return ret;
 }
 
 bool CppsshCrypto::negotiatedCmprsC2s(const std::string& cmprsAlgo)
@@ -298,11 +289,11 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
     std::string dlGroup;
     switch (_kexMethod)
     {
-        case DH_GROUP1_SHA1:
+        case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
             dlGroup = "modp/ietf/1024";
             break;
 
-        case DH_GROUP14_SHA1:
+        case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
             dlGroup = "modp/ietf/2048";
             break;
 
@@ -346,31 +337,20 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>& result, Bota
 
 bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>& result, const Botan::secure_vector<Botan::byte>& val)
 {
-    bool ret = true;
+    bool ret = false;
     Botan::HashFunction* hashIt = NULL;
-
-    switch (_kexMethod)
+    std::string hashAlgo = getHashAlgo();
+    if (hashAlgo.length() > 0)
     {
-        case DH_GROUP1_SHA1:
-        case DH_GROUP14_SHA1:
-            hashIt = Botan::global_state().algorithm_factory().make_hash_function("SHA-1");
-            break;
-
-        default:
-            _session->_logger->pushMessage(std::stringstream() << "Undefined DH Group: '" << _kexMethod << "' while computing H.");
-            ret = false;
-            break;
+        hashIt = Botan::global_state().algorithm_factory().make_hash_function(hashAlgo);
     }
 
-    if (hashIt == NULL)
-    {
-        ret = false;
-    }
-    else
+    if (hashIt != NULL)
     {
         _H = hashIt->process(val);
         result = _H;
         delete (hashIt);
+        ret = true;
     }
 
     return ret;
@@ -405,7 +385,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
 
     switch (_hostkeyMethod)
     {
-        case SSH_DSS:
+        case hostkeyMethods::SSH_DSS:
             dsaKey = getDSAKey(hostKey);
             if (dsaKey == NULL)
             {
@@ -414,7 +394,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
             }
             break;
 
-        case SSH_RSA:
+        case hostkeyMethods::SSH_RSA:
             rsaKey = getRSAKey(hostKey);
             if (rsaKey == NULL)
             {
@@ -430,8 +410,8 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
 
     switch (_kexMethod)
     {
-        case DH_GROUP1_SHA1:
-        case DH_GROUP14_SHA1:
+        case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
+        case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
             if (dsaKey)
             {
                 verifier.reset(new Botan::PK_Verifier(*dsaKey, "EMSA1(SHA-1)"));
@@ -540,25 +520,26 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
 {
     switch (crypto)
     {
-        case TDES_CBC:
+        case cryptoMethods::_3DES_CBC:
             return "TripleDES";
 
-        case AES128_CBC:
+        case cryptoMethods::AES128_CBC:
             return "AES-128";
 
-        case AES192_CBC:
+        case cryptoMethods::AES192_CBC:
             return "AES-192";
 
-        case AES256_CBC:
+        case cryptoMethods::AES256_CBC:
             return "AES-256";
 
-        case BLOWFISH_CBC:
+        case cryptoMethods::BLOWFISH_CBC:
             return "Blowfish";
 
-        case CAST128_CBC:
+        case cryptoMethods::CAST128_CBC:
             return "CAST-128";
 
-        case TWOFISH_CBC:
+        case cryptoMethods::TWOFISH_CBC:
+        case cryptoMethods::TWOFISH256_CBC:
             return "Twofish";
 
         default:
@@ -567,39 +548,37 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
     }
 }
 
-size_t CppsshCrypto::maxKeyLengthOf(const std::string& name)
+size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods method)
 {
+    size_t keyLen = 0;
     Botan::Algorithm_Factory& af = Botan::global_state().algorithm_factory();
 
     if (const Botan::BlockCipher* bc = af.prototype_block_cipher(name))
     {
-        return bc->key_spec().maximum_keylength();
+        keyLen = bc->key_spec().maximum_keylength();
+        if (method == cryptoMethods::BLOWFISH_CBC)
+        {
+            keyLen = 16;
+        }
+        else if ((method == cryptoMethods::TWOFISH_CBC) || (method == cryptoMethods::TWOFISH256_CBC))
+        {
+            keyLen = 32;
+        }
     }
-
-    if (const Botan::StreamCipher* sc = af.prototype_stream_cipher(name))
-    {
-        return sc->key_spec().maximum_keylength();
-    }
-
-    if (const Botan::MessageAuthenticationCode* mac = af.prototype_mac(name))
-    {
-        return mac->key_spec().maximum_keylength();
-    }
-
-    return 0;
+    return keyLen;
 }
 
 const char* CppsshCrypto::getHmacAlgo(macMethods method)
 {
     switch (method)
     {
-        case HMAC_SHA1:
+        case macMethods::HMAC_SHA1:
             return "SHA-1";
 
-        case HMAC_MD5:
+        case macMethods::HMAC_MD5:
             return "MD5";
 
-        case HMAC_NONE:
+        case macMethods::HMAC_NONE:
             return NULL;
 
         default:
@@ -612,8 +591,8 @@ const char* CppsshCrypto::getHashAlgo()
 {
     switch (_kexMethod)
     {
-        case DH_GROUP1_SHA1:
-        case DH_GROUP14_SHA1:
+        case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
+        case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
             return "SHA-1";
 
         default:
@@ -683,18 +662,10 @@ bool CppsshCrypto::makeNewKeys()
         _c2sMacDigestLen = hashAlgo->output_length();
     }
     algo = getCryptAlgo(_c2sCryptoMethod);
-    keyLen = maxKeyLengthOf(algo);
+    keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
     if (keyLen == 0)
     {
         return false;
-    }
-    if (_c2sCryptoMethod == BLOWFISH_CBC)
-    {
-        keyLen = 16;
-    }
-    else if (_c2sCryptoMethod == TWOFISH_CBC)
-    {
-        keyLen = 32;
     }
     _encryptBlock = ivLen = Botan::block_size_of(algo);
     if (algo.length() == 0)
@@ -741,18 +712,10 @@ bool CppsshCrypto::makeNewKeys()
         _s2cMacDigestLen = hashAlgo->output_length();
     }
     algo = getCryptAlgo(_s2cCryptoMethod);
-    keyLen = maxKeyLengthOf(algo);
+    keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
     if (keyLen == 0)
     {
         return false;
-    }
-    if (_s2cCryptoMethod == BLOWFISH_CBC)
-    {
-        keyLen = 16;
-    }
-    else if (_s2cCryptoMethod == TWOFISH_CBC)
-    {
-        keyLen = 32;
     }
     _decryptBlock = ivLen = Botan::block_size_of(algo);
     if (algo.length() == 0)

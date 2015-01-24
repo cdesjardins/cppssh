@@ -26,7 +26,14 @@
 #include "botan/dh.h"
 #include "botan/dsa.h"
 #include "botan/rsa.h"
+#include "smrtenum.h"
 #include <memory>
+
+SMART_ENUM_DECLARE(macMethods, HMAC_SHA1, HMAC_MD5, HMAC_NONE);
+SMART_ENUM_DECLARE(kexMethods, DIFFIE_HELLMAN_GROUP1_SHA1, DIFFIE_HELLMAN_GROUP14_SHA1);
+SMART_ENUM_DECLARE(hostkeyMethods, SSH_DSS, SSH_RSA);
+SMART_ENUM_DECLARE(cmprsMethods, NONE, ZLIB);
+SMART_ENUM_DECLARE(cryptoMethods, _3DES_CBC, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC, TWOFISH_CBC, TWOFISH256_CBC);
 
 class CppsshCrypto
 {
@@ -99,17 +106,18 @@ private:
     uint32_t _c2sMacDigestLen;
     uint32_t _s2cMacDigestLen;
     bool _inited;
-    enum macMethods { HMAC_SHA1, HMAC_MD5, HMAC_NONE };
+    //enum macMethods { HMAC_SHA1, HMAC_MD5, HMAC_NONE };
+
     macMethods _c2sMacMethod;
     macMethods _s2cMacMethod;
-    enum kexMethods { DH_GROUP1_SHA1, DH_GROUP14_SHA1 };
+    //enum kexMethods { DH_GROUP1_SHA1, DH_GROUP14_SHA1 };
     kexMethods _kexMethod;
-    enum hostkeyMethods { SSH_DSS, SSH_RSA };
+    //enum hostkeyMethods { SSH_DSS, SSH_RSA };
     hostkeyMethods _hostkeyMethod;
-    enum cryptoMethods { TDES_CBC, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC, TWOFISH_CBC };
+    //enum cryptoMethods { TDES_CBC, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC, TWOFISH_CBC };
     cryptoMethods _c2sCryptoMethod;
     cryptoMethods _s2cCryptoMethod;
-    enum cmprsMethods { NONE, ZLIB };
+    //enum cmprsMethods { NONE, ZLIB };
     cmprsMethods _c2sCmprsMethod;
     cmprsMethods _s2cCmprsMethod;
 
@@ -124,7 +132,7 @@ private:
     const char* getHashAlgo();
     const char* getHmacAlgo(macMethods method);
 
-    size_t maxKeyLengthOf(const std::string& name);
+    size_t maxKeyLengthOf(const std::string& name, cryptoMethods method);
 };
 
 #endif
