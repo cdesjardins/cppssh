@@ -34,15 +34,17 @@ CppsshConnection::CppsshConnection(int channelId, unsigned int timeout)
 {
     _session->_transport = _transport;
     _session->_crypto = _crypto;
+    _session->_channel = _channel;
 }
 
 CppsshConnection::~CppsshConnection()
 {
-    _channel.reset();
     _transport.reset();
     _crypto.reset();
+    _channel.reset();
     _session->_transport.reset();
     _session->_crypto.reset();
+    _session->_channel.reset();
     _session.reset();
 }
 
@@ -154,6 +156,7 @@ bool CppsshConnection::requestService(const std::string& service)
     {
         if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) <= 0)
         {
+            _channel->handleDisconnect(packet);
             _session->_logger->pushMessage("Service request failed.");
         }
         else

@@ -26,6 +26,7 @@
 
 class CppsshTransport;
 class CppsshCrypto;
+class CppsshChannel;
 
 class CppsshSession
 {
@@ -93,6 +94,7 @@ public:
 
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;
+    std::shared_ptr<CppsshChannel> _channel;
     std::shared_ptr<CppsshLogger> _logger;
 private:
     std::string _remoteVer;
