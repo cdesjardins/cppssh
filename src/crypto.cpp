@@ -210,46 +210,6 @@ bool CppsshCrypto::negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods
     {
         _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.");
     }
-    /*
-    if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "3des-cbc") == true)
-    {
-        *cryptoMethod = TDES_CBC;
-        ret = true;
-    }
-    else if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "aes128-cbc") == true)
-    {
-        *cryptoMethod = AES128_CBC;
-        ret = true;
-    }
-    else if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "aes192-cbc") == true)
-    {
-        *cryptoMethod = AES192_CBC;
-        ret = true;
-    }
-    else if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "aes256-cbc") == true)
-    {
-        *cryptoMethod = AES256_CBC;
-        ret = true;
-    }
-    else if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "blowfish-cbc") == true)
-    {
-        *cryptoMethod = BLOWFISH_CBC;
-        ret = true;
-    }
-    else if (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "cast128-cbc") == true)
-    {
-        *cryptoMethod = CAST128_CBC;
-        ret = true;
-    }
-    else if ((equal(cryptoAlgo.begin(), cryptoAlgo.end(), "twofish-cbc") == true) || (equal(cryptoAlgo.begin(), cryptoAlgo.end(), "twofish256-cbc") == true))
-    {
-        *cryptoMethod = TWOFISH_CBC;
-        ret = true;
-    }
-    if (ret == false)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.");
-    }*/
     return ret;
 }
 
@@ -368,18 +328,18 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
 
     if (_H.empty() == true)
     {
-        _session->_logger->pushMessage(std::stringstream() << "H was not initialzed.");
+        _session->_logger->pushMessage("H was not initialzed.");
         return false;
     }
 
     if (signaturePacket.getString(sigType) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Signature without type.");
+        _session->_logger->pushMessage("Signature without type.");
         return false;
     }
     if (signaturePacket.getString(sigData) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Signature without data.");
+        _session->_logger->pushMessage("Signature without data.");
         return false;
     }
 
@@ -389,7 +349,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
             dsaKey = getDSAKey(hostKey);
             if (dsaKey == NULL)
             {
-                _session->_logger->pushMessage(std::stringstream() << "DSA key not generated.");
+                _session->_logger->pushMessage("DSA key not generated.");
                 return false;
             }
             break;
@@ -398,7 +358,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
             rsaKey = getRSAKey(hostKey);
             if (rsaKey == NULL)
             {
-                _session->_logger->pushMessage(std::stringstream() << "RSA key not generated.");
+                _session->_logger->pushMessage("RSA key not generated.");
                 return false;
             }
             break;
@@ -439,7 +399,7 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
 
     if (result == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Failure to verify host signature.");
+        _session->_logger->pushMessage("Failure to verify host signature.");
     }
     return result;
 }
@@ -619,7 +579,7 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byt
 
     if (hashIt == NULL)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Undefined HASH algorithm encountered while computing the key.");
+        _session->_logger->pushMessage("Undefined HASH algorithm encountered while computing the key.");
         return false;
     }
 

@@ -4,7 +4,7 @@
 #include <thread>
 #include <mutex>
 
-#define NUM_THREADS 1
+#define NUM_THREADS 5
 std::mutex _outputMutex;
 
 void reportErrors(const std::string& tag, const int channel)

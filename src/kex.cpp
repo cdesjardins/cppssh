@@ -118,7 +118,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::KEX_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible key exchange algorithms.");
+        _session->_logger->pushMessage("No compatible key exchange algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedKex(agreed) == false)
@@ -131,7 +131,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::HOSTKEY_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible Hostkey algorithms.");
+        _session->_logger->pushMessage("No compatible Hostkey algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedHostkey(agreed) == false)
@@ -144,7 +144,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible cryptographic algorithms.");
+        _session->_logger->pushMessage("No compatible cryptographic algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCryptoC2s(agreed) == false)
@@ -157,7 +157,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible cryptographic algorithms.");
+        _session->_logger->pushMessage("No compatible cryptographic algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCryptoS2c(agreed) == false)
@@ -170,7 +170,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
+        _session->_logger->pushMessage("No compatible HMAC algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedMacC2s(agreed) == false)
@@ -183,7 +183,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible HMAC algorithms.");
+        _session->_logger->pushMessage("No compatible HMAC algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedMacS2c(agreed) == false)
@@ -196,7 +196,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible compression algorithms.");
+        _session->_logger->pushMessage("No compatible compression algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCmprsC2s(agreed) == false)
@@ -209,7 +209,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "No compatible compression algorithms.");
+        _session->_logger->pushMessage("No compatible compression algorithms.");
         return false;
     }
     if (_session->_crypto->negotiatedCmprsS2c(agreed) == false)
@@ -238,7 +238,7 @@ bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
         {
             if (_session->_transport->waitForPacket(SSH2_MSG_KEXDH_REPLY, packet) <= 0)
             {
-                _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange DH reply.");
+                _session->_logger->pushMessage("Timeout while waiting for key exchange DH reply.");
             }
             else
             {
@@ -340,7 +340,7 @@ bool CppsshKex::sendKexNewKeys()
 
     if (_session->_transport->waitForPacket(SSH2_MSG_NEWKEYS, &packet) <= 0)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange newkeys reply.");
+        _session->_logger->pushMessage("Timeout while waiting for key exchange newkeys reply.");
     }
     else
     {
@@ -351,7 +351,7 @@ bool CppsshKex::sendKexNewKeys()
         {
             if (_session->_crypto->makeNewKeys() == false)
             {
-                _session->_logger->pushMessage(std::stringstream() << "Could not make keys.");
+                _session->_logger->pushMessage("Could not make keys.");
             }
             else
             {

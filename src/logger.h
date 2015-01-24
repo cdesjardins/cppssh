@@ -28,12 +28,17 @@
 class CppsshLogger
 {
 public:
-    //logger->pushMessage(std::stringstream() << "this is how you push a message" << 42);
-
-    void pushMessage(std::ostream& message)
+    //logger->pushMessage(std::stringstream() << "this is how you push a message " << 42);
+    void pushMessage(const std::ostream& message)
     {
         std::unique_lock<std::recursive_mutex> lock(_mutex);
-        _messages.push(dynamic_cast<std::stringstream&>(message).str());
+        _messages.push(dynamic_cast<const std::stringstream&>(message).str());
+    }
+
+    void pushMessage(const std::string& message)
+    {
+        std::unique_lock<std::recursive_mutex> lock(_mutex);
+        _messages.push(message);
     }
 
     bool popMessage(CppsshLogMessage* message)

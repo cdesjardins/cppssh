@@ -104,7 +104,7 @@ CppsshPacket& CppsshPacket::operator=(Botan::secure_vector<Botan::byte>* encrypt
     return *this;
 }
 
-uint32_t CppsshPacket::getPacketLength()
+uint32_t CppsshPacket::getPacketLength() const
 {
     uint32_t ret = 0;
     if (_data->size() >= NE7SSH_PACKET_LENGTH_SIZE)
@@ -114,7 +114,7 @@ uint32_t CppsshPacket::getPacketLength()
     return ret;
 }
 
-uint32_t CppsshPacket::getCryptoLength()
+uint32_t CppsshPacket::getCryptoLength() const
 {
     uint32_t ret = getPacketLength();
     if (ret > 0)
@@ -124,7 +124,7 @@ uint32_t CppsshPacket::getCryptoLength()
     return ret;
 }
 
-Botan::byte CppsshPacket::getPadLength()
+Botan::byte CppsshPacket::getPadLength() const
 {
     Botan::byte ret = 0;
     if (_data->size() >= (NE7SSH_PACKET_PAD_OFFS + NE7SSH_PACKET_PAD_SIZE))
@@ -134,7 +134,7 @@ Botan::byte CppsshPacket::getPadLength()
     return ret;
 }
 
-Botan::byte CppsshPacket::getCommand()
+Botan::byte CppsshPacket::getCommand() const
 {
     Botan::byte ret = 0;
     if (_data->size() >= (NE7SSH_PACKET_PAYLOAD_OFFS + NE7SSH_PACKET_CMD_SIZE))
@@ -144,7 +144,7 @@ Botan::byte CppsshPacket::getCommand()
     return ret;
 }
 
-Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadBegin()
+Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadBegin() const
 {
     Botan::secure_vector<Botan::byte>::iterator ret = _data->end();
     if (_data->size() > NE7SSH_PACKET_PAYLOAD_OFFS)
@@ -154,7 +154,7 @@ Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadBegin()
     return ret;
 }
 
-Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadEnd()
+Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadEnd() const
 {
     return getPayloadBegin() + (getPacketLength() - 1);
 }
@@ -223,7 +223,7 @@ void CppsshPacket::clear()
     _data->clear();
 }
 
-size_t CppsshPacket::size()
+size_t CppsshPacket::size() const
 {
     return _data->size();
 }

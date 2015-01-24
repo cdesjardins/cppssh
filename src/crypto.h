@@ -92,6 +92,13 @@ private:
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte>& hostKey);
     bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
+    bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
+    bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
+    bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod);
+    std::string getCryptAlgo(cryptoMethods crypto);
+    const char* getHashAlgo();
+    const char* getHmacAlgo(macMethods method);
+    size_t maxKeyLengthOf(const std::string& name, cryptoMethods method);
 
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;
@@ -106,18 +113,13 @@ private:
     uint32_t _c2sMacDigestLen;
     uint32_t _s2cMacDigestLen;
     bool _inited;
-    //enum macMethods { HMAC_SHA1, HMAC_MD5, HMAC_NONE };
 
     macMethods _c2sMacMethod;
     macMethods _s2cMacMethod;
-    //enum kexMethods { DH_GROUP1_SHA1, DH_GROUP14_SHA1 };
     kexMethods _kexMethod;
-    //enum hostkeyMethods { SSH_DSS, SSH_RSA };
     hostkeyMethods _hostkeyMethod;
-    //enum cryptoMethods { TDES_CBC, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC, TWOFISH_CBC };
     cryptoMethods _c2sCryptoMethod;
     cryptoMethods _s2cCryptoMethod;
-    //enum cmprsMethods { NONE, ZLIB };
     cmprsMethods _c2sCmprsMethod;
     cmprsMethods _s2cCmprsMethod;
 
@@ -125,14 +127,6 @@ private:
     Botan::secure_vector<Botan::byte> _K;
     Botan::secure_vector<Botan::byte> _H;
 
-    bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
-    bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
-    bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod);
-    std::string getCryptAlgo(cryptoMethods crypto);
-    const char* getHashAlgo();
-    const char* getHmacAlgo(macMethods method);
-
-    size_t maxKeyLengthOf(const std::string& name, cryptoMethods method);
 };
 
 #endif

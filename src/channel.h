@@ -28,6 +28,7 @@ public:
     CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     bool open(uint32_t channelID);
     void getShell();
+    void handleDisconnect(const CppsshPacket& packet);
 
 private:
     bool handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf);

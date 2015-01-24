@@ -50,16 +50,8 @@ bool CppsshChannel::open(uint32_t channelID)
     {
         if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &packet) <= 0)
         {
-            std::string err;
-            if (packet.size() > 0)
-            {
-                CppsshPacket message(&buf);
-                Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(message.getPayloadBegin() + 1, message.getPayloadEnd()));
-                CppsshPacket payloadPacket(&payload);
-                payloadPacket.getInt();
-                payloadPacket.getString(err);
-            }
-            _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << " could not be open. " << err);
+            handleDisconnect(packet);
+            _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << " could not be open. ");
         }
         else
         {
@@ -67,6 +59,22 @@ bool CppsshChannel::open(uint32_t channelID)
         }
     }
     return _channelOpened;
+}
+
+void CppsshChannel::handleDisconnect(const CppsshPacket& packet)
+{
+    if (packet.size() > 0)
+    {
+        std::string err;
+        if (packet.getCommand() == SSH2_MSG_DISCONNECT)
+        {
+            Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin() + 1, packet.getPayloadEnd()));
+            CppsshPacket payloadPacket(&payload);
+            payloadPacket.getInt();
+            payloadPacket.getString(err);
+            _session->_logger->pushMessage(err);
+        }
+    }
 }
 
 bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf)

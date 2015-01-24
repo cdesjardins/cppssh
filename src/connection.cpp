@@ -154,7 +154,7 @@ bool CppsshConnection::requestService(const std::string& service)
     {
         if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) <= 0)
         {
-            _session->_logger->pushMessage(std::stringstream() << "Service request failed.");
+            _session->_logger->pushMessage("Service request failed.");
         }
         else
         {
@@ -183,6 +183,9 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
         cmd = _transport->waitForPacket(0, &packet);
         if (cmd == SSH2_MSG_USERAUTH_BANNER)
         {
+            buf.clear();
+            packet.addString(password);
+            _transport->sendPacket(buf);
             // FIXME: Add the banner to the rx queue
             cmd = _transport->waitForPacket(0, &packet);
         }

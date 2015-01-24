@@ -45,7 +45,7 @@ public:
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
     bool sendPacket(const Botan::secure_vector<Botan::byte>& buffer);
-    short waitForPacket(Botan::byte command, CppsshPacket* packet);
+    Botan::byte waitForPacket(Botan::byte command, CppsshPacket* packet);
 
 private:
     bool setNonBlocking(bool on);

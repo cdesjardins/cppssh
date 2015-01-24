@@ -37,12 +37,12 @@ public:
     static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
 
     CppsshPacket& operator=(Botan::secure_vector<Botan::byte>* encryptedPacket);
-    uint32_t getPacketLength();
-    uint32_t getCryptoLength();
-    Botan::byte getPadLength();
-    Botan::byte getCommand();
-    Botan::secure_vector<Botan::byte>::iterator getPayloadBegin();
-    Botan::secure_vector<Botan::byte>::iterator getPayloadEnd();
+    uint32_t getPacketLength() const;
+    uint32_t getCryptoLength() const;
+    Botan::byte getPadLength() const;
+    Botan::byte getCommand() const;
+    Botan::secure_vector<Botan::byte>::iterator getPayloadBegin() const;
+    Botan::secure_vector<Botan::byte>::iterator getPayloadEnd() const;
 
     bool getString(Botan::secure_vector<Botan::byte>& result);
     bool getString(std::string& result);
@@ -51,7 +51,7 @@ public:
 
     void copy(const Botan::secure_vector<Botan::byte>& src);
     void clear();
-    size_t size();
+    size_t size() const;
 
 private:
     Botan::secure_vector<Botan::byte>* _data;

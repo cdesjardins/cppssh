@@ -87,7 +87,7 @@ int CppsshTransport::establish(const char* host, short port)
     _sock = socket(AF_INET, SOCK_STREAM, 0);
     if (_sock < 0)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Failure to bind to socket.");
+        _session->_logger->pushMessage("Failure to bind to socket.");
         return -1;
     }
     if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
@@ -116,7 +116,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     int options;
     if ((options = fcntl(_sock, F_GETFL)) < 0)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Cannot read options of the socket.");
+        _session->_logger->pushMessage("Cannot read options of the socket.");
         return false;
     }
 
@@ -133,7 +133,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     unsigned long options = on;
     if (ioctlsocket(_sock, FIONBIO, &options))
     {
-        _session->_logger->pushMessage(std::stringstream() << "Cannot set asynch I/O on the socket.");
+        _session->_logger->pushMessage("Cannot set asynch I/O on the socket.");
         return false;
     }
 #endif
@@ -209,15 +209,9 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
 
     if (_running == true)
     {
-        if (len == 0)
-        {
-            //_session->_logger->pushMessage(std::stringstream() << "Received a packet of zero length.");
-            //ret = false;
-        }
-
         if (len < 0)
         {
-            _session->_logger->pushMessage(std::stringstream() << "Connection dropped.");
+            _session->_logger->pushMessage("Connection dropped.");
             ret = false;
         }
     }
@@ -283,7 +277,7 @@ bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer
         Botan::secure_vector<Botan::byte> hmac;
         if (_session->_crypto->encryptPacket(crypted, hmac, buf, _txSeq) == false)
         {
-            _session->_logger->pushMessage(std::stringstream() << "Failure to encrypt the payload.");
+            _session->_logger->pushMessage("Failure to encrypt the payload.");
             return false;
         }
         crypted += hmac;
@@ -364,7 +358,7 @@ void CppsshTransport::rxThread()
                 hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + cryptoLen + _session->_crypto->getMacInLen());
                 if (hMac != ourMac)
                 {
-                    _session->_logger->pushMessage(std::stringstream() << "Mismatched HMACs.");
+                    _session->_logger->pushMessage("Mismatched HMACs.");
                     return;
                 }
                 cryptoLen += _session->_crypto->getMacInLen();
@@ -392,7 +386,7 @@ void CppsshTransport::rxThread()
     }
 }
 
-short CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
+Botan::byte CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
 {
     Botan::byte cmd = 0;
     std::unique_lock<std::mutex> lock(_inBufferMutex);
