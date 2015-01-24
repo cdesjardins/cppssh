@@ -183,9 +183,6 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
         cmd = _transport->waitForPacket(0, &packet);
         if (cmd == SSH2_MSG_USERAUTH_BANNER)
         {
-            buf.clear();
-            packet.addString(password);
-            _transport->sendPacket(buf);
             // FIXME: Add the banner to the rx queue
             cmd = _transport->waitForPacket(0, &packet);
         }
