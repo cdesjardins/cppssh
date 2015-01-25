@@ -36,7 +36,7 @@ private:
     bool sendInit(CppsshPacket* packet);
     bool sendKexDHInit(CppsshPacket* packet);
     void constructLocalKex();
-    void makeH(Botan::secure_vector<Botan::byte>& hVector);
+    void makeH(Botan::secure_vector<Botan::byte>* hVector);
 
     std::shared_ptr<CppsshSession> _session;
     Botan::secure_vector<Botan::byte> _localKex;

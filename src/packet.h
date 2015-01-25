@@ -30,7 +30,7 @@ class CppsshConstPacket
 public:
     CppsshConstPacket(const Botan::secure_vector<Botan::byte>* const data);
 
-    static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
+    static void bn2vector(Botan::secure_vector<Botan::byte>* result, const Botan::BigInt& bi);
 
     uint32_t getPacketLength() const;
     uint32_t getCryptoLength() const;
@@ -39,11 +39,11 @@ public:
     Botan::secure_vector<Botan::byte>::const_iterator getPayloadBegin() const;
     Botan::secure_vector<Botan::byte>::const_iterator getPayloadEnd() const;
 
-    bool getString(Botan::secure_vector<Botan::byte>& result) const;
-    bool getString(std::string& result) const;
-    bool getBigInt(Botan::BigInt& result) const;
-    void getChannelData(CppsshMessage& result) const;
-    void getBannerData(CppsshMessage& result) const;
+    bool getString(Botan::secure_vector<Botan::byte>* result) const;
+    bool getString(std::string* result) const;
+    bool getBigInt(Botan::BigInt* result) const;
+    void getChannelData(CppsshMessage* result) const;
+    void getBannerData(CppsshMessage* result) const;
     uint8_t getByte() const;
     uint32_t getInt() const;
     void skipHeader() const;

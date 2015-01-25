@@ -55,11 +55,11 @@ public:
         return _inited;
     }
 
-    bool encryptPacket(Botan::secure_vector<Botan::byte>& crypted, Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
-    bool decryptPacket(Botan::secure_vector<Botan::byte>& decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len);
+    bool encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
+    bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len);
 
-    void computeMac(Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
-    bool computeH(Botan::secure_vector<Botan::byte>& result, const Botan::secure_vector<Botan::byte>& val);
+    void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
+    bool computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val);
 
     bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote);
     bool verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig);
@@ -74,7 +74,7 @@ public:
     bool negotiatedCmprsS2c(const std::string& cmprsAlgo);
 
     bool getKexPublic(Botan::BigInt& publicKey);
-    bool makeKexSecret(Botan::secure_vector<Botan::byte>& result, Botan::BigInt& f);
+    bool makeKexSecret(Botan::secure_vector<Botan::byte>* result, Botan::BigInt& f);
     bool makeNewKeys();
 
     uint32_t getMacOutLen()
@@ -91,7 +91,7 @@ private:
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
-    bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
+    bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes);
     bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
     bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod);

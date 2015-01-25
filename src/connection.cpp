@@ -212,7 +212,7 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
             std::string methods;
             const CppsshConstPacket message(&buf);
             message.skipHeader();
-            message.getString(methods);
+            message.getString(&methods);
             _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
         }
     }

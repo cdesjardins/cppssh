@@ -109,7 +109,7 @@ bool CppsshKex::handleInit()
     Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
     const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
 
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -122,7 +122,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -135,7 +135,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -148,7 +148,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -161,7 +161,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -174,7 +174,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -187,7 +187,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -200,7 +200,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(algos) == false)
+    if (remoteKexAlgosPacket.getString(&algos) == false)
     {
         return false;
     }
@@ -229,7 +229,7 @@ bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
         dhInit.addBigInt(publicKey);
 
         _e.clear();
-        CppsshConstPacket::bn2vector(_e, publicKey);
+        CppsshConstPacket::bn2vector(&_e, publicKey);
 
         if (_session->_transport->sendPacket(buf) == true)
         {
@@ -264,30 +264,30 @@ bool CppsshKex::handleKexDHReply()
     Botan::BigInt publicKey;
 
     _hostKey.clear();
-    if (packet.getString(_hostKey) == false)
+    if (packet.getString(&_hostKey) == false)
     {
         return false;
     }
 
-    if (packet.getBigInt(publicKey) == false)
+    if (packet.getBigInt(&publicKey) == false)
     {
         return false;
     }
     _f.clear();
-    CppsshConstPacket::bn2vector(_f, publicKey);
+    CppsshConstPacket::bn2vector(&_f, publicKey);
 
-    if (packet.getString(hSig) == false)
+    if (packet.getString(&hSig) == false)
     {
         return false;
     }
 
     _k.clear();
-    if (_session->_crypto->makeKexSecret(_k, publicKey) == false)
+    if (_session->_crypto->makeKexSecret(&_k, publicKey) == false)
     {
         return false;
     }
 
-    makeH(hVector);
+    makeH(&hVector);
     if (hVector.empty() == true)
     {
         return false;
@@ -306,7 +306,7 @@ bool CppsshKex::handleKexDHReply()
     return true;
 }
 
-void CppsshKex::makeH(Botan::secure_vector<Botan::byte>& hVector)
+void CppsshKex::makeH(Botan::secure_vector<Botan::byte>* hVector)
 {
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket hashBytes(&buf);

@@ -45,7 +45,7 @@ CppsshConstPacket::CppsshConstPacket(const Botan::secure_vector<Botan::byte>* co
 {
 }
 
-void CppsshConstPacket::bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi)
+void CppsshConstPacket::bn2vector(Botan::secure_vector<Botan::byte>* result, const Botan::BigInt& bi)
 {
     bool high;
 
@@ -55,13 +55,13 @@ void CppsshConstPacket::bn2vector(Botan::secure_vector<Botan::byte>& result, con
 
     if (high == true)
     {
-        result.push_back(0);
+        result->push_back(0);
     }
     else
     {
-        result.clear();
+        result->clear();
     }
-    result += strVector;
+    *result += strVector;
 }
 
 uint32_t CppsshConstPacket::getPacketLength() const
@@ -119,7 +119,7 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshConstPacket::getPayloadE
     return getPayloadBegin() + (getPacketLength() - 1);
 }
 
-bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>& result) const
+bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>* result) const
 {
     bool ret = true;
     uint32_t len = getPacketLength();
@@ -130,23 +130,23 @@ bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>& result) con
     }
     else
     {
-        result = Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index, _cdata->begin() + (sizeof(uint32_t) + len + _index));
+        *result = Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index, _cdata->begin() + (sizeof(uint32_t) + len + _index));
         _index += sizeof(uint32_t) + len;
     }
     return ret;
 }
 
-bool CppsshConstPacket::getString(std::string& result) const
+bool CppsshConstPacket::getString(std::string* result) const
 {
     bool ret;
-    Botan::secure_vector<Botan::byte> str;
-    ret = getString(str);
-    result.clear();
-    result.append((char*)str.data(), str.size());
+    Botan::secure_vector<Botan::byte> buf;
+    ret = getString(&buf);
+    result->clear();
+    result->append((char*)buf.data(), buf.size());
     return ret;
 }
 
-bool CppsshConstPacket::getBigInt(Botan::BigInt& result) const
+bool CppsshConstPacket::getBigInt(Botan::BigInt* result) const
 {
     bool ret = true;
     uint32_t len = getPacketLength();
@@ -158,25 +158,25 @@ bool CppsshConstPacket::getBigInt(Botan::BigInt& result) const
     else
     {
         Botan::BigInt tmpBI(_cdata->data() + sizeof(uint32_t) + _index, len);
-        result.swap(tmpBI);
+        result->swap(tmpBI);
         _index += sizeof(uint32_t) + len;
     }
     return ret;
 }
 
-void CppsshConstPacket::getChannelData(CppsshMessage& result) const
+void CppsshConstPacket::getChannelData(CppsshMessage* result) const
 {
     // hackery to avoid tons of memcpy
     const Botan::byte* p = _cdata->data() + CPPSSH_PACKET_CH_DATA_OFFS + _index;
     uint32_t len = ntohl(*((uint32_t*)p));
-    result.setMessage((uint8_t*)(p + sizeof(uint32_t)), len);
+    result->setMessage((uint8_t*)(p + sizeof(uint32_t)), len);
 }
 
-void CppsshConstPacket::getBannerData(CppsshMessage& result) const
+void CppsshConstPacket::getBannerData(CppsshMessage* result) const
 {
     skipHeader();
     uint32_t len = getInt();
-    result.setMessage((uint8_t*)(_cdata->data() + _index), len);
+    result->setMessage((uint8_t*)(_cdata->data() + _index), len);
 }
 
 uint32_t CppsshConstPacket::getInt() const
@@ -267,7 +267,7 @@ void CppsshPacket::addByte(const uint8_t ch)
 void CppsshPacket::addBigInt(const Botan::BigInt& bn)
 {
     Botan::secure_vector<Botan::byte> converted;
-    CppsshConstPacket::bn2vector(converted, bn);
+    CppsshConstPacket::bn2vector(&converted, bn);
     addVectorField(converted);
 }
 

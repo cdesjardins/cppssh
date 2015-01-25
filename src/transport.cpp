@@ -279,7 +279,7 @@ bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer
     {
         Botan::secure_vector<Botan::byte> crypted;
         Botan::secure_vector<Botan::byte> hmac;
-        if (_session->_crypto->encryptPacket(crypted, hmac, buf, _txSeq) == false)
+        if (_session->_crypto->encryptPacket(&crypted, &hmac, buf, _txSeq) == false)
         {
             _session->_logger->pushMessage("Failure to encrypt the payload.");
             return false;
@@ -335,7 +335,7 @@ void CppsshTransport::rxThread()
         {
             if (_in.size() >= _session->_crypto->getDecryptBlock())
             {
-                _session->_crypto->decryptPacket(decrypted, _in, _session->_crypto->getDecryptBlock());
+                _session->_crypto->decryptPacket(&decrypted, _in, _session->_crypto->getDecryptBlock());
                 macLen = _session->_crypto->getMacInLen();
             }
             if (decrypted.empty() == false)
@@ -357,13 +357,13 @@ void CppsshTransport::rxThread()
             {
                 Botan::secure_vector<Botan::byte> tmpVar;
                 tmpVar = Botan::secure_vector<Botan::byte>(_in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
-                _session->_crypto->decryptPacket(tmpVar, tmpVar, tmpVar.size());
+                _session->_crypto->decryptPacket(&tmpVar, tmpVar, tmpVar.size());
                 decrypted += tmpVar;
             }
             if (_session->_crypto->getMacInLen() && (_in.size() > 0) && (_in.size() >= (cryptoLen + _session->_crypto->getMacInLen())))
             {
                 Botan::secure_vector<Botan::byte> ourMac, hMac;
-                _session->_crypto->computeMac(ourMac, decrypted, _rxSeq);
+                _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
                 hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + cryptoLen + _session->_crypto->getMacInLen());
                 if (hMac != ourMac)
                 {

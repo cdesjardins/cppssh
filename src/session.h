@@ -62,7 +62,7 @@ public:
         return _localVer;
     }
 
-    void setSessionID(Botan::secure_vector<Botan::byte>& session)
+    void setSessionID(const Botan::secure_vector<Botan::byte>& session)
     {
         _sessionID = session;
     }

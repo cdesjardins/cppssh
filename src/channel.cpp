@@ -70,7 +70,7 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
         {
             packet.skipHeader();
             packet.getInt();
-            packet.getString(err);
+            packet.getString(&err);
             _session->_logger->pushMessage(err);
             disconnect();
         }
@@ -93,11 +93,11 @@ void CppsshChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::
     std::shared_ptr<CppsshMessage> message(new CppsshMessage());
     if (isBanner == false)
     {
-        packet.getChannelData(*message.get());
+        packet.getChannelData(message.get());
     }
     else
     {
-        packet.getBannerData(*message.get());
+        packet.getBannerData(message.get());
     }
 
     _windowRecv -= message->length();
@@ -250,7 +250,7 @@ bool CppsshChannel::getShell()
     return ret;
 }
 
-bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
+bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
     const CppsshConstPacket packet(&buf);
     bool ret = false;

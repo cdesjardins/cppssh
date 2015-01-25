@@ -53,20 +53,20 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
 {
 }
 
-bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>& crypted, Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
+bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
 {
     bool ret = true;
     Botan::secure_vector<Botan::byte> macStr;
 
     _encrypt->process_msg(packet);
-    crypted = _encrypt->read_all(_encrypt->message_count() - 1);
+    *crypted = _encrypt->read_all(_encrypt->message_count() - 1);
 
     if (_hmacOut != NULL)
     {
         CppsshPacket mac(&macStr);
         mac.addInt(seq);
         macStr += packet;
-        hmac = _hmacOut->process(macStr);
+        *hmac = _hmacOut->process(macStr);
     }
 
     // reset the IV (nonce)
@@ -74,7 +74,7 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>& crypted, Bot
     return ret;
 }
 
-bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>& decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len)
+bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len)
 {
     bool ret = true;
     uint32_t pLen = packet.size();
@@ -90,14 +90,14 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>& decrypted, c
     }
 
     _decrypt->process_msg(packet.data(), len);
-    decrypted = _decrypt->read_all(_decrypt->message_count() - 1);
+    *decrypted = _decrypt->read_all(_decrypt->message_count() - 1);
 
     // reset the IV (nonce)
     _decryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
     return ret;
 }
 
-void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>& hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
+void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
 {
     Botan::secure_vector<Botan::byte> macStr;
 
@@ -106,11 +106,11 @@ void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>& hmac, const Bot
         CppsshPacket mac(&macStr);
         mac.addInt(seq);
         macStr += packet;
-        hmac = _hmacIn->process(macStr);
+        *hmac = _hmacIn->process(macStr);
     }
     else
     {
-        hmac.clear();
+        hmac->clear();
     }
 }
 
@@ -276,7 +276,7 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
     return ret;
 }
 
-bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>& result, Botan::BigInt& f)
+bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Botan::BigInt& f)
 {
     Botan::DH_KA_Operation dhop(*_privKexKey, *CppsshImpl::RNG);
     std::unique_ptr<Botan::byte> buf(new Botan::byte[f.bytes()]);
@@ -290,12 +290,12 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>& result, Bota
 
     Botan::BigInt Kint(negotiated.begin(), negotiated.length());
     CppsshConstPacket::bn2vector(result, Kint);
-    _K = result;
+    _K = *result;
     _privKexKey.reset();
     return true;
 }
 
-bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>& result, const Botan::secure_vector<Botan::byte>& val)
+bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val)
 {
     bool ret = false;
     Botan::HashFunction* hashIt = NULL;
@@ -308,7 +308,7 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>& result, const Bot
     if (hashIt != NULL)
     {
         _H = hashIt->process(val);
-        result = _H;
+        *result = _H;
         delete (hashIt);
         ret = true;
     }
@@ -331,12 +331,12 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
         return false;
     }
 
-    if (signaturePacket.getString(sigType) == false)
+    if (signaturePacket.getString(&sigType) == false)
     {
         _session->_logger->pushMessage("Signature without type.");
         return false;
     }
-    if (signaturePacket.getString(sigData) == false)
+    if (signaturePacket.getString(&sigData) == false)
     {
         _session->_logger->pushMessage("Signature without data.");
         return false;
@@ -410,7 +410,7 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secur
 
     const CppsshConstPacket hKeyPacket(&hostKey);
 
-    if (hKeyPacket.getString(field) == false)
+    if (hKeyPacket.getString(&field) == false)
     {
         return 0;
     }
@@ -419,19 +419,19 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secur
         return 0;
     }
 
-    if (hKeyPacket.getBigInt(p) == false)
+    if (hKeyPacket.getBigInt(&p) == false)
     {
         return 0;
     }
-    if (hKeyPacket.getBigInt(q) == false)
+    if (hKeyPacket.getBigInt(&q) == false)
     {
         return 0;
     }
-    if (hKeyPacket.getBigInt(g) == false)
+    if (hKeyPacket.getBigInt(&g) == false)
     {
         return 0;
     }
-    if (hKeyPacket.getBigInt(y) == false)
+    if (hKeyPacket.getBigInt(&y) == false)
     {
         return 0;
     }
@@ -448,7 +448,7 @@ std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secur
 
     const CppsshConstPacket hKeyPacket(&hostKey);
 
-    if (hKeyPacket.getString(field) == false)
+    if (hKeyPacket.getString(&field) == false)
     {
         return 0;
     }
@@ -457,11 +457,11 @@ std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secur
         return 0;
     }
 
-    if (hKeyPacket.getBigInt(e) == false)
+    if (hKeyPacket.getBigInt(&e) == false)
     {
         return 0;
     }
-    if (hKeyPacket.getBigInt(n) == false)
+    if (hKeyPacket.getBigInt(&n) == false)
     {
         return 0;
     }
@@ -554,9 +554,8 @@ const char* CppsshCrypto::getHashAlgo()
     }
 }
 
-bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes)
+bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes)
 {
-    Botan::secure_vector<Botan::byte> hash;
     Botan::secure_vector<Botan::byte> hashBytes;
     CppsshPacket hashBytesPacket(&hashBytes);
     Botan::HashFunction* hashIt;
@@ -581,22 +580,19 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byt
     hashBytesPacket.addByte(ID);
     hashBytesPacket.addVector(_session->getSessionID());
 
-    hash = hashIt->process(hashBytes);
-    key.clear();
-    key = hash;
-    len = key.size();
+    *key = hashIt->process(hashBytes);
+    len = key->size();
 
     while (len < nBytes)
     {
         hashBytes.clear();
         hashBytesPacket.addVectorField(_K);
         hashBytesPacket.addVector(_H);
-        hashBytesPacket.addVector(key);
-        hash = hashIt->process(hashBytes);
-        key += hash;
-        len = key.size();
+        hashBytesPacket.addVector(*key);
+        *key += hashIt->process(hashBytes);
+        len = key->size();
     }
-    key.resize(nBytes);
+    key->resize(nBytes);
     delete (hashIt);
     return true;
 }
@@ -626,19 +622,19 @@ bool CppsshCrypto::makeNewKeys()
         return false;
     }
 
-    if (computeKey(key, 'A', ivLen) == false)
+    if (computeKey(&key, 'A', ivLen) == false)
     {
         return false;
     }
     Botan::InitializationVector c2siv(key);
 
-    if (computeKey(key, 'C', keyLen) == false)
+    if (computeKey(&key, 'C', keyLen) == false)
     {
         return false;
     }
     Botan::SymmetricKey c2sKey(key);
 
-    if (computeKey(key, 'E', _c2sMacDigestLen) == false)
+    if (computeKey(&key, 'E', _c2sMacDigestLen) == false)
     {
         return false;
     }
@@ -676,19 +672,19 @@ bool CppsshCrypto::makeNewKeys()
         return false;
     }
 
-    if (computeKey(key, 'B', ivLen) == false)
+    if (computeKey(&key, 'B', ivLen) == false)
     {
         return false;
     }
     Botan::InitializationVector s2civ(key);
 
-    if (computeKey(key, 'D', keyLen) == false)
+    if (computeKey(&key, 'D', keyLen) == false)
     {
         return false;
     }
     Botan::SymmetricKey s2cKey(key);
 
-    if (computeKey(key, 'F', _s2cMacDigestLen) == false)
+    if (computeKey(&key, 'F', _s2cMacDigestLen) == false)
     {
         return false;
     }
