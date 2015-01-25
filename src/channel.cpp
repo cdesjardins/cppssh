@@ -162,7 +162,7 @@ bool CppsshChannel::send(const uint8_t* data, uint32_t bytes)
     uint32_t maxPacketSize = _session->getMaxPacket() - 64;
     while (totalBytesSent < bytes)
     {
-        uint32_t bytesSent = min(bytes, maxPacketSize);
+        uint32_t bytesSent = std::min(bytes, maxPacketSize);
         message.reset(new Botan::secure_vector<Botan::byte>());
         CppsshPacket packet(message.get());
         packet.addByte(SSH2_MSG_CHANNEL_DATA);
