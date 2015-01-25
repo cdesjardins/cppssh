@@ -19,12 +19,11 @@ void reportErrors(const std::string& tag, const int channel)
     }
 }
 
-std::ofstream getOutFile(int channel)
+void getOutFile(int channel, std::ofstream& outfile)
 {
     std::stringstream filename;
     filename << "channel" << channel << ".log";
-    std::ofstream ret(filename.str());
-    return ret;
+    outfile.open(filename.str());
 }
 
 void runConnectionTest(char* hostname, char* username, char* password)
@@ -32,7 +31,8 @@ void runConnectionTest(char* hostname, char* username, char* password)
     int channel;
     if (Cppssh::connectWithPassword(&channel, hostname, 22, username, password, NUM_THREADS * 10) == true)
     {
-        std::ofstream output = getOutFile(channel);
+        std::ofstream output;
+        getOutFile(channel, output);
         output << "Connected " << channel << std::endl;
         std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
         int txCount = 0;
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    _errLog = getOutFile(-1);
+    getOutFile(-1, _errLog);
     Cppssh::create();
     std::vector<std::string> ciphers;
     std::vector<std::string> macs;
