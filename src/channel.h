@@ -31,6 +31,7 @@ public:
     bool getShell();
     bool handleReceived(Botan::secure_vector<Botan::byte>& buf);
     bool read(CppsshMessage* data);
+    bool send(const uint8_t* data, uint32_t bytes);
 
 private:
     bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);

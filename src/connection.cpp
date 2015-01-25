@@ -118,6 +118,11 @@ bool CppsshConnection::read(CppsshMessage* data)
     return _channel->read(data);
 }
 
+bool CppsshConnection::send(const uint8_t* data, uint32_t bytes)
+{
+    return _channel->send(data, bytes);
+}
+
 bool CppsshConnection::isConnected()
 {
     return _channel->isConnected();

@@ -128,6 +128,12 @@ bool CppsshChannel::read(CppsshMessage* data)
     return ret;
 }
 
+bool CppsshChannel::send(const uint8_t* data, uint32_t bytes)
+{
+    //CppsshMessage message();
+    return false;
+}
+
 bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf)
 {
     bool ret = false;

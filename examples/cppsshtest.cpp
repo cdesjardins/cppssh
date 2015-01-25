@@ -31,6 +31,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
                 {
                     std::cout << message.message() << std::endl;
                 }
+                Cppssh::sendString(channel, "ls -l\n");
             }
         }
         else

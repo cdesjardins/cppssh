@@ -108,9 +108,15 @@ bool CppsshImpl::isConnected(const int channelId)
     return ret;
 }
 
-bool CppsshImpl::send(const int channelId, const char* data, size_t bytes)
+bool CppsshImpl::send(const int channelId, const uint8_t* data, size_t bytes)
 {
-    return false;
+    bool ret = false;
+    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    if (con != NULL)
+    {
+        ret = con->send(data, bytes);
+    }
+    return ret;
 }
 
 bool CppsshImpl::read(const int channelId, CppsshMessage* data)

@@ -37,7 +37,8 @@ public:
     CPPSSH_EXPORT static bool connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, unsigned int timeout = 1, bool shell = true);
     CPPSSH_EXPORT static bool connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, unsigned int timeout = 1, bool shell = true);
     CPPSSH_EXPORT static bool isConnected(const int channelId);
-    CPPSSH_EXPORT static bool send(const int channelId, const char* data, size_t bytes);
+    CPPSSH_EXPORT static bool sendString(const int channelId, const char* data);
+    CPPSSH_EXPORT static bool send(const int channelId, const uint8_t* data, size_t bytes);
     CPPSSH_EXPORT static bool read(const int channelId, CppsshMessage* data);
     CPPSSH_EXPORT static bool close(const int channelId);
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
@@ -55,15 +56,15 @@ class CppsshMessage
 {
 public:
     CppsshMessage& operator=(const CppsshMessage&);
-    CppsshMessage();
-    ~CppsshMessage();
-    CPPSSH_EXPORT const char* const message() const;
+    CPPSSH_EXPORT CppsshMessage();
+    CPPSSH_EXPORT virtual ~CppsshMessage();
+    CPPSSH_EXPORT const uint8_t* const message() const;
     CPPSSH_EXPORT size_t length() const;
     friend class CppsshLogger;
     friend class CppsshConstPacket;
 private:
-    void setMessage(const char* message, size_t bytes);
-    std::shared_ptr<char> _message;
+    virtual void setMessage(const uint8_t* message, size_t bytes);
+    std::shared_ptr<uint8_t> _message;
     size_t _len;
 };
 

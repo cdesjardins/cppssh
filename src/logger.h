@@ -56,7 +56,7 @@ public:
         std::unique_lock<std::recursive_mutex> lock(_mutex);
         if (_messages.size() > 0)
         {
-            message->setMessage(_messages.front().c_str(), _messages.front().length());
+            message->setMessage((const uint8_t*)_messages.front().c_str(), _messages.front().length());
             _messages.pop();
             ret = true;
         }

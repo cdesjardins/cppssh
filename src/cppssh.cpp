@@ -51,9 +51,14 @@ bool Cppssh::isConnected(const int channelId)
     return s_cppsshInst->isConnected(channelId);
 }
 
-bool Cppssh::send(const int channelId, const char* data, size_t bytes)
+bool Cppssh::sendString(const int channelId, const char* data)
 {
-    return false;
+    return send(channelId, (const uint8_t*)data, strlen(data));
+}
+
+bool Cppssh::send(const int channelId, const uint8_t* data, size_t bytes)
+{
+    return s_cppsshInst->send(channelId, data, bytes);
 }
 
 bool Cppssh::read(const int channelId, CppsshMessage* data)
@@ -90,7 +95,7 @@ CppsshMessage::~CppsshMessage()
 {
 }
 
-const char* const CppsshMessage::message() const
+const uint8_t* const CppsshMessage::message() const
 {
     return _message.get();
 }
@@ -101,11 +106,11 @@ CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
     return *this;
 }
 
-void CppsshMessage::setMessage(const char* message, size_t bytes)
+void CppsshMessage::setMessage(const uint8_t* message, size_t bytes)
 {
-    _message.reset(new char[bytes + 1]);
+    _message.reset(new uint8_t[bytes + 1]);
     _len = bytes;
-    strncpy(_message.get(), message, _len);
+    memcpy(_message.get(), message, _len);
     _message.get()[_len] = 0;
 }
 

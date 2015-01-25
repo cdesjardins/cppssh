@@ -34,7 +34,7 @@ public:
     ~CppsshImpl();
     bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell);
     bool isConnected(const int channelId);
-    bool send(const int channelId, const char* data, size_t bytes);
+    bool send(const int channelId, const uint8_t* data, size_t bytes);
     bool read(const int channelId, CppsshMessage* data);
     bool close(const int channelId);
     bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
