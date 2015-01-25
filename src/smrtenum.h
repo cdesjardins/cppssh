@@ -30,7 +30,7 @@
 
 template<typename T> struct enum_properties;
 
-#define _SMART_ENUM_STRINGIZE(x) #x
+#define _SMART_ENUM_STRINGIZE(x...) #x
 
 #define SMART_ENUM_DECLARE(E, ...)                                              \
     enum class E { __VA_ARGS__, MAX_VALS };                                     \
