@@ -185,9 +185,6 @@ bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>
 
     if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
     {
-        //Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
-        //Botan::secure_vector<Botan::byte> payload(buf.begin() + 1, buf.end() - 1);
-        //const CppsshConstPacket payloadPacket(&payload);
         packet.skipHeader();
         // Receive Channel
         packet.getInt();

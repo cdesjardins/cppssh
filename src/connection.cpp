@@ -211,8 +211,6 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
         {
             std::string methods;
             const CppsshConstPacket message(&buf);
-            //Botan::secure_vector<Botan::byte> authBuf(Botan::secure_vector<Botan::byte>(message.getPayloadBegin() + 1, message.getPayloadEnd()));
-            //const CppsshConstPacket auth(&authBuf);
             message.skipHeader();
             message.getString(methods);
             _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());

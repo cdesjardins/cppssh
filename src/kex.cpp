@@ -99,17 +99,14 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
-    Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
     std::string algos;
     std::string agreed;
 
-    if ((_session->_transport == NULL) || (_session->_crypto == NULL))
-    {
-        return false;
-    }
     _remoteKex.clear();
     CppsshPacket remoteKexPacket(&_remoteKex);
     remoteKexPacket.addVector(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin(), (packet.getPayloadEnd() - packet.getPadLength())));
+
+    Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
     const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
 
     if (remoteKexAlgosPacket.getString(algos) == false)
@@ -263,8 +260,6 @@ bool CppsshKex::handleKexDHReply()
     {
         return false;
     }
-    //Botan::secure_vector<Botan::byte> remoteKexDH(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
-    //const CppsshConstPacket remoteKexDHPacket(&remoteKexDH);
     packet.skipHeader();
     Botan::BigInt publicKey;
 

@@ -176,7 +176,7 @@ void CppsshConstPacket::getBannerData(CppsshMessage& result) const
 {
     skipHeader();
     uint32_t len = getInt();
-    result.setMessage((uint8_t*)(_cdata + sizeof(uint32_t)), len);
+    result.setMessage((uint8_t*)(_cdata->data() + _index), len);
 }
 
 uint32_t CppsshConstPacket::getInt() const
