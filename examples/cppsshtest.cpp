@@ -34,7 +34,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
                     std::cout << message.message();
                     rxCount++;
                 }
-                if ((txCount < 100) && (std::chrono::steady_clock::now() >(txTime + std::chrono::milliseconds(100))))
+                if ((txCount < 100) && (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(100))))
                 {
                     // send ls -l every 100 milliseconds
                     Cppssh::sendString(channel, "ls -l\n");

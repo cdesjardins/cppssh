@@ -111,14 +111,14 @@ bool CppsshChannel::flushOutgoingChannelData()
     while (_outgoingMessages.empty() == false)
     {
         std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
-        { // new scope for mutex
+        {// new scope for mutex
             std::unique_lock<std::mutex> lock(_outgoingMessagesMutex);
             message = _outgoingMessages.front();
         }
         if (_windowSend > message->size())
         {
             _windowSend -= message->size();
-            { // new scope for mutex
+            {// new scope for mutex
                 std::unique_lock<std::mutex> lock(_outgoingMessagesMutex);
                 _outgoingMessages.pop();
             }
@@ -275,6 +275,7 @@ bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_KEXINIT:
             _session->_transport->handleData(buf);
             break;
+
         case SSH2_MSG_USERAUTH_BANNER:
             _session->_transport->handleData(buf);
             handleIncomingChannelData(buf, true);
@@ -330,3 +331,4 @@ void CppsshChannel::sendAdjustWindow()
 
     _session->_transport->sendPacket(buf);
 }
+
