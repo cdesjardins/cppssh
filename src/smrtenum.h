@@ -19,7 +19,6 @@
 #ifndef _SMRT_ENUM_Hxx
 #define _SMRT_ENUM_Hxx
 
-
 #include "cryptstr.h"
 #include <sstream>
 #include <vector>
@@ -30,36 +29,36 @@
 
 template<typename T> struct enum_properties;
 #ifdef WIN32
-#define _SMART_ENUM_STRINGIZE(x) #x
+#define _SMART_ENUM_STRINGIZE(x) # x
 #else
-#define _SMART_ENUM_STRINGIZE(x...) #x
+#define _SMART_ENUM_STRINGIZE(x ...) # x
 #endif
 
 #define SMART_ENUM_DECLARE(E, ...)                                              \
     enum class E { __VA_ARGS__, MAX_VALS };                                     \
-    typedef enum_properties<E> SE##E;                                           \
+    typedef enum_properties<E> SE ## E;                                         \
     template<> struct enum_properties<E> {                                      \
-    public:                                                                     \
-        static const bool is_enum = std::is_enum<E>::value;                     \
-        static const bool is_specialized = true;                                \
+public:                                                                         \
+        static const bool   is_enum = std::is_enum<E>::value;                   \
+        static const bool   is_specialized = true;                              \
         static const size_t max;                                                \
         static E string2SmrtEnum(std::string);                                  \
         static std::string smrtEnum2String(E);                                  \
-    private:                                                                    \
+private:                                                                        \
         static std::string enumName();                                          \
         static std::string itemName(E);                                         \
-        static const char* items() { return _SMART_ENUM_STRINGIZE(__VA_ARGS__);}\
+        static const char* items() { return _SMART_ENUM_STRINGIZE(__VA_ARGS__); } \
         static std::vector<std::string> _itemList;                              \
         static std::map<std::string, E> _itemMap;                               \
     };                                                                          \
-    inline std::ostream &operator<<(std::ostream &os, E e)                      \
-        { return os << static_cast<long>(e); }
+    inline std::ostream& operator<<(std::ostream& os, E e)                      \
+    { return os << static_cast<long>(e); }
 
 #define SMART_ENUM_DEFINE(E)                                                    \
-    const size_t        enum_properties<E>::max = static_cast<size_t>(E::MAX_VALS); \
+    const size_t enum_properties<E>::max = static_cast<size_t>(E::MAX_VALS);    \
     std::vector<std::string> enum_properties<E>::_itemList;                     \
     std::map<std::string, E> enum_properties<E>::_itemMap;                      \
-    std::string enum_properties<E>::enumName() { return #E; }                   \
+    std::string enum_properties<E>::enumName() { return # E; }                  \
     std::string enum_properties<E>::itemName(E f)                               \
     {                                                                           \
         if (_itemList.size() != max)                                            \
@@ -109,7 +108,7 @@ template<typename T> struct enum_properties;
                 std::string element = *it;                                      \
                 _itemMap[element] = v;                                          \
                 std::transform(element.begin(), element.end(),                  \
-                    element.begin(), ::tolower);                                \
+                               element.begin(), ::tolower);                     \
                 _itemMap[element] = v;                                          \
                 v = (E)((long)v + 1);                                           \
             }                                                                   \

@@ -88,7 +88,7 @@ public:
     }
 
 private:
-    
+
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
@@ -126,7 +126,6 @@ private:
     std::unique_ptr<Botan::DH_PrivateKey> _privKexKey;
     Botan::secure_vector<Botan::byte> _K;
     Botan::secure_vector<Botan::byte> _H;
-
 };
 
 #endif

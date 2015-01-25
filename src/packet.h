@@ -19,7 +19,6 @@
 #ifndef _PACKET_Hxx
 #define _PACKET_Hxx
 
-
 #include "botan/botan.h"
 #include <cstdint>
 #include <cstddef>
@@ -29,7 +28,7 @@ class CppsshMessage;
 class CppsshConstPacket
 {
 public:
-    CppsshConstPacket(const Botan::secure_vector<Botan::byte>*const data);
+    CppsshConstPacket(const Botan::secure_vector<Botan::byte>* const data);
 
     static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
 
@@ -53,7 +52,7 @@ private:
     CppsshConstPacket(const CppsshConstPacket&);
     CppsshConstPacket& operator=(const CppsshConstPacket& data);
 
-    const Botan::secure_vector<Botan::byte>*const _cdata;
+    const Botan::secure_vector<Botan::byte>* const _cdata;
     mutable int _index;
 };
 

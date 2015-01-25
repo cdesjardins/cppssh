@@ -93,7 +93,6 @@ void CppsshChannel::handleChannelData(const Botan::secure_vector<Botan::byte>& b
 
 void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf)
 {
-
 }
 
 bool CppsshChannel::read(CppsshMessage* data)
@@ -118,7 +117,7 @@ bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>
 
     if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
     {
-        Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin()+1, packet.getPayloadEnd());
+        Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
         //Botan::secure_vector<Botan::byte> payload(buf.begin() + 1, buf.end() - 1);
         const CppsshConstPacket payloadPacket(&payload);
 
@@ -148,7 +147,7 @@ bool CppsshChannel::doChannelRequest(const std::string& req, const Botan::secure
     packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
     packet.addInt(_session->getSendChannel());
     packet.addString(req);
-    packet.addByte(1);  // want reply == true
+    packet.addByte(1);// want reply == true
     packet.addVector(reqdata);
     if ((_session->_transport->sendPacket(buf) == true) &&
         (_session->_transport->waitForPacket(0, &packet) == true) &&
@@ -193,58 +192,58 @@ bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
     int cmd = packet.getCommand();
     switch (cmd)
     {
-    case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
-        handleWindowAdjust(buf);
-        break;
+        case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
+            handleWindowAdjust(buf);
+            break;
 
-    case SSH2_MSG_CHANNEL_SUCCESS:
-    case SSH2_MSG_CHANNEL_FAILURE:
-    case SSH2_MSG_CHANNEL_OPEN_CONFIRMATION:
-    case SSH2_MSG_CHANNEL_OPEN_FAILURE:
-    case SSH2_MSG_USERAUTH_BANNER:
-    case SSH2_MSG_USERAUTH_FAILURE:
-    case SSH2_MSG_USERAUTH_SUCCESS:
-    case SSH2_MSG_SERVICE_ACCEPT:
-    case SSH2_MSG_KEXDH_REPLY:
-    case SSH2_MSG_NEWKEYS:
-    case SSH2_MSG_KEXINIT:
-        _session->_transport->handleData(buf);
-        break;
+        case SSH2_MSG_CHANNEL_SUCCESS:
+        case SSH2_MSG_CHANNEL_FAILURE:
+        case SSH2_MSG_CHANNEL_OPEN_CONFIRMATION:
+        case SSH2_MSG_CHANNEL_OPEN_FAILURE:
+        case SSH2_MSG_USERAUTH_BANNER:
+        case SSH2_MSG_USERAUTH_FAILURE:
+        case SSH2_MSG_USERAUTH_SUCCESS:
+        case SSH2_MSG_SERVICE_ACCEPT:
+        case SSH2_MSG_KEXDH_REPLY:
+        case SSH2_MSG_NEWKEYS:
+        case SSH2_MSG_KEXINIT:
+            _session->_transport->handleData(buf);
+            break;
 
-    case SSH2_MSG_CHANNEL_DATA:
-        handleChannelData(buf);
-        break;
+        case SSH2_MSG_CHANNEL_DATA:
+            handleChannelData(buf);
+            break;
 
-    case SSH2_MSG_CHANNEL_EXTENDED_DATA:
-        //handleExtendedData(newPacket.value());
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EXTENDED_DATA: " << cmd);
-        break;
+        case SSH2_MSG_CHANNEL_EXTENDED_DATA:
+            //handleExtendedData(newPacket.value());
+            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EXTENDED_DATA: " << cmd);
+            break;
 
-    case SSH2_MSG_CHANNEL_EOF:
-        //handleEof(newPacket.value());
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EOF: " << cmd);
-        break;
+        case SSH2_MSG_CHANNEL_EOF:
+            //handleEof(newPacket.value());
+            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EOF: " << cmd);
+            break;
 
-    case SSH2_MSG_CHANNEL_CLOSE:
-        //handleClose(newPacket.value());
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_CLOSE: " << cmd);
-        break;
+        case SSH2_MSG_CHANNEL_CLOSE:
+            //handleClose(newPacket.value());
+            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_CLOSE: " << cmd);
+            break;
 
-    case SSH2_MSG_CHANNEL_REQUEST:
-        //handleRequest(newPacket.value());
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_REQUEST: " << cmd);
-        break;
+        case SSH2_MSG_CHANNEL_REQUEST:
+            //handleRequest(newPacket.value());
+            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_REQUEST: " << cmd);
+            break;
 
-    case SSH2_MSG_IGNORE:
-        break;
+        case SSH2_MSG_IGNORE:
+            break;
 
-    case SSH2_MSG_DISCONNECT:
-        handleDisconnect(packet);
-        break;
+        case SSH2_MSG_DISCONNECT:
+            handleDisconnect(packet);
+            break;
 
-    default:
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled command encountered: " << cmd);
-        break;
+        default:
+            _session->_logger->pushMessage(std::stringstream() << "Unhandled command encountered: " << cmd);
+            break;
     }
     return ret;
 }

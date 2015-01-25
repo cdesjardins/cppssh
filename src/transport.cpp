@@ -416,3 +416,4 @@ void CppsshTransport::handleData(const Botan::secure_vector<Botan::byte>& data)
     _inBuffer.push(data);
     _inBufferCondVar.notify_all();
 }
+

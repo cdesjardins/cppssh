@@ -37,7 +37,7 @@
 
 #define CPPSSH_PACKET_CH_DATA_OFFS  10
 
-CppsshConstPacket::CppsshConstPacket(const Botan::secure_vector<Botan::byte>*const data)
+CppsshConstPacket::CppsshConstPacket(const Botan::secure_vector<Botan::byte>* const data)
     : _cdata(data),
     _index(0)
 {
@@ -183,6 +183,7 @@ size_t CppsshConstPacket::size() const
 {
     return _cdata->size();
 }
+
 /*
 CppsshConstPacket& CppsshConstPacket::operator=(const CppsshConstPacket& data)
 {
@@ -245,3 +246,4 @@ void CppsshPacket::addBigInt(const Botan::BigInt& bn)
     CppsshConstPacket::bn2vector(converted, bn);
     addVectorField(converted);
 }
+

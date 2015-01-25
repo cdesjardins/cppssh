@@ -99,3 +99,4 @@ CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
     _message = other._message;
     return *this;
 }
+
