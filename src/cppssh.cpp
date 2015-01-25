@@ -82,6 +82,7 @@ bool Cppssh::getLogMessage(const int channelId, CppsshMessage* message)
 }
 
 CppsshMessage::CppsshMessage()
+    : _len(0)
 {
 }
 
@@ -100,3 +101,15 @@ CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
     return *this;
 }
 
+void CppsshMessage::setMessage(const char* message, size_t bytes)
+{
+    _message.reset(new char[bytes + 1]);
+    _len = bytes;
+    strncpy(_message.get(), message, _len);
+    _message.get()[_len] = 0;
+}
+
+size_t CppsshMessage::length() const
+{
+    return _len;
+}

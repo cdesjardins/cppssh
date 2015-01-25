@@ -39,6 +39,8 @@ private:
     void handleChannelData(const Botan::secure_vector<Botan::byte>& buf, bool isBanner);
     void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
 
+    void sendAdjustWindow();
+
     std::shared_ptr<CppsshSession> _session;
     uint32_t _windowRecv;
     uint32_t _windowSend;

@@ -58,10 +58,13 @@ public:
     CppsshMessage();
     ~CppsshMessage();
     CPPSSH_EXPORT const char* const message() const;
+    CPPSSH_EXPORT size_t length() const;
     friend class CppsshLogger;
     friend class CppsshConstPacket;
 private:
+    void setMessage(const char* message, size_t bytes);
     std::shared_ptr<char> _message;
+    size_t _len;
 };
 
 #endif
