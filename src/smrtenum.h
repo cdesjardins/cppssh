@@ -42,7 +42,7 @@ template<typename T> struct enum_properties;
     public:                                                                     \
         static const bool is_enum = std::is_enum<E>::value;                     \
         static const bool is_specialized = true;                                \
-        static const long max;                                                  \
+        static const size_t max;                                                \
         static E string2SmrtEnum(std::string);                                  \
         static std::string smrtEnum2String(E);                                  \
     private:                                                                    \
@@ -56,7 +56,7 @@ template<typename T> struct enum_properties;
         { return os << static_cast<long>(e); }
 
 #define SMART_ENUM_DEFINE(E)                                                    \
-    const long        enum_properties<E>::max = static_cast<long>(E::MAX_VALS); \
+    const size_t        enum_properties<E>::max = static_cast<size_t>(E::MAX_VALS); \
     std::vector<std::string> enum_properties<E>::_itemList;                     \
     std::map<std::string, E> enum_properties<E>::_itemMap;                      \
     std::string enum_properties<E>::enumName() { return #E; }                   \
