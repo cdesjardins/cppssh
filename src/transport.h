@@ -41,14 +41,12 @@ public:
     int establish(const char* host, short port);
     bool start();
 
-    bool read(CppsshMessage* data);
-
-
     bool receive(Botan::secure_vector<Botan::byte>* buffer);
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
     bool sendPacket(const Botan::secure_vector<Botan::byte>& buffer);
-    Botan::byte waitForPacket(Botan::byte command, CppsshPacket* packet);
+    bool waitForPacket(Botan::byte command, CppsshPacket* packet);
+    void handleData(const Botan::secure_vector<Botan::byte>& data);
 
 private:
     bool setNonBlocking(bool on);

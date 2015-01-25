@@ -28,16 +28,22 @@ public:
     CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     bool open(uint32_t channelID);
     bool isConnected();
-    void getShell();
-    void handleDisconnect(const CppsshPacket& packet);
+    bool getShell();
+    bool handleReceived(Botan::secure_vector<Botan::byte>& buf);
+    bool read(CppsshMessage* data);
 
 private:
+    bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
     bool handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf);
+    void handleDisconnect(const CppsshPacket& packet);
+    void handleChannelData(Botan::secure_vector<Botan::byte>& buf);
 
     std::shared_ptr<CppsshSession> _session;
     uint32_t _windowRecv;
     uint32_t _windowSend;
     bool _channelOpened;
+    std::mutex _messageMutex;
+    std::queue<CppsshMessage> _messages;
 };
 
 #endif

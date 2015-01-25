@@ -18,6 +18,7 @@
 */
 
 #include "packet.h"
+#include "cppssh.h"
 
 #if !defined(WIN32) && !defined(__MINGW32__)
 #   include <arpa/inet.h>
@@ -25,16 +26,16 @@
 #   include <Winsock2.h>
 #endif
 
-#define NE7SSH_PACKET_LENGTH_OFFS   0
-#define NE7SSH_PACKET_LENGTH_SIZE   4
+#define CPPSSH_PACKET_LENGTH_OFFS   0
+#define CPPSSH_PACKET_LENGTH_SIZE   4
 
-#define NE7SSH_PACKET_PAD_OFFS      4
-#define NE7SSH_PACKET_PAD_SIZE      1
+#define CPPSSH_PACKET_PAD_OFFS      4
+#define CPPSSH_PACKET_PAD_SIZE      1
 
-#define NE7SSH_PACKET_PAYLOAD_OFFS  5
-#define NE7SSH_PACKET_CMD_SIZE      1
+#define CPPSSH_PACKET_PAYLOAD_OFFS  5
+#define CPPSSH_PACKET_CMD_SIZE      1
 
-#define NE7SSH_PACKET_HEADER_SIZE   (NE7SSH_PACKET_PAYLOAD_OFFS + NE7SSH_PACKET_CMD_SIZE)
+#define CPPSSH_PACKET_CH_DATA_OFFS  10
 
 CppsshPacket::CppsshPacket(Botan::secure_vector<Botan::byte>* data)
     : _data(data)
@@ -109,7 +110,7 @@ CppsshPacket& CppsshPacket::operator=(Botan::secure_vector<Botan::byte>* encrypt
 uint32_t CppsshPacket::getPacketLength() const
 {
     uint32_t ret = 0;
-    if (_data->size() >= NE7SSH_PACKET_LENGTH_SIZE)
+    if (_data->size() >= CPPSSH_PACKET_LENGTH_SIZE)
     {
         ret = ntohl(*((uint32_t*)_data->data()));
     }
@@ -129,9 +130,9 @@ uint32_t CppsshPacket::getCryptoLength() const
 Botan::byte CppsshPacket::getPadLength() const
 {
     Botan::byte ret = 0;
-    if (_data->size() >= (NE7SSH_PACKET_PAD_OFFS + NE7SSH_PACKET_PAD_SIZE))
+    if (_data->size() >= (CPPSSH_PACKET_PAD_OFFS + CPPSSH_PACKET_PAD_SIZE))
     {
-        ret = _data->begin()[NE7SSH_PACKET_PAD_OFFS];
+        ret = _data->begin()[CPPSSH_PACKET_PAD_OFFS];
     }
     return ret;
 }
@@ -139,9 +140,9 @@ Botan::byte CppsshPacket::getPadLength() const
 Botan::byte CppsshPacket::getCommand() const
 {
     Botan::byte ret = 0;
-    if (_data->size() >= (NE7SSH_PACKET_PAYLOAD_OFFS + NE7SSH_PACKET_CMD_SIZE))
+    if (_data->size() >= (CPPSSH_PACKET_PAYLOAD_OFFS + CPPSSH_PACKET_CMD_SIZE))
     {
-        ret = _data->begin()[NE7SSH_PACKET_PAYLOAD_OFFS];
+        ret = _data->begin()[CPPSSH_PACKET_PAYLOAD_OFFS];
     }
     return ret;
 }
@@ -149,9 +150,9 @@ Botan::byte CppsshPacket::getCommand() const
 Botan::secure_vector<Botan::byte>::iterator CppsshPacket::getPayloadBegin() const
 {
     Botan::secure_vector<Botan::byte>::iterator ret = _data->end();
-    if (_data->size() > NE7SSH_PACKET_PAYLOAD_OFFS)
+    if (_data->size() > CPPSSH_PACKET_PAYLOAD_OFFS)
     {
-        ret = _data->begin() + NE7SSH_PACKET_PAYLOAD_OFFS;
+        ret = _data->begin() + CPPSSH_PACKET_PAYLOAD_OFFS;
     }
     return ret;
 }
@@ -207,6 +208,16 @@ bool CppsshPacket::getBigInt(Botan::BigInt& result)
     return ret;
 }
 
+void CppsshPacket::getChannelData(CppsshMessage& result)
+{
+    // hackery to avoid tons of memcpy
+    Botan::byte* p = _data->data() + CPPSSH_PACKET_CH_DATA_OFFS;
+    uint32_t len = ntohl(*((uint32_t*)p));
+    result._message.reset(new char[len + 1]);
+    strncpy(result._message.get(), (char*)(p + 4), len);
+    result._message.get()[len] = 0;
+}
+
 uint32_t CppsshPacket::getInt()
 {
     uint32_t result = getPacketLength();
@@ -228,15 +239,4 @@ void CppsshPacket::clear()
 size_t CppsshPacket::size() const
 {
     return _data->size();
-}
-
-CppsshPacketHeader::CppsshPacketHeader(const Botan::secure_vector<Botan::byte>& data)
-    : CppsshPacket(&_buf),
-    _buf(Botan::secure_vector<Botan::byte>(data.data(), data.data() + NE7SSH_PACKET_HEADER_SIZE))
-{
-}
-
-CppsshPacketHeader::~CppsshPacketHeader()
-{
-
 }

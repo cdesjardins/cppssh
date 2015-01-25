@@ -78,9 +78,8 @@ bool CppsshKex::sendInit(CppsshPacket* packet)
 
     if (_session->_transport->sendPacket(_localKex) == true)
     {
-        if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT, packet) <= 0)
+        if (_session->_transport->waitForPacket(SSH2_MSG_KEXINIT, packet) == false)
         {
-            _session->_channel->handleDisconnect(*packet);
             _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange init reply.");
         }
         else
@@ -237,9 +236,8 @@ bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
 
         if (_session->_transport->sendPacket(buf) == true)
         {
-            if (_session->_transport->waitForPacket(SSH2_MSG_KEXDH_REPLY, packet) <= 0)
+            if (_session->_transport->waitForPacket(SSH2_MSG_KEXDH_REPLY, packet) == false)
             {
-                _session->_channel->handleDisconnect(*packet);
                 _session->_logger->pushMessage("Timeout while waiting for key exchange DH reply.");
             }
             else
@@ -340,9 +338,8 @@ bool CppsshKex::sendKexNewKeys()
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if (_session->_transport->waitForPacket(SSH2_MSG_NEWKEYS, &packet) <= 0)
+    if (_session->_transport->waitForPacket(SSH2_MSG_NEWKEYS, &packet) == false)
     {
-        _session->_channel->handleDisconnect(packet);
         _session->_logger->pushMessage("Timeout while waiting for key exchange newkeys reply.");
     }
     else

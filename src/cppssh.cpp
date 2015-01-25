@@ -61,8 +61,6 @@ bool Cppssh::read(const int channelId, CppsshMessage* data)
     return s_cppsshInst->read(channelId, data);
 }
 
-
-
 bool Cppssh::close(const int channelId)
 {
     return s_cppsshInst->close(channelId);
@@ -96,3 +94,8 @@ const char* const CppsshMessage::message() const
     return _message.get();
 }
 
+CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
+{
+    _message = other._message;
+    return *this;
+}

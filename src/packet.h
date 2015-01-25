@@ -19,9 +19,12 @@
 #ifndef _PACKET_Hxx
 #define _PACKET_Hxx
 
+
 #include "botan/botan.h"
 #include <cstdint>
 #include <cstddef>
+
+class CppsshMessage;
 
 class CppsshPacket
 {
@@ -47,6 +50,7 @@ public:
     bool getString(Botan::secure_vector<Botan::byte>& result);
     bool getString(std::string& result);
     bool getBigInt(Botan::BigInt& result);
+    void getChannelData(CppsshMessage& result);
     uint32_t getInt();
 
     void copy(const Botan::secure_vector<Botan::byte>& src);
@@ -55,16 +59,6 @@ public:
 
 private:
     Botan::secure_vector<Botan::byte>* _data;
-};
-
-// This class makes a copy of just the header bytes, for quick error checking etc...
-class CppsshPacketHeader : public CppsshPacket
-{
-public:
-    CppsshPacketHeader(const Botan::secure_vector<Botan::byte>& data);
-    ~CppsshPacketHeader();
-private:
-    Botan::secure_vector<Botan::byte> _buf;
 };
 
 #endif

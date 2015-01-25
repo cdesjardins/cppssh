@@ -373,9 +373,7 @@ void CppsshTransport::rxThread()
         if (decrypted.empty() == false)
         {
             _rxSeq++;
-            std::unique_lock<std::mutex> lock(_inBufferMutex);
-            _inBuffer.push(decrypted);
-            _inBufferCondVar.notify_all();
+            _session->_channel->handleReceived(decrypted);
             if (_in.size() == cryptoLen)
             {
                 _in.clear();
@@ -388,9 +386,9 @@ void CppsshTransport::rxThread()
     }
 }
 
-Botan::byte CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
+bool CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
 {
-    Botan::byte cmd = 0;
+    bool ret = false;
     std::unique_lock<std::mutex> lock(_inBufferMutex);
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
@@ -406,42 +404,14 @@ Botan::byte CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* pa
     {
         packet->copy(_inBuffer.front());
         _inBuffer.pop();
-    }
-    if (packet->size() != 0)
-    {
-        cmd = packet->getCommand();
-        if ((command == cmd) || (command == 0))
-        {
-            return cmd;
-        }
-        else
-        {
-            return 0;
-        }
-    }
-    return cmd;
-}
-
-bool CppsshTransport::read(CppsshMessage* data)
-{
-    bool ret = false;
-    std::unique_lock<std::mutex> lock(_inBufferMutex);
-    if (_inBuffer.empty() == false)
-    {
-        CppsshPacketHeader header(_inBuffer.front());
-        if (header.getCommand() == SSH2_MSG_DISCONNECT)
-        {
-            _session->_channel->handleDisconnect(CppsshPacket(&_inBuffer.front()));
-        }
-        else
-        {
-            data->_message.reset(new char[_inBuffer.front().size() + 1]);
-            strcpy(data->_message.get(), (const char*)_inBuffer.front().data());
-
-            _inBuffer.front();
-            _inBuffer.pop();
-            ret = true;
-        }
+        ret = true;
     }
     return ret;
+}
+
+void CppsshTransport::handleData(const Botan::secure_vector<Botan::byte>& data)
+{
+    std::unique_lock<std::mutex> lock(_inBufferMutex);
+    _inBuffer.push(data);
+    _inBufferCondVar.notify_all();
 }

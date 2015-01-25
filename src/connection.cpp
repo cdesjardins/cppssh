@@ -104,7 +104,10 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     }
     if (shell == true)
     {
-        _channel->getShell();
+        if (_channel->getShell() == false)
+        {
+            return -1;
+        }
     }
     _connected = true;
     return _channelId;
@@ -112,7 +115,7 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
 
 bool CppsshConnection::read(CppsshMessage* data)
 {
-    return _transport->read(data);
+    return _channel->read(data);
 }
 
 bool CppsshConnection::isConnected()
@@ -164,9 +167,8 @@ bool CppsshConnection::requestService(const std::string& service)
     packet.addString(service);
     if (_transport->sendPacket(buf) == true)
     {
-        if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) <= 0)
+        if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) == false)
         {
-            _channel->handleDisconnect(packet);
             _session->_logger->pushMessage("Service request failed.");
         }
         else
@@ -180,7 +182,6 @@ bool CppsshConnection::requestService(const std::string& service)
 bool CppsshConnection::authWithPassword(const std::string& username, const std::string& password)
 {
     bool ret = false;
-    short cmd;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
@@ -191,19 +192,17 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     packet.addByte('\0');
     packet.addString(password);
 
-    if (_transport->sendPacket(buf) == true)
+    if ((_transport->sendPacket(buf) == true) && (_transport->waitForPacket(0, &packet) == true))
     {
-        cmd = _transport->waitForPacket(0, &packet);
-        if (cmd == SSH2_MSG_USERAUTH_BANNER)
+        if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {
-            // FIXME: Add the banner to the rx queue
-            cmd = _transport->waitForPacket(0, &packet);
+            _transport->waitForPacket(0, &packet);
         }
-        if (cmd == SSH2_MSG_USERAUTH_SUCCESS)
+        if (packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS)
         {
             ret = true;
         }
-        else if (cmd == SSH2_MSG_USERAUTH_FAILURE)
+        else if (packet.getCommand() == SSH2_MSG_USERAUTH_FAILURE)
         {
             std::string methods;
             CppsshPacket message(&buf);

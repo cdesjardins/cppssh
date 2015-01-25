@@ -27,7 +27,7 @@
 class CppsshImpl;
 class CppsshMessage;
 class CppsshLogger;
-class CppsshTransport;
+class CppsshPacket;
 
 class Cppssh
 {
@@ -54,11 +54,12 @@ private:
 class CppsshMessage
 {
 public:
+    CppsshMessage& operator=(const CppsshMessage&);
     CppsshMessage();
     ~CppsshMessage();
     CPPSSH_EXPORT const char* const message() const;
     friend class CppsshLogger;
-    friend class CppsshTransport;
+    friend class CppsshPacket;
 private:
     std::shared_ptr<char> _message;
 };

@@ -5,7 +5,6 @@
 #include <mutex>
 
 #define NUM_THREADS 5
-std::mutex _outputMutex;
 
 void reportErrors(const std::string& tag, const int channel)
 {
@@ -21,7 +20,6 @@ void runConnectionTest(char* hostname, char* username, char* password)
     int channel;
     bool connected = Cppssh::connectWithPassword(&channel, hostname, 22, username, password, NUM_THREADS * 10);
     {
-        std::unique_lock<std::mutex> lock(_outputMutex);
         if (connected == true)
         {
             std::cout << "Connected " << channel << std::endl;
@@ -31,9 +29,13 @@ void runConnectionTest(char* hostname, char* username, char* password)
                 CppsshMessage message;
                 if (Cppssh::read(channel, &message) == true)
                 {
-                    std::cout << "got data " << message.message() << std::endl;
+                    std::cout << message.message() << std::endl;
                 }
             }
+        }
+        else
+        {
+            std::cout << "Did not connect " << channel << std::endl;
         }
         reportErrors("Connect", channel);
     }

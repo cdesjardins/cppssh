@@ -24,6 +24,9 @@
 #include <queue>
 #include <sstream>
 #include <string.h>
+#ifdef _DEBUG
+#include <iostream>
+#endif
 
 class CppsshLogger
 {
@@ -33,12 +36,18 @@ public:
     {
         std::unique_lock<std::recursive_mutex> lock(_mutex);
         _messages.push(dynamic_cast<const std::stringstream&>(message).str());
+#ifdef _DEBUG
+        std::cout << "DEBUG: " << dynamic_cast<const std::stringstream&>(message).str() << std::endl;
+#endif
     }
 
     void pushMessage(const std::string& message)
     {
         std::unique_lock<std::recursive_mutex> lock(_mutex);
         _messages.push(message);
+#ifdef _DEBUG
+        std::cout << "DEBUG: " << message << std::endl;
+#endif
     }
 
     bool popMessage(CppsshMessage* message)

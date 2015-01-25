@@ -48,9 +48,8 @@ bool CppsshChannel::open(uint32_t channelID)
 
     if (_session->_transport->sendPacket(buf) == true)
     {
-        if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &packet) <= 0)
+        if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &packet) == false)
         {
-            handleDisconnect(packet);
             _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << " could not be open. ");
         }
         else
@@ -83,51 +82,166 @@ bool CppsshChannel::isConnected()
     return _channelOpened;
 }
 
+void CppsshChannel::handleChannelData(Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshPacket packet(&buf);
+    CppsshMessage message;
+    packet.getChannelData(message);
+    std::unique_lock<std::mutex> lock(_messageMutex);
+    _messages.push(message);
+}
+
+bool CppsshChannel::read(CppsshMessage* data)
+{
+    bool ret = false;
+    std::unique_lock<std::mutex> lock(_messageMutex);
+    if (_messages.empty() == false)
+    {
+        *data = _messages.front();
+        _messages.pop();
+        ret = true;
+    }
+    return ret;
+}
+
 bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf)
 {
-    Botan::secure_vector<Botan::byte> tmp(buf.begin() + 1, buf.end() - 1);
+    bool ret = false;
+    Botan::secure_vector<Botan::byte> tmp(buf);
     CppsshPacket packet(&tmp);
     uint32_t field;
 
-    // Receive Channel
-    packet.getInt();
-    // Send Channel
-    field = packet.getInt();
-    _session->setSendChannel(field);
+    if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
+    {
+        Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin()+1, packet.getPayloadEnd());
+        //Botan::secure_vector<Botan::byte> payload(buf.begin() + 1, buf.end() - 1);
+        CppsshPacket payloadPacket(&payload);
 
-    // Window Size
-    field = packet.getInt();
-    _windowSend = field;
+        // Receive Channel
+        payloadPacket.getInt();
+        // Send Channel
+        field = payloadPacket.getInt();
+        _session->setSendChannel(field);
 
-    // Max Packet
-    field = packet.getInt();
-    _session->setMaxPacket(field);
-    return true;
+        // Window Size
+        field = payloadPacket.getInt();
+        _windowSend = field;
+
+        // Max Packet
+        field = payloadPacket.getInt();
+        _session->setMaxPacket(field);
+        ret = true;
+    }
+    return ret;
 }
 
-void CppsshChannel::getShell()
+bool CppsshChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata)
 {
+    bool ret = false;
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+    packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
+    packet.addInt(_session->getSendChannel());
+    packet.addString(req);
+    packet.addByte(1);  // want reply == true
+    packet.addVector(reqdata);
+    if ((_session->_transport->sendPacket(buf) == true) &&
+        (_session->_transport->waitForPacket(0, &packet) == true) &&
+        (packet.getCommand() == SSH2_MSG_CHANNEL_SUCCESS))
+    {
+        ret = true;
+    }
+    else
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Unable to send channel request: " << req);
+    }
+    return ret;
+}
+
+bool CppsshChannel::getShell()
+{
+    bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
-    packet.addInt(_session->getSendChannel());
-    packet.addString("pty-req");
-    packet.addByte(0);
     packet.addString("dumb");
     packet.addInt(80);
     packet.addInt(24);
     packet.addInt(0);
     packet.addInt(0);
     packet.addString("");
-    if (_session->_transport->sendPacket(buf) == true)
+    if (doChannelRequest("pty-req", buf) == true)
     {
         buf.clear();
-        packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
-        packet.addInt(_session->getSendChannel());
-        packet.addString("shell");
-        packet.addByte(0);
-        _session->_transport->sendPacket(buf);
+        if (doChannelRequest("shell", buf) == true)
+        {
+            ret = true;
+        }
     }
+    return ret;
+}
+
+bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshPacket packet(&buf);
+    bool ret = false;
+    int cmd = packet.getCommand();
+    switch (cmd)
+    {
+    case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
+        //adjustWindow(newPacket.value());
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_WINDOW_ADJUST: " << cmd);
+        break;
+
+    case SSH2_MSG_CHANNEL_SUCCESS:
+    case SSH2_MSG_CHANNEL_FAILURE:
+    case SSH2_MSG_CHANNEL_OPEN_CONFIRMATION:
+    case SSH2_MSG_CHANNEL_OPEN_FAILURE:
+    case SSH2_MSG_USERAUTH_BANNER:
+    case SSH2_MSG_USERAUTH_FAILURE:
+    case SSH2_MSG_USERAUTH_SUCCESS:
+    case SSH2_MSG_SERVICE_ACCEPT:
+    case SSH2_MSG_KEXDH_REPLY:
+    case SSH2_MSG_NEWKEYS:
+    case SSH2_MSG_KEXINIT:
+        _session->_transport->handleData(buf);
+        break;
+
+    case SSH2_MSG_CHANNEL_DATA:
+        handleChannelData(buf);
+        break;
+
+    case SSH2_MSG_CHANNEL_EXTENDED_DATA:
+        //handleExtendedData(newPacket.value());
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EXTENDED_DATA: " << cmd);
+        break;
+
+    case SSH2_MSG_CHANNEL_EOF:
+        //handleEof(newPacket.value());
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EOF: " << cmd);
+        break;
+
+    case SSH2_MSG_CHANNEL_CLOSE:
+        //handleClose(newPacket.value());
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_CLOSE: " << cmd);
+        break;
+
+    case SSH2_MSG_CHANNEL_REQUEST:
+        //handleRequest(newPacket.value());
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_REQUEST: " << cmd);
+        break;
+
+    case SSH2_MSG_IGNORE:
+        break;
+
+    case SSH2_MSG_DISCONNECT:
+        handleDisconnect(packet);
+        break;
+
+    default:
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled command encountered: " << cmd);
+        break;
+    }
+    return ret;
 }
 
