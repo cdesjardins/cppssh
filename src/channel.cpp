@@ -29,8 +29,7 @@ CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _windowRecv(CPPSSH_RX_WINDOW_SIZE),
     _windowSend(0),
-    _channelOpened(false),
-    _cnt(0)
+    _channelOpened(false)
 {
 }
 
@@ -38,7 +37,6 @@ bool CppsshChannel::open(uint32_t channelID)
 {
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
-    _cnt = 0;
     _windowSend = 0;
     _windowRecv = CPPSSH_RX_WINDOW_SIZE;
 
@@ -60,8 +58,6 @@ bool CppsshChannel::open(uint32_t channelID)
             _channelOpened = handleChannelConfirm(buf);
         }
     }
-    std::cout << "          open:" << _windowRecv << std::endl;
-
     return _channelOpened;
 }
 
@@ -129,7 +125,6 @@ bool CppsshChannel::flushOutgoingChannelData()
         if ((message->size() > 0) && (_windowSend >= message->size()))
         {
             _windowSend -= message->size();
-            _cnt += message->size();
             Botan::secure_vector<Botan::byte> buf;
             CppsshPacket packet(&buf);
             packet.addByte(SSH2_MSG_CHANNEL_DATA);
@@ -139,7 +134,6 @@ bool CppsshChannel::flushOutgoingChannelData()
             ret = _session->_transport->sendPacket(buf);
             if (ret == false)
             {
-                std::cout << "send packet failed " << _windowSend << std::endl;
                 break;
             }
         }
@@ -333,8 +327,6 @@ void CppsshChannel::sendAdjustWindow()
     packet.addInt(len);
     _windowRecv += len;
 
-    std::cout << "send adjust rx:" << _windowRecv << " " << len << std::endl;
-
     _session->_transport->sendPacket(buf);
 }
 
@@ -347,6 +339,4 @@ void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& 
     // add bytes to the window
     uint32_t size = packet.getInt();
     _windowSend += size;
-    std::cout << " got adjust tx:" << _windowSend << " " << size << " " << _cnt << std::endl;
-    _cnt = 0;
 }

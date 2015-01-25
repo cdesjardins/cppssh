@@ -53,7 +53,6 @@ private:
 
     std::mutex _outgoingMessagesMutex;
     std::queue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingMessages;
-    uint32_t _cnt;
 };
 
 #endif

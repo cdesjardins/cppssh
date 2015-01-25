@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#define NUM_THREADS 4
+#define NUM_THREADS 5
 
 std::ofstream _errLog;
 
@@ -70,8 +70,9 @@ int main(int argc, char** argv)
 
     _errLog = getOutFile(-1);
     Cppssh::create();
-
-    Cppssh::setOptions("aes192-cbc", "hmac-sha1");
+    std::vector<std::string> ciphers;
+    std::vector<std::string> macs;
+    Cppssh::setOptions("aes256-cbc", "hmac-md5");
     std::vector<std::thread> threads;
     for (int i = 0; i < NUM_THREADS; i++)
     {
