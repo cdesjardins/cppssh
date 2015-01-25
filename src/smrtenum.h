@@ -29,8 +29,11 @@
 #include <cctype>
 
 template<typename T> struct enum_properties;
-
+#ifdef WIN32
+#define _SMART_ENUM_STRINGIZE(x) #x
+#else
 #define _SMART_ENUM_STRINGIZE(x...) #x
+#endif
 
 #define SMART_ENUM_DECLARE(E, ...)                                              \
     enum class E { __VA_ARGS__, MAX_VALS };                                     \
