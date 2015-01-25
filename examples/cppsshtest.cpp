@@ -36,14 +36,12 @@ void runConnectionTest(char* hostname, char* username, char* password)
         output << "Connected " << channel << std::endl;
         std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
         int txCount = 0;
-        int rxCount = 0;
         while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
         {
             CppsshMessage message;
             if (Cppssh::read(channel, &message) == true)
             {
                 output << message.message();
-                rxCount++;
             }
             if ((txCount < 100) && (std::chrono::steady_clock::now() >(txTime + std::chrono::milliseconds(100))))
             {
