@@ -32,12 +32,13 @@ public:
     bool handleReceived(Botan::secure_vector<Botan::byte>& buf);
     bool read(CppsshMessage* data);
     bool send(const uint8_t* data, uint32_t bytes);
+    bool flushOutgoingChannelData();
 
 private:
     bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
     bool handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf);
     void handleDisconnect(const CppsshConstPacket& packet);
-    void handleChannelData(const Botan::secure_vector<Botan::byte>& buf, bool isBanner);
+    void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf, bool isBanner);
     void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
 
     void sendAdjustWindow();
@@ -46,8 +47,11 @@ private:
     uint32_t _windowRecv;
     uint32_t _windowSend;
     bool _channelOpened;
-    std::mutex _messageMutex;
-    std::queue<CppsshMessage> _messages;
+    std::mutex _incomingMessagesMutex;
+    std::queue<std::shared_ptr<CppsshMessage> > _incomingMessages;
+
+    std::mutex _outgoingMessagesMutex;
+    std::queue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingMessages;
 };
 
 #endif

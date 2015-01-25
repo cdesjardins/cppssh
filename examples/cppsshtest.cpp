@@ -23,15 +23,24 @@ void runConnectionTest(char* hostname, char* username, char* password)
         if (connected == true)
         {
             std::cout << "Connected " << channel << std::endl;
-            std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-            while ((std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(1))) && (Cppssh::isConnected(channel) == true))
+            std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
+            int txCount = 0;
+            int rxCount = 0;
+            while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
             {
                 CppsshMessage message;
                 if (Cppssh::read(channel, &message) == true)
                 {
-                    std::cout << message.message() << std::endl;
+                    std::cout << message.message();
+                    rxCount++;
                 }
-                Cppssh::sendString(channel, "ls -l\n");
+                if ((txCount < 100) && (std::chrono::steady_clock::now() >(txTime + std::chrono::milliseconds(100))))
+                {
+                    // send ls -l every 100 milliseconds
+                    Cppssh::sendString(channel, "ls -l\n");
+                    txTime = std::chrono::steady_clock::now();
+                    txCount++;
+                }
             }
         }
         else
@@ -53,7 +62,7 @@ int main(int argc, char** argv)
 
     Cppssh::create();
 
-    Cppssh::setOptions("aes192-cbc", "hmac-md5");
+    Cppssh::setOptions("aes192-cbc", "hmac-sha1");
     std::vector<std::thread> threads;
     for (int i = 0; i < NUM_THREADS; i++)
     {

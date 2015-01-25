@@ -41,18 +41,23 @@ public:
     int establish(const char* host, short port);
     bool start();
 
-    bool receive(Botan::secure_vector<Botan::byte>* buffer);
-    bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
     bool sendPacket(const Botan::secure_vector<Botan::byte>& buffer);
     bool waitForPacket(Botan::byte command, CppsshPacket* packet);
     void handleData(const Botan::secure_vector<Botan::byte>& data);
+
+    // send/receive are just here for early link bringup, these
+    // are the raw socket io calls. Alsmost everything should
+    // go through the sendPacket/waitForPacket path.
+    bool receive(Botan::secure_vector<Botan::byte>* buffer);
+    bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
 private:
     bool setNonBlocking(bool on);
     void setupFd(fd_set* fd);
     bool wait(bool isWrite);
     void rxThread();
+    void txThread();
 
     SOCKET _sock;
     std::shared_ptr<CppsshSession> _session;
@@ -63,6 +68,7 @@ private:
     std::queue<Botan::secure_vector<Botan::byte> > _inBuffer;
     std::mutex _inBufferMutex;
     std::thread _rxThread;
+    std::thread _txThread;
     volatile bool _running;
     std::condition_variable _inBufferCondVar;
 };

@@ -28,6 +28,7 @@ class CppsshImpl;
 class CppsshMessage;
 class CppsshLogger;
 class CppsshConstPacket;
+class CppsshChannel;
 
 class Cppssh
 {
@@ -62,6 +63,7 @@ public:
     CPPSSH_EXPORT size_t length() const;
     friend class CppsshLogger;
     friend class CppsshConstPacket;
+    friend class CppsshChannel;
 private:
     virtual void setMessage(const uint8_t* message, size_t bytes);
     std::shared_ptr<uint8_t> _message;

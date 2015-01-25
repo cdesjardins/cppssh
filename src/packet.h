@@ -64,6 +64,7 @@ public:
 
     void addVectorField(const Botan::secure_vector<Botan::byte>& vec);
     void addVector(const Botan::secure_vector<Botan::byte>& vec);
+    void addRawDataField(const uint8_t* data, uint32_t bytes);
     void addString(const std::string& str);
     void addInt(const uint32_t var);
     void addByte(const uint8_t ch);

@@ -69,6 +69,10 @@ CppsshTransport::~CppsshTransport()
     {
         _rxThread.join();
     }
+    if (_txThread.joinable() == true)
+    {
+        _txThread.join();
+    }
 }
 
 int CppsshTransport::establish(const char* host, short port)
@@ -109,6 +113,7 @@ int CppsshTransport::establish(const char* host, short port)
 bool CppsshTransport::start()
 {
     _rxThread = std::thread(&CppsshTransport::rxThread, this);
+    _txThread = std::thread(&CppsshTransport::txThread, this);
     return true;
 }
 
@@ -383,6 +388,17 @@ void CppsshTransport::rxThread()
             {
                 _in.erase(_in.begin(), _in.begin() + cryptoLen);
             }
+        }
+    }
+}
+
+void CppsshTransport::txThread()
+{
+    while (_running == true)
+    {
+        if (_session->_channel->flushOutgoingChannelData() == false)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 }
