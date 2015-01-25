@@ -289,7 +289,7 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>& result, Bota
     }
 
     Botan::BigInt Kint(negotiated.begin(), negotiated.length());
-    CppsshPacket::bn2vector(result, Kint);
+    CppsshConstPacket::bn2vector(result, Kint);
     _K = result;
     _privKexKey.reset();
     return true;
@@ -316,14 +316,13 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>& result, const Bot
     return ret;
 }
 
-bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::secure_vector<Botan::byte>& sig)
+bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig)
 {
     std::shared_ptr<Botan::DSA_PublicKey> dsaKey;
     std::shared_ptr<Botan::RSA_PublicKey> rsaKey;
     std::unique_ptr<Botan::PK_Verifier> verifier;
     Botan::secure_vector<Botan::byte> sigType, sigData;
-    Botan::secure_vector<Botan::byte> signature(sig);
-    CppsshPacket signaturePacket(&signature);
+    const CppsshConstPacket signaturePacket(&sig);
     bool result = false;
 
     if (_H.empty() == true)
@@ -404,15 +403,12 @@ bool CppsshCrypto::verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::
     return result;
 }
 
-std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vector<Botan::byte>& hostKey)
+std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
 {
-    Botan::secure_vector<Botan::byte> hKey;
     std::string field;
     Botan::BigInt p, q, g, y;
 
-    CppsshPacket hKeyPacket(&hKey);
-
-    hKeyPacket.addVector(hostKey);
+    const CppsshConstPacket hKeyPacket(&hostKey);
 
     if (hKeyPacket.getString(field) == false)
     {
@@ -445,15 +441,12 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(Botan::secure_vect
     return pubKey;
 }
 
-std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(Botan::secure_vector<Botan::byte>& hostKey)
+std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
 {
-    Botan::secure_vector<Botan::byte> hKey;
     std::string field;
     Botan::BigInt e, n;
 
-    CppsshPacket hKeyPacket(&hKey);
-
-    hKeyPacket.addVector(hostKey);
+    const CppsshConstPacket hKeyPacket(&hostKey);
 
     if (hKeyPacket.getString(field) == false)
     {

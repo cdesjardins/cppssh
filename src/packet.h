@@ -26,7 +26,38 @@
 
 class CppsshMessage;
 
-class CppsshPacket
+class CppsshConstPacket
+{
+public:
+    CppsshConstPacket(const Botan::secure_vector<Botan::byte>*const data);
+
+    static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
+
+    uint32_t getPacketLength() const;
+    uint32_t getCryptoLength() const;
+    Botan::byte getPadLength() const;
+    Botan::byte getCommand() const;
+    Botan::secure_vector<Botan::byte>::const_iterator getPayloadBegin() const;
+    Botan::secure_vector<Botan::byte>::const_iterator getPayloadEnd() const;
+
+    bool getString(Botan::secure_vector<Botan::byte>& result) const;
+    bool getString(std::string& result) const;
+    bool getBigInt(Botan::BigInt& result) const;
+    void getChannelData(CppsshMessage& result) const;
+    uint32_t getInt() const;
+
+    size_t size() const;
+
+private:
+    CppsshConstPacket();
+    CppsshConstPacket(const CppsshConstPacket&);
+    CppsshConstPacket& operator=(const CppsshConstPacket& data);
+
+    const Botan::secure_vector<Botan::byte>*const _cdata;
+    mutable int _index;
+};
+
+class CppsshPacket : public CppsshConstPacket
 {
 public:
     CppsshPacket(Botan::secure_vector<Botan::byte>* data);
@@ -37,27 +68,14 @@ public:
     void addInt(const uint32_t var);
     void addByte(const uint8_t ch);
     void addBigInt(const Botan::BigInt& bn);
-    static void bn2vector(Botan::secure_vector<Botan::byte>& result, const Botan::BigInt& bi);
-
-    CppsshPacket& operator=(Botan::secure_vector<Botan::byte>* encryptedPacket);
-    uint32_t getPacketLength() const;
-    uint32_t getCryptoLength() const;
-    Botan::byte getPadLength() const;
-    Botan::byte getCommand() const;
-    Botan::secure_vector<Botan::byte>::iterator getPayloadBegin() const;
-    Botan::secure_vector<Botan::byte>::iterator getPayloadEnd() const;
-
-    bool getString(Botan::secure_vector<Botan::byte>& result);
-    bool getString(std::string& result);
-    bool getBigInt(Botan::BigInt& result);
-    void getChannelData(CppsshMessage& result);
-    uint32_t getInt();
-
     void copy(const Botan::secure_vector<Botan::byte>& src);
     void clear();
-    size_t size() const;
 
 private:
+    CppsshPacket();
+    CppsshPacket(const CppsshPacket&);
+    CppsshPacket& operator=(const CppsshPacket&);
+
     Botan::secure_vector<Botan::byte>* _data;
 };
 

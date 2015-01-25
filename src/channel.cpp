@@ -60,7 +60,7 @@ bool CppsshChannel::open(uint32_t channelID)
     return _channelOpened;
 }
 
-void CppsshChannel::handleDisconnect(const CppsshPacket& packet)
+void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 {
     if (packet.size() > 0)
     {
@@ -68,7 +68,7 @@ void CppsshChannel::handleDisconnect(const CppsshPacket& packet)
         if (packet.getCommand() == SSH2_MSG_DISCONNECT)
         {
             Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin() + 1, packet.getPayloadEnd()));
-            CppsshPacket payloadPacket(&payload);
+            CppsshConstPacket payloadPacket(&payload);
             payloadPacket.getInt();
             payloadPacket.getString(err);
             _session->_logger->pushMessage(err);
@@ -82,13 +82,18 @@ bool CppsshChannel::isConnected()
     return _channelOpened;
 }
 
-void CppsshChannel::handleChannelData(Botan::secure_vector<Botan::byte>& buf)
+void CppsshChannel::handleChannelData(const Botan::secure_vector<Botan::byte>& buf)
 {
-    CppsshPacket packet(&buf);
+    CppsshConstPacket packet(&buf);
     CppsshMessage message;
     packet.getChannelData(message);
     std::unique_lock<std::mutex> lock(_messageMutex);
     _messages.push(message);
+}
+
+void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf)
+{
+
 }
 
 bool CppsshChannel::read(CppsshMessage* data)
@@ -108,14 +113,14 @@ bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> tmp(buf);
-    CppsshPacket packet(&tmp);
+    const CppsshConstPacket packet(&tmp);
     uint32_t field;
 
     if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
     {
         Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin()+1, packet.getPayloadEnd());
         //Botan::secure_vector<Botan::byte> payload(buf.begin() + 1, buf.end() - 1);
-        CppsshPacket payloadPacket(&payload);
+        const CppsshConstPacket payloadPacket(&payload);
 
         // Receive Channel
         payloadPacket.getInt();
@@ -183,14 +188,13 @@ bool CppsshChannel::getShell()
 
 bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
 {
-    CppsshPacket packet(&buf);
+    const CppsshConstPacket packet(&buf);
     bool ret = false;
     int cmd = packet.getCommand();
     switch (cmd)
     {
     case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
-        //adjustWindow(newPacket.value());
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_WINDOW_ADJUST: " << cmd);
+        handleWindowAdjust(buf);
         break;
 
     case SSH2_MSG_CHANNEL_SUCCESS:

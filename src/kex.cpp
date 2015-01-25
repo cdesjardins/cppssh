@@ -110,7 +110,7 @@ bool CppsshKex::handleInit()
     _remoteKex.clear();
     CppsshPacket remoteKexPacket(&_remoteKex);
     remoteKexPacket.addVector(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin(), (packet.getPayloadEnd() - packet.getPadLength())));
-    CppsshPacket remoteKexAlgosPacket(&remoteKexAlgos);
+    const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
 
     if (remoteKexAlgosPacket.getString(algos) == false)
     {
@@ -232,7 +232,7 @@ bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
         dhInit.addBigInt(publicKey);
 
         _e.clear();
-        CppsshPacket::bn2vector(_e, publicKey);
+        CppsshConstPacket::bn2vector(_e, publicKey);
 
         if (_session->_transport->sendPacket(buf) == true)
         {
@@ -252,7 +252,7 @@ bool CppsshKex::sendKexDHInit(CppsshPacket* packet)
 bool CppsshKex::handleKexDHReply()
 {
     Botan::secure_vector<Botan::byte> buffer;
-    Botan::secure_vector<Botan::byte> field, hSig, kVector, hVector;
+    Botan::secure_vector<Botan::byte> hSig, kVector, hVector;
     CppsshPacket packet(&buffer);
 
     if (sendKexDHInit(&packet) == false)
@@ -264,37 +264,32 @@ bool CppsshKex::handleKexDHReply()
         return false;
     }
     Botan::secure_vector<Botan::byte> remoteKexDH(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
-    CppsshPacket remoteKexDHPacket(&remoteKexDH);
+    const CppsshConstPacket remoteKexDHPacket(&remoteKexDH);
     Botan::BigInt publicKey;
 
-    if (remoteKexDHPacket.getString(field) == false)
+    _hostKey.clear();
+    if (remoteKexDHPacket.getString(_hostKey) == false)
     {
         return false;
     }
-    _hostKey.clear();
-    CppsshPacket hostKeyPacket(&_hostKey);
-
-    hostKeyPacket.addVector(field);
 
     if (remoteKexDHPacket.getBigInt(publicKey) == false)
     {
         return false;
     }
     _f.clear();
-    CppsshPacket::bn2vector(_f, publicKey);
+    CppsshConstPacket::bn2vector(_f, publicKey);
 
     if (remoteKexDHPacket.getString(hSig) == false)
     {
         return false;
     }
 
-    if (_session->_crypto->makeKexSecret(kVector, publicKey) == false)
+    _k.clear();
+    if (_session->_crypto->makeKexSecret(_k, publicKey) == false)
     {
         return false;
     }
-    _k.clear();
-    CppsshPacket kPacket(&_k);
-    kPacket.addVector(kVector);
 
     makeH(hVector);
     if (hVector.empty() == true)

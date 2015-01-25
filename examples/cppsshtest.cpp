@@ -4,7 +4,7 @@
 #include <thread>
 #include <mutex>
 
-#define NUM_THREADS 5
+#define NUM_THREADS 1
 
 void reportErrors(const std::string& tag, const int channel)
 {
@@ -24,7 +24,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
         {
             std::cout << "Connected " << channel << std::endl;
             std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-            while ((std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(5))) && (Cppssh::isConnected(channel) == true))
+            while ((std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(1))) && (Cppssh::isConnected(channel) == true))
             {
                 CppsshMessage message;
                 if (Cppssh::read(channel, &message) == true)

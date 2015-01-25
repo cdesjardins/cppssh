@@ -35,8 +35,9 @@ public:
 private:
     bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
     bool handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf);
-    void handleDisconnect(const CppsshPacket& packet);
-    void handleChannelData(Botan::secure_vector<Botan::byte>& buf);
+    void handleDisconnect(const CppsshConstPacket& packet);
+    void handleChannelData(const Botan::secure_vector<Botan::byte>& buf);
+    void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
 
     std::shared_ptr<CppsshSession> _session;
     uint32_t _windowRecv;

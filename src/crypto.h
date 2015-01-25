@@ -62,7 +62,7 @@ public:
     bool computeH(Botan::secure_vector<Botan::byte>& result, const Botan::secure_vector<Botan::byte>& val);
 
     bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote);
-    bool verifySig(Botan::secure_vector<Botan::byte>& hostKey, Botan::secure_vector<Botan::byte>& sig);
+    bool verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig);
 
     bool negotiatedKex(const std::string& kexAlgo);
     bool negotiatedHostkey(const std::string& hostkeyAlgo);
@@ -89,8 +89,8 @@ public:
 
 private:
     
-    std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(Botan::secure_vector<Botan::byte>& hostKey);
-    std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(Botan::secure_vector<Botan::byte>& hostKey);
+    std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
+    std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     bool computeKey(Botan::secure_vector<Botan::byte>& key, Botan::byte ID, uint32_t nBytes);
     bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);

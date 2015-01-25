@@ -306,7 +306,6 @@ void CppsshTransport::rxThread()
     while (_running == true)
     {
         decrypted.clear();
-        packet = &_in;
         uint32_t cryptoLen = 0;
         int macLen = 0;
 
@@ -325,27 +324,33 @@ void CppsshTransport::rxThread()
                 }
             }
         }
-        if ((_session->_crypto->isInited() == true) && (_in.size() >= _session->_crypto->getDecryptBlock()))
+        if (_session->_crypto->isInited() == false)
         {
-            _session->_crypto->decryptPacket(decrypted, _in, _session->_crypto->getDecryptBlock());
-            packet = &decrypted;
-            macLen = _session->_crypto->getMacInLen();
+            cryptoLen = packet.getCryptoLength();
+            decrypted = _in;
         }
-        cryptoLen = packet.getCryptoLength();
-        //if ((bufferOnly == false) || ((_session->_crypto->isInited() == true) && (packet.getCommand() > 0) && (packet.getCommand() < 0xff)))
-        if ((_session->_crypto->isInited() == true) && (packet.getCommand() > 0) && (packet.getCommand() < 0xff))
+        else
         {
-            while (((cryptoLen + macLen) > _in.size()) && (_running == true))
+            if (_in.size() >= _session->_crypto->getDecryptBlock())
             {
-                if (receive(&_in) == false)
+                _session->_crypto->decryptPacket(decrypted, _in, _session->_crypto->getDecryptBlock());
+                macLen = _session->_crypto->getMacInLen();
+            }
+            if (decrypted.empty() == false)
+            {
+                CppsshConstPacket cpacket(&decrypted);
+                cryptoLen = cpacket.getCryptoLength();
+                if ((packet.getCommand() > 0) && (packet.getCommand() < 0xff))
                 {
-                    return;
+                    while (((cryptoLen + macLen) > _in.size()) && (_running == true))
+                    {
+                        if (receive(&_in) == false)
+                        {
+                            return;
+                        }
+                    }
                 }
             }
-        }
-
-        if (_session->_crypto->isInited() == true)
-        {
             if (cryptoLen > _session->_crypto->getDecryptBlock())
             {
                 Botan::secure_vector<Botan::byte> tmpVar;
@@ -365,10 +370,6 @@ void CppsshTransport::rxThread()
                 }
                 cryptoLen += _session->_crypto->getMacInLen();
             }
-        }
-        else
-        {
-            decrypted = _in;
         }
         if (decrypted.empty() == false)
         {
