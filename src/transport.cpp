@@ -195,11 +195,11 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
 {
     bool ret = true;
     int len = 0;
-    buffer->resize(MAX_PACKET_LEN);
+    buffer->resize(CPPSSH_MAX_PACKET_LEN);
 
     if (wait(false) == true)
     {
-        len = ::recv(_sock, (char*)buffer->data(), MAX_PACKET_LEN, 0);
+        len = ::recv(_sock, (char*)buffer->data(), CPPSSH_MAX_PACKET_LEN, 0);
         if (len > 0)
         {
             buffer->resize(len);
@@ -214,13 +214,11 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
         buffer->clear();
     }
 
-    if (_running == true)
+    if ((_running == true) && (len < 0))
     {
-        if (len < 0)
-        {
-            _session->_logger->pushMessage("Connection dropped.");
-            ret = false;
-        }
+        _session->_logger->pushMessage("Connection dropped.");
+        _session->_channel->disconnect();
+        ret = false;
     }
 
     return ret;
@@ -228,28 +226,27 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
 
 bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
 {
-    int byteCount;
+    int len;
     size_t sent = 0;
-    bool ret = true;
     while ((sent < buffer.size()) && (_running == true))
     {
         if (wait(true) == true)
         {
-            byteCount = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
+            len = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
         }
         else
         {
-            ret = false;
             break;
         }
-        if (byteCount < 0)
+        if ((_running == true) && (len < 0))
         {
-            ret = false;
+            _session->_logger->pushMessage("Connection dropped.");
+            _session->_channel->disconnect();
             break;
         }
-        sent += byteCount;
+        sent += len;
     }
-    return ret;
+    return sent == buffer.size();
 }
 
 bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer)
@@ -398,8 +395,9 @@ void CppsshTransport::txThread()
     {
         if (_session->_channel->flushOutgoingChannelData() == false)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

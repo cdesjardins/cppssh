@@ -31,7 +31,7 @@
 #   include <winsock.h>
 #endif
 
-#define MAX_PACKET_LEN 0x4000
+#define CPPSSH_MAX_PACKET_LEN 0x4000
 
 class CppsshTransport
 {

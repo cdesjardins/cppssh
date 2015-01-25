@@ -33,6 +33,7 @@ public:
     bool read(CppsshMessage* data);
     bool send(const uint8_t* data, uint32_t bytes);
     bool flushOutgoingChannelData();
+    void disconnect();
 
 private:
     bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
@@ -52,6 +53,7 @@ private:
 
     std::mutex _outgoingMessagesMutex;
     std::queue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingMessages;
+    uint32_t _cnt;
 };
 
 #endif

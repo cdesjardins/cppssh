@@ -234,9 +234,8 @@ void CppsshPacket::addVector(const Botan::secure_vector<Botan::byte>& vec)
     (*_data) += vec;
 }
 
-void CppsshPacket::addRawDataField(const uint8_t* data, uint32_t bytes)
+void CppsshPacket::addRawData(const uint8_t* data, uint32_t bytes)
 {
-    addInt(bytes);
     for (uint32_t i = 0; i < bytes; i++)
     {
         _data->push_back(data[i]);
