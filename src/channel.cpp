@@ -67,10 +67,9 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
         std::string err;
         if (packet.getCommand() == SSH2_MSG_DISCONNECT)
         {
-            Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin() + 1, packet.getPayloadEnd()));
-            CppsshConstPacket payloadPacket(&payload);
-            payloadPacket.getInt();
-            payloadPacket.getString(err);
+            packet.skipHeader();
+            packet.getInt();
+            packet.getString(err);
             _session->_logger->pushMessage(err);
             _channelOpened = false;
         }
@@ -136,10 +135,12 @@ bool CppsshChannel::flushOutgoingChannelData()
 void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf)
 {
     CppsshConstPacket packet(&buf);
+    packet.skipHeader();
     // channel number
     packet.getInt();
     // add bytes to the window
-    _windowSend += packet.getInt();
+    uint32_t size = packet.getInt();
+    _windowSend += size;
 }
 
 bool CppsshChannel::read(CppsshMessage* data)
@@ -184,22 +185,22 @@ bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>
 
     if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
     {
-        Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
+        //Botan::secure_vector<Botan::byte> payload(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
         //Botan::secure_vector<Botan::byte> payload(buf.begin() + 1, buf.end() - 1);
-        const CppsshConstPacket payloadPacket(&payload);
-
+        //const CppsshConstPacket payloadPacket(&payload);
+        packet.skipHeader();
         // Receive Channel
-        payloadPacket.getInt();
+        packet.getInt();
         // Send Channel
-        field = payloadPacket.getInt();
+        field = packet.getInt();
         _session->setSendChannel(field);
 
         // Window Size
-        field = payloadPacket.getInt();
+        field = packet.getInt();
         _windowSend = field;
 
         // Max Packet
-        field = payloadPacket.getInt();
+        field = packet.getInt();
         _session->setMaxPacket(field);
         ret = true;
     }

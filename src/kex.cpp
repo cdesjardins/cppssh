@@ -263,24 +263,25 @@ bool CppsshKex::handleKexDHReply()
     {
         return false;
     }
-    Botan::secure_vector<Botan::byte> remoteKexDH(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
-    const CppsshConstPacket remoteKexDHPacket(&remoteKexDH);
+    //Botan::secure_vector<Botan::byte> remoteKexDH(packet.getPayloadBegin() + 1, packet.getPayloadEnd());
+    //const CppsshConstPacket remoteKexDHPacket(&remoteKexDH);
+    packet.skipHeader();
     Botan::BigInt publicKey;
 
     _hostKey.clear();
-    if (remoteKexDHPacket.getString(_hostKey) == false)
+    if (packet.getString(_hostKey) == false)
     {
         return false;
     }
 
-    if (remoteKexDHPacket.getBigInt(publicKey) == false)
+    if (packet.getBigInt(publicKey) == false)
     {
         return false;
     }
     _f.clear();
     CppsshConstPacket::bn2vector(_f, publicKey);
 
-    if (remoteKexDHPacket.getString(hSig) == false)
+    if (packet.getString(hSig) == false)
     {
         return false;
     }

@@ -35,6 +35,8 @@
 #define CPPSSH_PACKET_PAYLOAD_OFFS  5
 #define CPPSSH_PACKET_CMD_SIZE      1
 
+#define CPPSSH_PACKET_HEADER_SIZE   (CPPSSH_PACKET_PAYLOAD_OFFS + CPPSSH_PACKET_CMD_SIZE)
+
 #define CPPSSH_PACKET_CH_DATA_OFFS  10
 
 CppsshConstPacket::CppsshConstPacket(const Botan::secure_vector<Botan::byte>* const data)
@@ -172,10 +174,9 @@ void CppsshConstPacket::getChannelData(CppsshMessage& result) const
 
 void CppsshConstPacket::getBannerData(CppsshMessage& result) const
 {
-    Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(getPayloadBegin() + 1, getPayloadEnd()));
-    CppsshConstPacket payloadPacket(&payload);
-    uint32_t len = payloadPacket.getInt();
-    result.setMessage((uint8_t*)(payload.data() + sizeof(uint32_t)), len);
+    skipHeader();
+    uint32_t len = getInt();
+    result.setMessage((uint8_t*)(_cdata + sizeof(uint32_t)), len);
 }
 
 uint32_t CppsshConstPacket::getInt() const
@@ -185,18 +186,27 @@ uint32_t CppsshConstPacket::getInt() const
     return result;
 }
 
+uint8_t CppsshConstPacket::getByte() const
+{
+    uint8_t result = 0;
+    if (_cdata->size() >= sizeof(uint8_t))
+    {
+        result = (uint8_t)((*_cdata)[_index]);
+        _index += sizeof(uint8_t);
+    }
+    return result;
+}
+
 size_t CppsshConstPacket::size() const
 {
     return _cdata->size();
 }
 
-/*
-CppsshConstPacket& CppsshConstPacket::operator=(const CppsshConstPacket& data)
+void CppsshConstPacket::skipHeader() const
 {
-    _cdata = data;
-    return *this;
+    _index += CPPSSH_PACKET_HEADER_SIZE;
 }
-*/
+
 CppsshPacket::CppsshPacket(Botan::secure_vector<Botan::byte>* data)
     : CppsshConstPacket(data),
     _data(data)

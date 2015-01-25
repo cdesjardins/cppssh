@@ -44,7 +44,9 @@ public:
     bool getBigInt(Botan::BigInt& result) const;
     void getChannelData(CppsshMessage& result) const;
     void getBannerData(CppsshMessage& result) const;
+    uint8_t getByte() const;
     uint32_t getInt() const;
+    void skipHeader() const;
 
     size_t size() const;
 
