@@ -82,11 +82,18 @@ bool CppsshChannel::isConnected()
     return _channelOpened;
 }
 
-void CppsshChannel::handleChannelData(const Botan::secure_vector<Botan::byte>& buf)
+void CppsshChannel::handleChannelData(const Botan::secure_vector<Botan::byte>& buf, bool isBanner)
 {
     CppsshConstPacket packet(&buf);
     CppsshMessage message;
-    packet.getChannelData(message);
+    if (isBanner == false)
+    {
+        packet.getChannelData(message);
+    }
+    else
+    {
+        packet.getBannerData(message);
+    }
     std::unique_lock<std::mutex> lock(_messageMutex);
     _messages.push(message);
 }
@@ -200,7 +207,6 @@ bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_CHANNEL_FAILURE:
         case SSH2_MSG_CHANNEL_OPEN_CONFIRMATION:
         case SSH2_MSG_CHANNEL_OPEN_FAILURE:
-        case SSH2_MSG_USERAUTH_BANNER:
         case SSH2_MSG_USERAUTH_FAILURE:
         case SSH2_MSG_USERAUTH_SUCCESS:
         case SSH2_MSG_SERVICE_ACCEPT:
@@ -209,9 +215,13 @@ bool CppsshChannel::handleReceived(Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_KEXINIT:
             _session->_transport->handleData(buf);
             break;
+        case SSH2_MSG_USERAUTH_BANNER:
+            _session->_transport->handleData(buf);
+            handleChannelData(buf, true);
+            break;
 
         case SSH2_MSG_CHANNEL_DATA:
-            handleChannelData(buf);
+            handleChannelData(buf, false);
             break;
 
         case SSH2_MSG_CHANNEL_EXTENDED_DATA:

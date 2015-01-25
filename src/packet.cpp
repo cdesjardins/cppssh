@@ -168,7 +168,17 @@ void CppsshConstPacket::getChannelData(CppsshMessage& result) const
     const Botan::byte* p = _cdata->data() + CPPSSH_PACKET_CH_DATA_OFFS + _index;
     uint32_t len = ntohl(*((uint32_t*)p));
     result._message.reset(new char[len + 1]);
-    strncpy(result._message.get(), (char*)(p + 4), len);
+    strncpy(result._message.get(), (char*)(p + sizeof(uint32_t)), len);
+    result._message.get()[len] = 0;
+}
+
+void CppsshConstPacket::getBannerData(CppsshMessage& result) const
+{
+    Botan::secure_vector<Botan::byte> payload(Botan::secure_vector<Botan::byte>(getPayloadBegin() + 1, getPayloadEnd()));
+    CppsshConstPacket payloadPacket(&payload);
+    uint32_t len = payloadPacket.getInt();
+    result._message.reset(new char[len + 1]);
+    strncpy(result._message.get(), (char*)(payload.data() + sizeof(uint32_t)), len);
     result._message.get()[len] = 0;
 }
 
