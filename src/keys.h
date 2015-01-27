@@ -19,10 +19,49 @@
 #ifndef _KEYS_Hxx
 #define _KEYS_Hxx
 
+#include "session.h"
+#include "crypto.h"
+#include <string>
+
 class CppsshKeys
 {
 public:
+    CppsshKeys(std::shared_ptr<CppsshSession> session)
+        : _session(session)
+    {
+
+    }
+    bool getKeyPairFromFile(const std::string& privKeyFileName);
+    const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
+    Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
+
+    hostkeyMethods getKeyAlgo()
+    {
+        return _keyAlgo;
+    }
+    const Botan::secure_vector<Botan::byte>& getPublicKeyBlob()
+    {
+        return _publicKeyBlob;
+    }
 private:
+    bool isKey(const Botan::secure_vector<Botan::byte>& buf, std::string header, std::string footer);
+    bool getRSAKeys(Botan::secure_vector<Botan::byte> buf);
+    static Botan::secure_vector<Botan::byte>::const_iterator findEndOfLine(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader);
+    static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
+    static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);
+
+    static const std::string CppsshKeys::HEADER_DSA;
+    static const std::string CppsshKeys::FOOTER_DSA;
+    static const std::string CppsshKeys::HEADER_RSA;
+    static const std::string CppsshKeys::FOOTER_RSA;
+    static const std::string CppsshKeys::PROC_TYPE;
+    static const std::string CppsshKeys::DEK_INFO;
+
+    std::shared_ptr<CppsshSession> _session;
+    hostkeyMethods _keyAlgo;
+    std::shared_ptr<Botan::RSA_PrivateKey> _rsaPrivateKey;
+    Botan::secure_vector<Botan::byte> _publicKeyBlob;
+    Botan::secure_vector<Botan::byte> _signature;
 };
 
 #endif

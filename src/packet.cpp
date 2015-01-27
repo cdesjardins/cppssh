@@ -19,6 +19,7 @@
 
 #include "packet.h"
 #include "cppssh.h"
+#include <fstream>
 
 #if !defined(WIN32) && !defined(__MINGW32__)
 #   include <arpa/inet.h>
@@ -271,3 +272,32 @@ void CppsshPacket::addBigInt(const Botan::BigInt& bn)
     addVectorField(converted);
 }
 
+bool CppsshPacket::addFile(const std::string& fileName)
+{
+    bool ret = false;
+    // open the file:
+    std::ifstream file(fileName, std::ios::in);
+
+    if (file.is_open() == true)
+    {
+        // Stop eating new lines in binary mode!!!
+        file.unsetf(std::ios::skipws);
+
+        // get its size:
+        std::streampos fileSize;
+
+        file.seekg(0, std::ios::end);
+        fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
+
+        // reserve capacity
+        _data->reserve((size_t)fileSize);
+
+        // read the data:
+        _data->insert(_data->begin(),
+            std::istream_iterator<Botan::byte>(file),
+            std::istream_iterator<Botan::byte>());
+        ret = true;
+    }
+    return ret;
+}

@@ -267,6 +267,7 @@ bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_CHANNEL_OPEN_FAILURE:
         case SSH2_MSG_USERAUTH_FAILURE:
         case SSH2_MSG_USERAUTH_SUCCESS:
+        case SSH2_MSG_USERAUTH_PK_OK:
         case SSH2_MSG_SERVICE_ACCEPT:
         case SSH2_MSG_KEXDH_REPLY:
         case SSH2_MSG_NEWKEYS:

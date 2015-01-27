@@ -19,6 +19,7 @@
 
 #include "connection.h"
 #include "kex.h"
+#include "keys.h"
 #include "cryptstr.h"
 #include "packet.h"
 #include "messages.h"
@@ -184,26 +185,19 @@ bool CppsshConnection::requestService(const std::string& service)
     return ret;
 }
 
-bool CppsshConnection::authWithPassword(const std::string& username, const std::string& password)
+bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& userAuthRequest)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addByte(SSH2_MSG_USERAUTH_REQUEST);
-    packet.addString(username);
-    packet.addString("ssh-connection");
-    packet.addString("password");
-    packet.addByte('\0');
-    packet.addString(password);
-
-    if ((_transport->sendPacket(buf) == true) && (_transport->waitForPacket(0, &packet) == true))
+    if ((_transport->sendPacket(userAuthRequest) == true) && (_transport->waitForPacket(0, &packet) == true))
     {
         if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {
             _transport->waitForPacket(0, &packet);
         }
-        if (packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS)
+        if ((packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS) || (packet.getCommand() == SSH2_MSG_USERAUTH_PK_OK))
         {
             ret = true;
         }
@@ -215,12 +209,79 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
             message.getString(&methods);
             _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
         }
+        else
+        {
+            _session->_logger->pushMessage(std::stringstream() << "Unknown user auth response: " << packet.getCommand());
+        }
     }
     return ret;
+}
+bool CppsshConnection::authWithPassword(const std::string& username, const std::string& password)
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+
+    packet.addByte(SSH2_MSG_USERAUTH_REQUEST);
+    packet.addString(username);
+    packet.addString("ssh-connection");
+    packet.addString("password");
+    packet.addByte('\0');
+    packet.addString(password);
+    return authenticate(buf);
 }
 
 bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName)
 {
-    return false;
+    bool ret = false;
+    CppsshKeys keyPair(_session);
+
+    if (keyPair.getKeyPairFromFile(privKeyFileName) == true)
+    {
+        Botan::secure_vector<Botan::byte> buf;
+        Botan::secure_vector<Botan::byte> beginBuf;
+        Botan::secure_vector<Botan::byte> endBuf;
+        CppsshPacket packet(&buf);
+        CppsshPacket packetBegin(&beginBuf);
+        CppsshPacket packetEnd(&endBuf);
+
+        packetBegin.addByte(SSH2_MSG_USERAUTH_REQUEST);
+        packetBegin.addString(username);
+        packetBegin.addString("ssh-connection");
+        packetBegin.addString("publickey");
+
+        std::string algo = SEhostkeyMethods::smrtEnum2String(keyPair.getKeyAlgo());
+        std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
+        packetEnd.addString(algo);
+        size_t packetSize = endBuf.size();
+        packetEnd.addVectorField(keyPair.getPublicKeyBlob());
+        if (packetSize == endBuf.size())
+        {
+            _session->_logger->pushMessage("Invallid public key.");
+        }
+        else
+        {
+            packet.addVector(beginBuf);
+            packet.addByte(0);
+            packet.addVector(endBuf);
+            if (authenticate(buf) == true)
+            {
+                buf.clear();
+                packet.addVector(beginBuf);
+                packet.addByte(1);
+                packet.addVector(endBuf);
+                Botan::secure_vector<Botan::byte> sigBlob = keyPair.generateSignature(_session->getSessionID(), buf);
+                if (sigBlob.size() == 0)
+                {
+                    _session->_logger->pushMessage("Failure while generating the signature.");
+                }
+                else
+                {
+                    packet.addVectorField(sigBlob);
+                    ret = authenticate(buf);
+                }
+            }
+        }
+    }
+    return ret;
 }
 

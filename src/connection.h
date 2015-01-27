@@ -44,6 +44,7 @@ private:
     bool requestService(const std::string& service);
     bool authWithPassword(const std::string& username, const std::string& password);
     bool authWithKey(const std::string& username, const std::string& privKeyFileName);
+    bool authenticate(const Botan::secure_vector<Botan::byte>& userAuthRequest);
 
     int _channelId;
     std::shared_ptr<CppsshSession> _session;

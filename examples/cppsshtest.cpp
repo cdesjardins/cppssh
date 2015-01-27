@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#define NUM_THREADS 5
+#define NUM_THREADS 1
 
 std::ofstream _errLog;
 
@@ -29,7 +29,8 @@ void getOutFile(int channel, std::ofstream& outfile)
 void runConnectionTest(char* hostname, char* username, char* password)
 {
     int channel;
-    if (Cppssh::connectWithPassword(&channel, hostname, 22, username, password, NUM_THREADS * 10) == true)
+    //if (Cppssh::connectWithPassword(&channel, hostname, 22, username, password, NUM_THREADS * 10) == true)
+    if (Cppssh::connectWithKey(&channel, hostname, 22, username, password, NUM_THREADS * 10) == true)
     {
         std::ofstream output;
         getOutFile(channel, output);
