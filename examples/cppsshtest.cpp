@@ -34,7 +34,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
     {
         std::ofstream output;
         getOutFile(channel, output);
-        output << "Connected " << channel << std::endl;
+        std::cout << "Connected " << channel << std::endl;
         std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
         int txCount = 0;
         while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
@@ -51,6 +51,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
                 txTime = std::chrono::steady_clock::now();
                 txCount++;
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
     else

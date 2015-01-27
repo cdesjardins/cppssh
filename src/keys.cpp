@@ -142,46 +142,51 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     bool ret = false;
     Botan::secure_vector<Botan::byte> keyDataRaw;
     Botan::BigInt p, q, e, d, n;
-    size_t version;
+    size_t version = 0;
     Botan::secure_vector<Botan::byte> key(findKeyBegin(privateKey, HEADER_RSA), findKeyEnd(privateKey, FOOTER_RSA));
     Botan::Pipe base64dec(new Botan::Base64_Decoder);
     base64dec.process_msg(key);
     keyDataRaw = base64dec.read_all();
-
-    Botan::BER_Decoder decoder(keyDataRaw);
-
-    Botan::BER_Decoder sequence = decoder.start_cons(Botan::SEQUENCE);
-    sequence.decode(version);
-
-    if (version != 0)
+    try
     {
-        _session->_logger->pushMessage("Encountered unknown RSA key version.");
-    }
-    else
-    {
-        sequence.decode(n);
-        sequence.decode(e);
-        sequence.decode(d);
-        sequence.decode(p);
-        sequence.decode(q);
+        Botan::BER_Decoder decoder(keyDataRaw);
+        Botan::BER_Decoder sequence = decoder.start_cons(Botan::SEQUENCE);
+        sequence.decode(version);
 
-        sequence.discard_remaining();
-        sequence.verify_end();
-
-        if (n.is_zero() || e.is_zero() || d.is_zero() || p.is_zero() || q.is_zero())
+        if (version != 0)
         {
-            _session->_logger->pushMessage("Could not decode the supplied RSA key.");
+            _session->_logger->pushMessage("Encountered unknown RSA key version.");
         }
         else
         {
-            _rsaPrivateKey.reset(new Botan::RSA_PrivateKey(*CppsshImpl::RNG, p, q, e, d, n));
-            _publicKeyBlob.clear();
-            CppsshPacket publicKeyPacket(&_publicKeyBlob);
-            publicKeyPacket.addString("ssh-rsa");
-            publicKeyPacket.addBigInt(e);
-            publicKeyPacket.addBigInt(n);
-            ret = true;
+            sequence.decode(n);
+            sequence.decode(e);
+            sequence.decode(d);
+            sequence.decode(p);
+            sequence.decode(q);
+
+            sequence.discard_remaining();
+            sequence.verify_end();
+
+            if (n.is_zero() || e.is_zero() || d.is_zero() || p.is_zero() || q.is_zero())
+            {
+                _session->_logger->pushMessage("Could not decode the supplied RSA key.");
+            }
+            else
+            {
+                _rsaPrivateKey.reset(new Botan::RSA_PrivateKey(*CppsshImpl::RNG, p, q, e, d, n));
+                _publicKeyBlob.clear();
+                CppsshPacket publicKeyPacket(&_publicKeyBlob);
+                publicKeyPacket.addString("ssh-rsa");
+                publicKeyPacket.addBigInt(e);
+                publicKeyPacket.addBigInt(n);
+                ret = true;
+            }
         }
+    }
+    catch (const Botan::BER_Decoding_Error& ex)
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Error decoding private key: " << ex.what());
     }
     return ret;
 }
