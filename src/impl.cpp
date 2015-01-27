@@ -66,7 +66,7 @@ void CppsshImpl::destroy()
 
 CppsshImpl::CppsshImpl()
 {
-    _init.reset(new Botan::LibraryInitializer("thread_safe"));
+    _init.reset(new Botan::LibraryInitializer());
 }
 
 CppsshImpl::~CppsshImpl()
