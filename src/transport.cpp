@@ -191,28 +191,23 @@ bool CppsshTransport::wait(bool isWrite)
     return ret;
 }
 
+// Append new receive data to the end of the buffer
 bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
 {
     bool ret = true;
     int len = 0;
-    buffer->resize(CPPSSH_MAX_PACKET_LEN);
+    int bufferLen = buffer->size();
+    buffer->resize(CPPSSH_MAX_PACKET_LEN + bufferLen);
 
     if (wait(false) == true)
     {
-        len = ::recv(_sock, (char*)buffer->data(), CPPSSH_MAX_PACKET_LEN, 0);
+        len = ::recv(_sock, (char*)buffer->data() + bufferLen, CPPSSH_MAX_PACKET_LEN, 0);
         if (len > 0)
         {
-            buffer->resize(len);
-        }
-        else
-        {
-            buffer->clear();
+            bufferLen += len;
         }
     }
-    else
-    {
-        buffer->clear();
-    }
+    buffer->resize(bufferLen);
 
     if ((_running == true) && (len < 0))
     {

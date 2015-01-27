@@ -34,6 +34,7 @@ public:
     bool getKeyPairFromFile(const std::string& privKeyFileName);
     const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
+    Botan::secure_vector<Botan::byte> generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
 
     hostkeyMethods getKeyAlgo()
     {
@@ -46,6 +47,7 @@ public:
 private:
     bool isKey(const Botan::secure_vector<Botan::byte>& buf, std::string header, std::string footer);
     bool getRSAKeys(Botan::secure_vector<Botan::byte> buf);
+    bool getDSAKeys(Botan::secure_vector<Botan::byte> buf);
     static Botan::secure_vector<Botan::byte>::const_iterator findEndOfLine(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);
@@ -60,6 +62,7 @@ private:
     std::shared_ptr<CppsshSession> _session;
     hostkeyMethods _keyAlgo;
     std::shared_ptr<Botan::RSA_PrivateKey> _rsaPrivateKey;
+    std::shared_ptr<Botan::DSA_PrivateKey> _dsaPrivateKey;
     Botan::secure_vector<Botan::byte> _publicKeyBlob;
     Botan::secure_vector<Botan::byte> _signature;
 };
