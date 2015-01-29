@@ -307,20 +307,17 @@ void CppsshTransport::rxThread()
             decrypted.clear();
             uint32_t cryptoLen = 0;
             int macLen = 0;
+            size_t size = sizeof(uint32_t);
 
-            //if (bufferOnly == false)
+            if (_session->_crypto->isInited() == true)
             {
-                size_t size = 4;
-                if (_session->_crypto->isInited() == true)
+                size = _session->_crypto->getDecryptBlock();
+            }
+            while ((_in.size() < size) && (_running == true))
+            {
+                if (receive(&_in) == false)
                 {
-                    size = _session->_crypto->getDecryptBlock();
-                }
-                while ((_in.size() < size) && (_running == true))
-                {
-                    if (receive(&_in) == false)
-                    {
-                        return;
-                    }
+                    return;
                 }
             }
             if (_session->_crypto->isInited() == false)
@@ -387,13 +384,20 @@ void CppsshTransport::rxThread()
 
 void CppsshTransport::txThread()
 {
-    while (_running == true)
+    try
     {
-        if (_session->_channel->flushOutgoingChannelData() == false)
+        while (_running == true)
         {
-            break;
+            if (_session->_channel->flushOutgoingChannelData() == false)
+            {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    catch (const std::exception& ex)
+    {
+        _session->_logger->pushMessage(std::stringstream() << "txThread exception: " << ex.what());
     }
 }
 
