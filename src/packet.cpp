@@ -20,6 +20,7 @@
 #include "packet.h"
 #include "cppssh.h"
 #include <fstream>
+#include <iterator>
 
 #if !defined(WIN32) && !defined(__MINGW32__)
 #   include <arpa/inet.h>

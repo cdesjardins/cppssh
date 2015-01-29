@@ -27,7 +27,9 @@ class CppsshKeys
 {
 public:
     CppsshKeys(std::shared_ptr<CppsshSession> session)
-        : _session(session)
+        : _session(session),
+        _keyAlgo(hostkeyMethods::MAX_VALS)
+
     {
 
     }
@@ -52,12 +54,12 @@ private:
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);
 
-    static const std::string CppsshKeys::HEADER_DSA;
-    static const std::string CppsshKeys::FOOTER_DSA;
-    static const std::string CppsshKeys::HEADER_RSA;
-    static const std::string CppsshKeys::FOOTER_RSA;
-    static const std::string CppsshKeys::PROC_TYPE;
-    static const std::string CppsshKeys::DEK_INFO;
+    static const std::string HEADER_DSA;
+    static const std::string FOOTER_DSA;
+    static const std::string HEADER_RSA;
+    static const std::string FOOTER_RSA;
+    static const std::string PROC_TYPE;
+    static const std::string DEK_INFO;
 
     std::shared_ptr<CppsshSession> _session;
     hostkeyMethods _keyAlgo;

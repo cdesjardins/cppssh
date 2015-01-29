@@ -23,6 +23,9 @@
 #include <botan/rsa.h>
 #include <botan/ber_dec.h>
 #include <botan/pubkey.h>
+#ifndef WIN32
+#include <sys/stat.h>
+#endif
 
 const std::string CppsshKeys::HEADER_DSA = "-----BEGIN DSA PRIVATE KEY-----\n";
 const std::string CppsshKeys::FOOTER_DSA = "-----END DSA PRIVATE KEY-----\n";
@@ -51,7 +54,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
 #ifndef WIN32
     struct stat privKeyStatus;
 
-    if (lstat(privKeyFileName, &privKeyStatus) < 0)
+    if (lstat(privKeyFileName.c_str(), &privKeyStatus) < 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Cannot read file status: " << privKeyFileName);
         return false;
@@ -259,6 +262,9 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(const Bot
             break;
         case hostkeyMethods::SSH_DSS:
             _signature = generateDSASignature(sessionID, signingData);
+            break;
+        default:
+            _session->_logger->pushMessage(std::stringstream() << "Invalid key type (RSA, or DSA required).");
             break;
     }
 
