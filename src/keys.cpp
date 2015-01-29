@@ -134,7 +134,7 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyEnd(const B
 {
     return privateKey.cend() - footer.length();
 }
-
+#if 1
 bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 {
     bool ret = false;
@@ -188,7 +188,14 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     }
     return ret;
 }
-
+#else
+bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
+{
+    bool ret = false;
+    std::shared_ptr<Botan::Private_Key> pk(Botan::PKCS8::load_key(std::string("C:\\Users\\chrisd\\.ssh\\id_dsa_np"), *CppsshImpl::RNG));
+    return ret;
+}
+#endif
 bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 {
     bool ret = false;
