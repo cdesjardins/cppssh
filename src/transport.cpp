@@ -347,10 +347,6 @@ void CppsshTransport::rxThread()
                 if (cryptoLen > _session->_crypto->getDecryptBlock())
                 {
                     Botan::secure_vector<Botan::byte> tmpVar;
-                    if (_in.size() < cryptoLen)
-                    {
-                        std::cout << "error" << std::endl;
-                    }
                     tmpVar = Botan::secure_vector<Botan::byte>(_in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
                     _session->_crypto->decryptPacket(&tmpVar, tmpVar, tmpVar.size());
                     decrypted += tmpVar;
