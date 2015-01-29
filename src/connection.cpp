@@ -216,6 +216,7 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     }
     return ret;
 }
+
 bool CppsshConnection::authWithPassword(const std::string& username, const std::string& password)
 {
     Botan::secure_vector<Botan::byte> buf;

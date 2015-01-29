@@ -296,9 +296,10 @@ bool CppsshPacket::addFile(const std::string& fileName)
 
         // read the data:
         _data->insert(_data->begin(),
-            std::istream_iterator<Botan::byte>(file),
-            std::istream_iterator<Botan::byte>());
+                      std::istream_iterator<Botan::byte>(file),
+                      std::istream_iterator<Botan::byte>());
         ret = true;
     }
     return ret;
 }
+

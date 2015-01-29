@@ -29,8 +29,8 @@ public:
     CppsshKeys()
         : _keyAlgo(hostkeyMethods::MAX_VALS)
     {
-
     }
+
     bool getKeyPairFromFile(const std::string& privKeyFileName);
     const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
@@ -39,15 +39,16 @@ public:
     static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
-
     hostkeyMethods getKeyAlgo()
     {
         return _keyAlgo;
     }
+
     const Botan::secure_vector<Botan::byte>& getPublicKeyBlob()
     {
         return _publicKeyBlob;
     }
+
 private:
     bool isKey(const Botan::secure_vector<Botan::byte>& buf, std::string header, std::string footer);
     bool getRSAKeys(Botan::secure_vector<Botan::byte> buf);

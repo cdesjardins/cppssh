@@ -93,15 +93,17 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
     {
         switch (_keyAlgo)
         {
-        case hostkeyMethods::SSH_RSA:
-            ret = getRSAKeys(buf);
-            break;
-        case hostkeyMethods::SSH_DSS:
-            ret = getDSAKeys(buf);
-            break;
-        default:
-            CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Unrecognized private key file format.");
-            break;
+            case hostkeyMethods::SSH_RSA:
+                ret = getRSAKeys(buf);
+                break;
+
+            case hostkeyMethods::SSH_DSS:
+                ret = getDSAKeys(buf);
+                break;
+
+            default:
+                CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Unrecognized private key file format.");
+                break;
         }
     }
     catch (const std::exception& ex)
@@ -276,9 +278,11 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(const Bot
         case hostkeyMethods::SSH_RSA:
             _signature = generateRSASignature(sessionID, signingData);
             break;
+
         case hostkeyMethods::SSH_DSS:
             _signature = generateDSASignature(sessionID, signingData);
             break;
+
         default:
             CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Invalid key type (RSA, or DSA required).");
             break;
@@ -412,7 +416,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
             pubKeyFile.write(fqdn, strlen(fqdn));
             pubKeyFile.write("\n", 1);
         }
-        catch (const std::ofstream::failure &)
+        catch (const std::ofstream::failure&)
         {
             CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "I/O error while writting to file: " << pubKeyFileName);
         }
@@ -465,7 +469,6 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket pubKeyBlob(&buf);
 
-
     Botan::DL_Group dsaGroup(*CppsshImpl::RNG, Botan::DL_Group::DSA_Kosherizer, keySize);
     Botan::DSA_PrivateKey privDsaKey(*CppsshImpl::RNG, dsaGroup);
     Botan::DSA_PublicKey pubDsaKey = privDsaKey;
@@ -504,20 +507,20 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
             pubKeyFile.write(fqdn, strlen(fqdn));
             pubKeyFile.write("\n", 1);
         }
-        catch (const std::ofstream::failure &)
+        catch (const std::ofstream::failure&)
         {
             CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "I/O error while writting to file: " << pubKeyFileName);
         }
         if (pubKeyFile.fail() == false)
         {
             encoder.start_cons(Botan::SEQUENCE)
-                .encode((size_t)0U)
-                .encode(p)
-                .encode(q)
-                .encode(g)
-                .encode(y)
-                .encode(x)
-                .end_cons();
+            .encode((size_t)0U)
+            .encode(p)
+            .encode(q)
+            .encode(g)
+            .encode(y)
+            .encode(x)
+            .end_cons();
             privKeyEncoded = Botan::PEM_Code::encode(encoder.get_contents(), "DSA PRIVATE KEY");
 
             privKeyFile.open(privKeyFileName);
@@ -542,3 +545,4 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
     }
     return ret;
 }
+

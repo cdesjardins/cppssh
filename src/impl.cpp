@@ -208,3 +208,4 @@ std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int channelId)
     }
     return con;
 }
+
