@@ -18,6 +18,7 @@
 */
 
 #include "impl.h"
+#include "keys.h"
 #include "botan/auto_rng.h"
 #include "botan/init.h"
 
@@ -28,6 +29,8 @@ std::vector<std::string> CppsshImpl::HOSTKEY_ALGORITHMS;
 std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
 
 std::unique_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
+
+std::shared_ptr<CppsshLogger> CppsshImpl::GLOBAL_LOGGER(new CppsshLogger());
 
 std::shared_ptr<CppsshImpl> CppsshImpl::create()
 {
@@ -155,15 +158,28 @@ void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
     setPref(prefHmac, &MAC_ALGORITHMS);
 }
 
-bool CppsshImpl::generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
-    return false;
+    return CppsshKeys::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
+}
+
+bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+{
+    return CppsshKeys::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
 bool CppsshImpl::getLogMessage(const int channelId, CppsshMessage* message)
 {
-    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
-    return con->getLogMessage(message);
+    bool ret = GLOBAL_LOGGER->popMessage(message);
+    if (ret == false)
+    {
+        std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+        if (con != NULL)
+        {
+            ret = con->getLogMessage(message);
+        }
+    }
+    return ret;
 }
 
 void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string* outstr)

@@ -26,8 +26,7 @@
 class CppsshKeys
 {
 public:
-    CppsshKeys(std::shared_ptr<CppsshSession> session)
-        : _session(session)
+    CppsshKeys()
     {
 
     }
@@ -35,6 +34,10 @@ public:
     const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
+
+    static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+    static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+
 
     hostkeyMethods getKeyAlgo()
     {
@@ -59,7 +62,6 @@ private:
     static const std::string CppsshKeys::PROC_TYPE;
     static const std::string CppsshKeys::DEK_INFO;
 
-    std::shared_ptr<CppsshSession> _session;
     hostkeyMethods _keyAlgo;
     std::shared_ptr<Botan::RSA_PrivateKey> _rsaPrivateKey;
     std::shared_ptr<Botan::DSA_PrivateKey> _dsaPrivateKey;

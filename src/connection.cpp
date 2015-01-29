@@ -233,7 +233,7 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
 bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName)
 {
     bool ret = false;
-    CppsshKeys keyPair(_session);
+    CppsshKeys keyPair;
 
     if (keyPair.getKeyPairFromFile(privKeyFileName) == true)
     {

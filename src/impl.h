@@ -30,6 +30,8 @@ public:
     static std::shared_ptr<CppsshImpl> create();
     static void destroy();
     static void setOptions(const char* prefCipher, const char* prefHmac);
+    static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+    static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CppsshImpl();
     ~CppsshImpl();
     bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell);
@@ -37,7 +39,6 @@ public:
     bool send(const int channelId, const uint8_t* data, size_t bytes);
     bool read(const int channelId, CppsshMessage* data);
     bool close(const int channelId);
-    bool generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     bool getLogMessage(const int channelId, CppsshMessage* message);
 
     static void vecToCommaString(const std::vector<std::string>& vec, std::string* outstr);
@@ -47,8 +48,8 @@ public:
     static std::vector<std::string> KEX_ALGORITHMS;
     static std::vector<std::string> HOSTKEY_ALGORITHMS;
     static std::vector<std::string> COMPRESSION_ALGORITHMS;
-
     static std::unique_ptr<Botan::RandomNumberGenerator> RNG;
+    static std::shared_ptr<CppsshLogger> GLOBAL_LOGGER;
 private:
     std::shared_ptr<CppsshConnection> getConnection(const int channelId);
     static void setPref(const char* pref, std::vector<std::string>* list);

@@ -76,9 +76,14 @@ void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
     CppsshImpl::setOptions(prefCipher, prefHmac);
 }
 
-bool Cppssh::generateKeyPair(const char* type, const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
-    return false;
+    return CppsshImpl::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
+}
+
+bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+{
+    return CppsshImpl::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
 bool Cppssh::getLogMessage(const int channelId, CppsshMessage* message)

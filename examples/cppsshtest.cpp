@@ -71,20 +71,31 @@ int main(int argc, char** argv)
     }
 
     getOutFile(-1, _errLog);
-    Cppssh::create();
-    std::vector<std::string> ciphers;
-    std::vector<std::string> macs;
-    Cppssh::setOptions("aes256-cbc", "hmac-md5");
-    std::vector<std::thread> threads;
-    for (int i = 0; i < NUM_THREADS; i++)
+    try
     {
-        threads.push_back(std::thread(&runConnectionTest, argv[1], argv[2], argv[3]));
+        Cppssh::create();
+        std::vector<std::string> ciphers;
+        std::vector<std::string> macs;
+        Cppssh::setOptions("aes256-cbc", "hmac-md5");
+
+        Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
+        Cppssh::generateDsaKeyPair("test", "privDsa", "pubDsa", 1024);
+
+        std::vector<std::thread> threads;
+        for (int i = 0; i < NUM_THREADS; i++)
+        {
+            threads.push_back(std::thread(&runConnectionTest, argv[1], argv[2], argv[3]));
+        }
+        for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); it++)
+        {
+            (*it).join();
+        }
+        Cppssh::destroy();
     }
-    for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); it++)
+    catch (const std::exception& ex)
     {
-        (*it).join();
+        std::cout << "Exception: " << ex.what() << std::endl;
     }
-    Cppssh::destroy();
     return 0;
 }
 
