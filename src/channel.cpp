@@ -257,7 +257,7 @@ bool CppsshChannel::runXauth(const char* display, std::string* method, std::stri
 {
     bool ret = false;
     std::stringstream xauth;
-    char tmpname [L_tmpnam];
+    char tmpname[L_tmpnam];
     std::tmpnam(tmpname);
     xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
     if (system(xauth.str().c_str()) == 0)
@@ -284,7 +284,7 @@ bool CppsshChannel::runXauth(const char* display, std::string* method, std::stri
     return ret;
 }
 
-bool CppsshChannel::getFakeX11Cookie(const int size, std::string *fakeX11Cookie) const
+bool CppsshChannel::getFakeX11Cookie(const int size, std::string* fakeX11Cookie) const
 {
     std::vector<Botan::byte> random;
     random.resize(size / 2);
@@ -301,7 +301,7 @@ bool CppsshChannel::getFakeX11Cookie(const int size, std::string *fakeX11Cookie)
 bool CppsshChannel::getX11()
 {
     bool ret = false;
-    char *display = getenv("DISPLAY");
+    char* display = getenv("DISPLAY");
     if (display != NULL)
     {
         if ((runXauth(display, &_realX11Method, &_realX11Cookie) == true) &&
@@ -309,7 +309,7 @@ bool CppsshChannel::getX11()
         {
             Botan::secure_vector<Botan::byte> x11req;
             CppsshPacket x11packet(&x11req);
-            x11packet.addByte(0); // single connection
+            x11packet.addByte(0);// single connection
             x11packet.addString(_realX11Method);
             x11packet.addString(_fakeX11Cookie);
             x11packet.addInt(0);
@@ -415,3 +415,4 @@ void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& 
     uint32_t size = packet.getInt();
     _windowSend += size;
 }
+
