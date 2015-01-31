@@ -29,6 +29,7 @@ public:
     bool open(uint32_t channelID);
     bool isConnected();
     bool getShell();
+    bool getX11();
     bool handleReceived(const Botan::secure_vector<Botan::byte>& buf);
     bool read(CppsshMessage* data);
     bool send(const uint8_t* data, uint32_t bytes);

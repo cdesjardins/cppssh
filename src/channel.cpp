@@ -250,6 +250,21 @@ bool CppsshChannel::getShell()
     return ret;
 }
 
+bool CppsshChannel::getX11()
+{
+    bool ret = false;
+    char *display = getenv("DISPLAY");
+    if (display != NULL)
+    {
+        std::stringstream xauth;
+        char tmpname [L_tmpnam];
+        std::tmpnam(tmpname);
+        xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
+        system(xauth.str().c_str());
+    }
+    return ret;
+}
+
 bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
     const CppsshConstPacket packet(&buf);
