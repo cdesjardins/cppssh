@@ -36,14 +36,9 @@ void Cppssh::destroy()
     s_cppsshInst.reset();
 }
 
-bool Cppssh::connectWithPassword(int* channelId, const char* host, const short port, const char* username, const char* password, unsigned int timeout, bool shell)
+bool Cppssh::connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
 {
-    return s_cppsshInst->connect(channelId, host, port, username, password, NULL, timeout, shell);
-}
-
-bool Cppssh::connectWithKey(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileName, unsigned int timeout, bool shell)
-{
-    return s_cppsshInst->connect(channelId, host, port, username, NULL, privKeyFileName, timeout, shell);
+    return s_cppsshInst->connect(channelId, host, port, username, privKeyFileNameOrPassword, timeout, shell);
 }
 
 bool Cppssh::isConnected(const int channelId)

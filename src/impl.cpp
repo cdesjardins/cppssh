@@ -78,7 +78,7 @@ CppsshImpl::~CppsshImpl()
     _init.reset();
 }
 
-bool CppsshImpl::connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell)
+bool CppsshImpl::connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
 {
     bool ret = false;
     int channel;
@@ -91,7 +91,7 @@ bool CppsshImpl::connect(int* channelId, const char* host, const short port, con
     }
     if (con != NULL)
     {
-        channel = con->connect(host, port, username, password, privKeyFileName, shell);
+        channel = con->connect(host, port, username, privKeyFileNameOrPassword, shell);
         if (channel != -1)
         {
             ret = true;

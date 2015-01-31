@@ -34,7 +34,7 @@ public:
     static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CppsshImpl();
     ~CppsshImpl();
-    bool connect(int* channelId, const char* host, const short port, const char* username, const char* password, const char* privKeyFileName, unsigned int timeout, bool shell);
+    bool connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell);
     bool isConnected(const int channelId);
     bool send(const int channelId, const uint8_t* data, size_t bytes);
     bool read(const int channelId, CppsshMessage* data);
