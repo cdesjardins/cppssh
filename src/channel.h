@@ -42,6 +42,8 @@ private:
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf, bool isBanner);
     void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
+    bool runXauth(const char* display, std::string* method, std::string* cookie) const;
+    bool getFakeX11Cookie(const int size, std::string *fakeX11Cookie) const;
 
     void sendAdjustWindow();
 
@@ -54,6 +56,10 @@ private:
 
     std::mutex _outgoingMessagesMutex;
     std::queue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingMessages;
+
+    std::string _realX11Method;
+    std::string _realX11Cookie;
+    std::string _fakeX11Cookie;
 };
 
 #endif

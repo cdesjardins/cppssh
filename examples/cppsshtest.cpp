@@ -8,14 +8,13 @@
 
 #define NUM_THREADS 1
 
-std::ofstream _errLog;
 
 void reportErrors(const std::string& tag, const int channel)
 {
     CppsshMessage logMessage;
     while (Cppssh::getLogMessage(channel, &logMessage))
     {
-        _errLog << tag << " " << channel << " " << logMessage.message() << std::endl;
+        std::cout << tag << " " << channel << " " << logMessage.message() << std::endl;
     }
 }
 
@@ -36,6 +35,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
         std::cout << "Connected " << channel << std::endl;
         std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
         int txCount = 0;
+        bool sentGvim = false;
         while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
         {
             CppsshMessage message;
@@ -43,6 +43,12 @@ void runConnectionTest(char* hostname, char* username, char* password)
             {
                 output << message.message();
             }
+            if (sentGvim == false)
+            {
+                Cppssh::sendString(channel, "gvim\n");
+                sentGvim = true;
+            }
+
             if ((txCount < 100) && (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(100))))
             {
                 // send ls -l every 100 milliseconds
@@ -55,7 +61,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
     }
     else
     {
-        _errLog << "Did not connect " << channel << std::endl;
+        std::cout << "Did not connect " << channel << std::endl;
     }
     reportErrors("Connect", channel);
     Cppssh::close(channel);
@@ -69,7 +75,6 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    getOutFile(-1, _errLog);
     try
     {
         Cppssh::create();
@@ -77,8 +82,8 @@ int main(int argc, char** argv)
         std::vector<std::string> macs;
         Cppssh::setOptions("aes256-cbc", "hmac-md5");
 
-        Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
-        Cppssh::generateDsaKeyPair("test", "privDsa", "pubDsa", 1024);
+        //Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
+        //Cppssh::generateDsaKeyPair("test", "privDsa", "pubDsa", 1024);
 
         std::vector<std::thread> threads;
         for (int i = 0; i < NUM_THREADS; i++)

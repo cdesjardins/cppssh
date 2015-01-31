@@ -95,11 +95,11 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     }
     if (shell == true)
     {
+        _channel->getX11();
         if (_channel->getShell() == false)
         {
             return -1;
         }
-        _channel->getX11();
     }
     _connected = true;
     return _channelId;

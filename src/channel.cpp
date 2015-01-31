@@ -16,12 +16,15 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "impl.h"
 #include "channel.h"
 #include "messages.h"
 #include "transport.h"
 #include "packet.h"
 #include "logger.h"
 #include <sstream>
+#include <iterator>
+#include <iomanip>
 
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
@@ -250,17 +253,68 @@ bool CppsshChannel::getShell()
     return ret;
 }
 
+bool CppsshChannel::runXauth(const char* display, std::string* method, std::string* cookie) const
+{
+    bool ret = false;
+    std::stringstream xauth;
+    char tmpname [L_tmpnam];
+    std::tmpnam(tmpname);
+    xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
+    if (system(xauth.str().c_str()) == 0)
+    {
+        Botan::secure_vector<Botan::byte> buf;
+        CppsshPacket packet(&buf);
+        if (packet.addFile(tmpname) == true)
+        {
+            std::string magic(buf.begin(), buf.end());
+            std::istringstream iss(magic);
+            std::vector<std::string> cookies;
+            std::copy(std::istream_iterator<std::string>(iss),
+                      std::istream_iterator<std::string>(),
+                      std::back_inserter(cookies));
+            if (cookies.size() == 3)
+            {
+                *method = cookies[1];
+                *cookie = cookies[2];
+                ret = true;
+            }
+        }
+    }
+    remove(tmpname);
+    return ret;
+}
+
+bool CppsshChannel::getFakeX11Cookie(const int size, std::string *fakeX11Cookie) const
+{
+    std::vector<Botan::byte> random;
+    random.resize(size / 2);
+    CppsshImpl::RNG->randomize(random.data(), random.size());
+    std::stringstream fake;
+    for (std::vector<Botan::byte>::const_iterator it = random.begin(); it != random.end(); it++)
+    {
+        fake << std::hex << std::setw(2) << std::setfill('0') << (int)*it;
+    }
+    *fakeX11Cookie = fake.str();
+    return true;
+}
+
 bool CppsshChannel::getX11()
 {
     bool ret = false;
     char *display = getenv("DISPLAY");
     if (display != NULL)
     {
-        std::stringstream xauth;
-        char tmpname [L_tmpnam];
-        std::tmpnam(tmpname);
-        xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
-        system(xauth.str().c_str());
+        if ((runXauth(display, &_realX11Method, &_realX11Cookie) == true) &&
+            (getFakeX11Cookie(_realX11Cookie.size(), &_fakeX11Cookie) == true))
+        {
+            Botan::secure_vector<Botan::byte> x11req;
+            CppsshPacket x11packet(&x11req);
+            x11packet.addByte(0); // single connection
+            x11packet.addString(_realX11Method);
+            x11packet.addString(_fakeX11Cookie);
+            x11packet.addInt(0);
+            ret = doChannelRequest("x11-req", x11req);
+        }
     }
     return ret;
 }
@@ -307,6 +361,11 @@ bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_CHANNEL_EOF:
             //handleEof(newPacket.value());
             _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EOF: " << cmd);
+            break;
+
+        case SSH2_MSG_CHANNEL_OPEN:
+            //handleOpen(buf);
+            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_OPEN: " << cmd);
             break;
 
         case SSH2_MSG_CHANNEL_CLOSE:

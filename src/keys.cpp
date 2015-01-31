@@ -59,7 +59,6 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
 
     if (lstat(privKeyFileName.c_str(), &privKeyStatus) < 0)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Cannot read file status: " << privKeyFileName);
         return false;
     }
 
@@ -71,7 +70,6 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
 #endif
     if (privKeyPacket.addFile(privKeyFileName) == false)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Cannot read PEM file: " << privKeyFileName);
         return false;
     }
     // Find all CR-LF, and remove the CR
