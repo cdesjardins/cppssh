@@ -75,14 +75,17 @@ public:
     ~CppsshSubChannel()
     {
     }
+
     void reduceWindowRecv(uint32_t bytes)
     {
         _windowRecv -= bytes;
     }
+
     void increaseWindowSend(uint32_t bytes)
     {
         _windowSend += bytes;
     }
+
     uint32_t getWindowRecv()
     {
         return _windowRecv;

@@ -8,7 +8,6 @@
 
 #define NUM_THREADS 1
 
-
 void reportErrors(const std::string& tag, const int channel)
 {
     CppsshMessage logMessage;

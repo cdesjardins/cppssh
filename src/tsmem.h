@@ -58,12 +58,12 @@ public:
         std::unique_lock<std::mutex> lock(_queueMutex);
         return _queue.size();
     }
+
 private:
     std::mutex _queueMutex;
     std::condition_variable _queueCondVar;
     std::queue<T> _queue;
 };
-
 
 // Simple thread safe map
 
@@ -87,7 +87,7 @@ public:
         std::unique_lock<std::mutex> lock(_mapMutex);
         return _map.find(k);
     }
-    
+
     typename std::map<keyType, valType>::iterator find(const keyType& k)
     {
         std::unique_lock<std::mutex> lock(_mapMutex);
@@ -122,6 +122,7 @@ public:
     {
         return _map.end();
     }
+
 private:
     std::mutex _mapMutex;
     std::map<keyType, valType> _map;

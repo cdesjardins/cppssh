@@ -42,9 +42,10 @@ public:
     }
 };
 
-struct	sockaddr_un {
+struct  sockaddr_un
+{
     short sun_family;       /* AF_UNIX */
-    char sun_path[108];
+    char  sun_path[108];
 };
 
 WSockInitializer _wsock32_;
@@ -175,7 +176,7 @@ bool CppsshTransport::establishLocalX11(const std::string& path)
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
-        int connectRet = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+        int connectRet = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
         if (connectRet == 0)
         {
             // success
@@ -480,6 +481,7 @@ void CppsshTransport::txThread()
         _session->_logger->pushMessage(std::stringstream() << "txThread exception: " << ex.what());
     }
 }
+
 /*
 bool CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
 {

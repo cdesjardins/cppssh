@@ -289,7 +289,7 @@ bool CppsshSubChannel::handleChannelConfirm()
     Botan::secure_vector<Botan::byte> buf;
     if (_incomingControlData.dequeue(&buf, _timeout) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "New channel: " << /* channelId << FIXME: rx channel id */" could not be open. ");
+        _session->_logger->pushMessage(std::stringstream() << "New channel: " << /* channelId << FIXME: rx channel id */ " could not be open. ");
     }
     else
     {
@@ -507,6 +507,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_KEXINIT:
             handleIncomingGlobalData(buf);
             break;
+
         case SSH2_MSG_USERAUTH_BANNER:
             handleIncomingGlobalData(buf);
             handleBanner(buf);
