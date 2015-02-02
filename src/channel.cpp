@@ -433,10 +433,28 @@ void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& 
     _channels.at(rxChannel)->increaseWindowSend(size);
 }
 
+void CppsshChannel::handleIncomingGlobalData(const Botan::secure_vector<Botan::byte>& buf)
+{
+    _incomingGlobalData.enqueue(buf);
+}
+
+bool CppsshChannel::waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf)
+{
+    return _incomingGlobalData.dequeue(buf, _timeout);
+}
+
+void CppsshChannel::handleBanner(const Botan::secure_vector<Botan::byte>& buf)
+{
+    const CppsshConstPacket packet(&buf);
+    std::shared_ptr<CppsshMessage> message(new CppsshMessage());
+    packet.getBannerData(message.get());
+    // FIXME: enqueue the banner to mainChannel incomingChannelData
+}
+
 void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
     const CppsshConstPacket packet(&buf);
-    int cmd = packet.getCommand();
+    Botan::byte cmd = packet.getCommand();
     switch (cmd)
     {
         case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
@@ -461,13 +479,12 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_KEXDH_REPLY:
         case SSH2_MSG_NEWKEYS:
         case SSH2_MSG_KEXINIT:
-            _session->_transport->handleData(buf);
+            handleIncomingGlobalData(buf);
             break;
-
         case SSH2_MSG_USERAUTH_BANNER:
-            _session->_transport->handleData(buf);
+            handleIncomingGlobalData(buf);
+            handleBanner(buf);
             break;
-
 
         case SSH2_MSG_CHANNEL_EXTENDED_DATA:
             //handleExtendedData(newPacket.value());
@@ -524,7 +541,7 @@ CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session
     _windowSend(0),
     _txChannel(0),
     _maxPacket(0),
-    _timeout(timeout * 1000)
+    _timeout(timeout)
 {
 }
 

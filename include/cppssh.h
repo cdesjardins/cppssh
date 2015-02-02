@@ -35,7 +35,8 @@ class Cppssh
 public:
     CPPSSH_EXPORT static void create();
     CPPSSH_EXPORT static void destroy();
-    CPPSSH_EXPORT static bool connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout = 1, bool shell = true);
+    // Timeout is in milliseconds
+    CPPSSH_EXPORT static bool connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout = 1000, bool shell = true);
     CPPSSH_EXPORT static bool isConnected(const int channelId);
     CPPSSH_EXPORT static bool writeString(const int channelId, const char* data);
     CPPSSH_EXPORT static bool write(const int channelId, const uint8_t* data, size_t bytes);

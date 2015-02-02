@@ -249,7 +249,7 @@ bool CppsshTransport::wait(bool isWrite)
     waitTime.tv_usec = 1000;
 
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-    while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::seconds(_timeout))))
+    while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_timeout))))
     {
         fd_set fds;
         setupFd(&fds);
@@ -480,7 +480,7 @@ void CppsshTransport::txThread()
         _session->_logger->pushMessage(std::stringstream() << "txThread exception: " << ex.what());
     }
 }
-
+/*
 bool CppsshTransport::waitForPacket(Botan::byte command, CppsshPacket* packet)
 {
     bool ret = false;
@@ -511,3 +511,4 @@ void CppsshTransport::handleData(const Botan::secure_vector<Botan::byte>& data)
     _inBufferCondVar.notify_all();
 }
 
+*/

@@ -164,7 +164,7 @@ bool CppsshConnection::requestService(const std::string& service)
     packet.addString(service);
     if (_transport->sendPacket(buf) == true)
     {
-        if (_transport->waitForPacket(SSH2_MSG_SERVICE_ACCEPT, &packet) == false)
+        if ((_channel->waitForGlobalMessage(&buf) == false) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
         {
             _session->_logger->pushMessage("Service request failed.");
         }
@@ -182,11 +182,11 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_transport->sendPacket(userAuthRequest) == true) && (_transport->waitForPacket(0, &packet) == true))
+    if ((_transport->sendPacket(userAuthRequest) == true) && (_channel->waitForGlobalMessage(&buf) == true))
     {
         if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {
-            _transport->waitForPacket(0, &packet);
+            _channel->waitForGlobalMessage(&buf);
         }
         if ((packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS) || (packet.getCommand() == SSH2_MSG_USERAUTH_PK_OK))
         {
@@ -195,9 +195,8 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
         else if (packet.getCommand() == SSH2_MSG_USERAUTH_FAILURE)
         {
             std::string methods;
-            const CppsshConstPacket message(&buf);
-            message.skipHeader();
-            message.getString(&methods);
+            packet.skipHeader();
+            packet.getString(&methods);
             _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
         }
         else

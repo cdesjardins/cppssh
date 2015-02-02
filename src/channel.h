@@ -39,11 +39,14 @@ public:
     void handleReceived(const Botan::secure_vector<Botan::byte>& buf);
     bool flushOutgoingChannelData();
     void disconnect();
+    bool waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf);
 
 private:
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
+    void handleIncomingGlobalData(const Botan::secure_vector<Botan::byte>& buf);
+    void handleBanner(const Botan::secure_vector<Botan::byte>& buf);
 
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
@@ -59,6 +62,7 @@ private:
     std::string _realX11Cookie;
     std::string _fakeX11Cookie;
 
+    CppsshTsQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;
     CppsshTsMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
     unsigned int _timeout;
     uint32_t _mainChannel;
