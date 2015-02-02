@@ -52,9 +52,9 @@ private:
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
     bool runXauth(const char* display, std::string* method, std::string* cookie) const;
     bool getFakeX11Cookie(const int size, std::string* fakeX11Cookie) const;
-    bool createNewSubChannel(uint32_t* rxChannel);
-    void sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason reason);
-    bool connectToX11();
+    bool createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket, uint32_t* rxChannel);
+    bool createNewSubChannel(const std::string& channelName, uint32_t* rxChannel);
+    void sendOpenFailure(uint32_t txChannel, CppsshOpenFailureReason reason);
 
     std::shared_ptr<CppsshSession> _session;
     bool _channelOpened;
@@ -71,7 +71,7 @@ private:
 class CppsshSubChannel
 {
 public:
-    CppsshSubChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
+    CppsshSubChannel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName, unsigned int timeout);
     ~CppsshSubChannel()
     {
     }
@@ -92,11 +92,14 @@ public:
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     bool handleChannelConfirm();
+
     void sendOpenConfirmation(uint32_t rxChannel);
+
     void sendAdjustWindow();
     bool flushOutgoingChannelData();
     bool readChannel(CppsshMessage* data);
     bool writeChannel(const uint8_t* data, uint32_t bytes);
+    void setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket);
 
 private:
     CppsshSubChannel();
@@ -111,6 +114,7 @@ private:
     uint32_t _txChannel;
     uint32_t _maxPacket;
     unsigned int _timeout;
+    std::string _channelName;
 };
 
 #endif

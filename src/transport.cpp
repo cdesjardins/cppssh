@@ -118,7 +118,7 @@ bool CppsshTransport::establish(const std::string& host, short port)
     return ret;
 }
 
-bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum) const
+bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
 {
     bool ret = false;
     size_t start = display.find(':') + 1;

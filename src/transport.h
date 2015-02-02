@@ -52,6 +52,7 @@ public:
     bool receive(Botan::secure_vector<Botan::byte>* buffer);
     bool send(const Botan::secure_vector<Botan::byte>& buffer);
 
+    static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 private:
     bool establishLocalX11(const std::string& path);
     bool setNonBlocking(bool on);
@@ -59,7 +60,6 @@ private:
     bool wait(bool isWrite);
     void rxThread();
     void txThread();
-    bool parseDisplay(const std::string& display, int* displayNum, int* screenNum) const;
 
     SOCKET _sock;
     std::shared_ptr<CppsshSession> _session;
