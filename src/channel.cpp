@@ -26,6 +26,8 @@
 #include <iterator>
 #include <iomanip>
 
+#include <iostream>
+
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
@@ -97,9 +99,9 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
 {
     CppsshConstPacket packet(&buf);
     std::shared_ptr<CppsshMessage> message(new CppsshMessage());
-    uint32_t rxChannel;
     packet.skipHeader();
-    rxChannel = packet.getInt();
+    // rx channel
+    packet.getInt();
     packet.getChannelData(message.get());
     _windowRecv -= message->length();
     if (_windowRecv < (CPPSSH_RX_WINDOW_SIZE / 2))
@@ -147,8 +149,8 @@ bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t
 
 void CppsshSubChannel::setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket)
 {
-    _txChannel = windowSend;
-    _windowSend = txChannel;
+    _windowSend = windowSend;
+    _txChannel = txChannel;
     _maxPacket = maxPacket;
 }
 
@@ -157,8 +159,8 @@ void CppsshSubChannel::sendOpenConfirmation(uint32_t rxChannel)
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket openConfirmation(&buf);
     openConfirmation.addByte(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION);
-    openConfirmation.addInt(rxChannel);
     openConfirmation.addInt(_txChannel);
+    openConfirmation.addInt(rxChannel);
     openConfirmation.addInt(_windowRecv);
     openConfirmation.addInt(CPPSSH_MAX_PACKET_LEN);
     _session->_transport->sendPacket(buf);
@@ -194,6 +196,7 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
         {
             if (_session->_transport->establishX11() == true)
             {
+                std::cout << "x11 established " << rxChannel << " " << txChannel << std::endl;
                 _channels.at(rxChannel)->sendOpenConfirmation(rxChannel);
             }
             else

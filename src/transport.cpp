@@ -57,6 +57,7 @@ WSockInitializer _wsock32_;
 #   include <netdb.h>
 #   include <unistd.h>
 #   include <fcntl.h>
+#   include <sys/un.h>
 #endif
 
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
