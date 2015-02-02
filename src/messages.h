@@ -49,4 +49,11 @@
 #define SSH2_MSG_CHANNEL_SUCCESS                        99
 #define SSH2_MSG_CHANNEL_FAILURE                        100
 
+enum CppsshOpenFailureReason
+{
+    SSH2_OPEN_ADMINISTRATIVELY_PROHIBITED               = 1,
+    SSH2_OPEN_CONNECT_FAILED                            = 2,
+    SSH2_OPEN_UNKNOWN_CHANNEL_TYPE                      = 3,
+    SSH2_OPEN_RESOURCE_SHORTAGE                         = 4,
+};
 #endif

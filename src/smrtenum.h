@@ -48,6 +48,7 @@ private:                                                                        
         static std::string enumName();                                          \
         static std::string itemName(E);                                         \
         static const char* items() { return _SMART_ENUM_STRINGIZE(__VA_ARGS__); } \
+        static std::mutex _listMutex;                                           \
         static std::vector<std::string> _itemList;                              \
         static std::map<std::string, E> _itemMap;                               \
     };                                                                          \
@@ -56,6 +57,7 @@ private:                                                                        
 
 #define SMART_ENUM_DEFINE(E)                                                    \
     const size_t enum_properties<E>::max = static_cast<size_t>(E::MAX_VALS);    \
+    std::mutex enum_properties<E>::_listMutex;                                  \
     std::vector<std::string> enum_properties<E>::_itemList;                     \
     std::map<std::string, E> enum_properties<E>::_itemMap;                      \
     std::string enum_properties<E>::enumName() { return # E; }                  \
@@ -63,17 +65,21 @@ private:                                                                        
     {                                                                           \
         if (_itemList.size() != max)                                            \
         {                                                                       \
-            std::istringstream iss(items());                                    \
-            std::string tok;                                                    \
-            while (std::getline(iss, tok, ','))                                 \
+            std::unique_lock<std::mutex> lock(_listMutex);                      \
+            if (_itemList.size() != max)                                        \
             {                                                                   \
-                std::string element = CppsshCryptstr::trim(tok);                \
-                if (element[0] == '_')                                          \
+                std::istringstream iss(items());                                \
+                std::string tok;                                                \
+                while (std::getline(iss, tok, ','))                             \
                 {                                                               \
-                    element.erase(element.begin());                             \
+                    std::string element = CppsshCryptstr::trim(tok);            \
+                    if (element[0] == '_')                                      \
+                    {                                                           \
+                        element.erase(element.begin());                         \
+                    }                                                           \
+                    std::replace(element.begin(), element.end(), '_', '-');     \
+                    _itemList.push_back(element);                               \
                 }                                                               \
-                std::replace(element.begin(), element.end(), '_', '-');         \
-                _itemList.push_back(element);                                   \
             }                                                                   \
         }                                                                       \
         if ((long)f < (long)_itemList.size())                                   \
@@ -103,14 +109,18 @@ private:                                                                        
             E v = (E)0;                                                         \
             /* Build the itemList if it isn't already built */                  \
             itemName(v);                                                        \
-            for (it = _itemList.begin(); it != _itemList.end(); it++)           \
+            std::unique_lock<std::mutex> lock(_listMutex);                      \
+            if (_itemMap.size() != max)                                         \
             {                                                                   \
-                std::string element = *it;                                      \
-                _itemMap[element] = v;                                          \
-                std::transform(element.begin(), element.end(),                  \
-                               element.begin(), ::tolower);                     \
-                _itemMap[element] = v;                                          \
-                v = (E)((long)v + 1);                                           \
+                for (it = _itemList.begin(); it != _itemList.end(); it++)       \
+                {                                                               \
+                    std::string element = *it;                                  \
+                    _itemMap[element] = v;                                      \
+                    std::transform(element.begin(), element.end(),              \
+                                   element.begin(), ::tolower);                 \
+                    _itemMap[element] = v;                                      \
+                    v = (E)((long)v + 1);                                       \
+                }                                                               \
             }                                                                   \
         }                                                                       \
         std::map<std::string, E>::iterator item;                                \

@@ -30,12 +30,12 @@
 class CppsshConnection
 {
 public:
-    CppsshConnection(int channelId, unsigned int timeout);
+    CppsshConnection(int connectionId, unsigned int timeout);
     ~CppsshConnection();
     int connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell);
 
     bool read(CppsshMessage* data);
-    bool send(const uint8_t* data, uint32_t bytes);
+    bool write(const uint8_t* data, uint32_t bytes);
     bool isConnected();
     bool getLogMessage(CppsshMessage* message);
 private:
@@ -46,7 +46,7 @@ private:
     bool authWithKey(const std::string& username, const std::string& privKeyFileName);
     bool authenticate(const Botan::secure_vector<Botan::byte>& userAuthRequest);
 
-    int _channelId;
+    int _connectionId;
     std::shared_ptr<CppsshSession> _session;
     std::shared_ptr<CppsshCrypto> _crypto;
     std::shared_ptr<CppsshTransport> _transport;

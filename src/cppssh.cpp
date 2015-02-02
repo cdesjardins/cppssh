@@ -46,14 +46,14 @@ bool Cppssh::isConnected(const int channelId)
     return s_cppsshInst->isConnected(channelId);
 }
 
-bool Cppssh::sendString(const int channelId, const char* data)
+bool Cppssh::writeString(const int channelId, const char* data)
 {
-    return send(channelId, (const uint8_t*)data, strlen(data));
+    return write(channelId, (const uint8_t*)data, strlen(data));
 }
 
-bool Cppssh::send(const int channelId, const uint8_t* data, size_t bytes)
+bool Cppssh::write(const int channelId, const uint8_t* data, size_t bytes)
 {
-    return s_cppsshInst->send(channelId, data, bytes);
+    return s_cppsshInst->write(channelId, data, bytes);
 }
 
 bool Cppssh::read(const int channelId, CppsshMessage* data)

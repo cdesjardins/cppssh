@@ -34,12 +34,12 @@ public:
     static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CppsshImpl();
     ~CppsshImpl();
-    bool connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell);
-    bool isConnected(const int channelId);
-    bool send(const int channelId, const uint8_t* data, size_t bytes);
-    bool read(const int channelId, CppsshMessage* data);
-    bool close(const int channelId);
-    bool getLogMessage(const int channelId, CppsshMessage* message);
+    bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell);
+    bool isConnected(const int connectionId);
+    bool write(const int connectionId, const uint8_t* data, size_t bytes);
+    bool read(const int connectionId, CppsshMessage* data);
+    bool close(const int connectionId);
+    bool getLogMessage(const int connectionId, CppsshMessage* message);
 
     static void vecToCommaString(const std::vector<std::string>& vec, std::string* outstr);
 
@@ -51,7 +51,7 @@ public:
     static std::unique_ptr<Botan::RandomNumberGenerator> RNG;
     static std::shared_ptr<CppsshLogger> GLOBAL_LOGGER;
 private:
-    std::shared_ptr<CppsshConnection> getConnection(const int channelId);
+    std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
     static void setPref(const char* pref, std::vector<std::string>* list);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::unique_ptr<Botan::LibraryInitializer> _init;

@@ -39,8 +39,6 @@
 
 #define CPPSSH_PACKET_HEADER_SIZE   (CPPSSH_PACKET_PAYLOAD_OFFS + CPPSSH_PACKET_CMD_SIZE)
 
-#define CPPSSH_PACKET_CH_DATA_OFFS  10
-
 CppsshConstPacket::CppsshConstPacket(const Botan::secure_vector<Botan::byte>* const data)
     : _cdata(data),
     _index(0)
@@ -169,7 +167,7 @@ bool CppsshConstPacket::getBigInt(Botan::BigInt* result) const
 void CppsshConstPacket::getChannelData(CppsshMessage* result) const
 {
     // hackery to avoid tons of memcpy
-    const Botan::byte* p = _cdata->data() + CPPSSH_PACKET_CH_DATA_OFFS + _index;
+    const Botan::byte* p = _cdata->data() + _index;
     uint32_t len = ntohl(*((uint32_t*)p));
     result->setMessage((uint8_t*)(p + sizeof(uint32_t)), len);
 }

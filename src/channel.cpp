@@ -28,40 +28,42 @@
 
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
-CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
+CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
     : _session(session),
-    _windowRecv(CPPSSH_RX_WINDOW_SIZE),
-    _windowSend(0),
-    _channelOpened(false)
+    _channelOpened(false),
+    _timeout(timeout)
 {
 }
 
-bool CppsshChannel::open(uint32_t channelID)
+bool CppsshChannel::openChannel()
 {
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
-    _windowSend = 0;
-    _windowRecv = CPPSSH_RX_WINDOW_SIZE;
-
-    packet.addByte(SSH2_MSG_CHANNEL_OPEN);
-    packet.addString("session");
-    packet.addInt(channelID);
-
-    packet.addInt(_windowRecv);
-    packet.addInt(CPPSSH_MAX_PACKET_LEN);
-
-    if (_session->_transport->sendPacket(buf) == true)
+    if (createNewSubChannel(&_mainChannel) == true)
     {
-        if (_session->_transport->waitForPacket(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &packet) == false)
+        packet.addByte(SSH2_MSG_CHANNEL_OPEN);
+        packet.addString("session");
+        packet.addInt(_mainChannel);
+
+        packet.addInt(CPPSSH_RX_WINDOW_SIZE);
+        packet.addInt(CPPSSH_MAX_PACKET_LEN);
+
+        if (_session->_transport->sendPacket(buf) == true)
         {
-            _session->_logger->pushMessage(std::stringstream() << "New channel: " << channelID << " could not be open. ");
-        }
-        else
-        {
-            _channelOpened = handleChannelConfirm(buf);
+            _channelOpened = _channels.at(_mainChannel)->handleChannelConfirm();
         }
     }
     return _channelOpened;
+}
+
+bool CppsshChannel::readMainChannel(CppsshMessage* data)
+{
+    return _channels.at(_mainChannel)->readChannel(data);
+}
+
+bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
+{
+    return _channels.at(_mainChannel)->writeChannel(data, bytes);
 }
 
 void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
@@ -90,48 +92,130 @@ bool CppsshChannel::isConnected()
     return _channelOpened;
 }
 
-void CppsshChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf, bool isBanner)
+void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf)
 {
     CppsshConstPacket packet(&buf);
     std::shared_ptr<CppsshMessage> message(new CppsshMessage());
-    if (isBanner == false)
-    {
-        packet.getChannelData(message.get());
-    }
-    else
-    {
-        packet.getBannerData(message.get());
-    }
-
+    uint32_t rxChannel;
+    packet.skipHeader();
+    rxChannel = packet.getInt();
+    packet.getChannelData(message.get());
     _windowRecv -= message->length();
     if (_windowRecv < (CPPSSH_RX_WINDOW_SIZE / 2))
     {
         sendAdjustWindow();
     }
 
-    std::unique_lock<std::mutex> lock(_incomingMessagesMutex);
-    _incomingMessages.push(message);
+    _incomingChannelData.enqueue(message);
+}
+
+void CppsshSubChannel::handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf)
+{
+    _incomingControlData.enqueue(buf);
+}
+
+bool CppsshChannel::createNewSubChannel(uint32_t* rxChannel)
+{
+    bool ret = false;
+
+    std::shared_ptr<CppsshSubChannel> channel(new CppsshSubChannel(_session, _timeout));
+
+    for (*rxChannel = 1; *rxChannel < 2048; *rxChannel++)
+    {
+        if (_channels.find(*rxChannel) == _channels.end())
+        {
+            _channels.insert(std::pair<int, std::shared_ptr<CppsshSubChannel> >(*rxChannel, channel));
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
+
+void CppsshSubChannel::sendOpenConfirmation(uint32_t rxChannel)
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket openConfirmation(&buf);
+    openConfirmation.addByte(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION);
+    openConfirmation.addInt(rxChannel);
+    openConfirmation.addInt(_txChannel);
+    openConfirmation.addInt(_windowRecv);
+    openConfirmation.addInt(CPPSSH_MAX_PACKET_LEN);
+}
+
+void CppsshChannel::sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason reason)
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket openFaulure(&buf);
+    openFaulure.addByte(SSH2_MSG_CHANNEL_OPEN_FAILURE);
+    openFaulure.addInt(reason);
+    openFaulure.addString("Bad request");
+    openFaulure.addString("EN");
+    _session->_transport->sendPacket(buf);
+}
+
+void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
+{
+    /*
+    std::string channelName;
+    std::string originatorAddr;
+    CppsshConstPacket openPacket(&buf);
+    openPacket.skipHeader();
+    openPacket.getString(&channelName);
+    uint32_t txChannel = openPacket.getInt();
+    uint32_t windowSize = openPacket.getInt();
+    uint32_t maxPacket = openPacket.getInt();
+    openPacket.getString(&originatorAddr);
+    uint32_t originatorPort = openPacket.getInt();
+    if (channelName == "x11")
+    {
+        uint32_t rxChannel;
+        if (createNewRxChannel(windowSize, txChannel, maxPacket, &rxChannel) == true)
+        {
+            if (connectToX11() == true)
+            {
+                sendOpenConfirmation(rxChannel);
+            }
+        }
+        else
+        {
+            sendOpenFailure(txChannel, SSH2_OPEN_RESOURCE_SHORTAGE);
+        }
+    }
+    else
+    {
+        sendOpenFailure(txChannel, SSH2_OPEN_UNKNOWN_CHANNEL_TYPE);
+    }
+    */
 }
 
 bool CppsshChannel::flushOutgoingChannelData()
 {
     bool ret = true;
-    while (_outgoingMessages.empty() == false)
+    std::shared_ptr<std::unique_lock<std::mutex> > lock = _channels.getLock();
+    std::map<int, std::shared_ptr<CppsshSubChannel> >::iterator it;
+    for (it = _channels.begin(); (it != _channels.end() && (ret == true)); it++)
+    {
+        ret = it->second->flushOutgoingChannelData();
+    }
+    return ret;
+}
+
+bool CppsshSubChannel::flushOutgoingChannelData()
+{
+    bool ret = true;
+    while (_outgoingChannelData.size() > 0)
     {
         std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
-        {// new scope for mutex
-            std::unique_lock<std::mutex> lock(_outgoingMessagesMutex);
-            message = _outgoingMessages.front();
-            _outgoingMessages.pop();
-        }
+        _outgoingChannelData.dequeue(&message);
 
-        if ((message->size() > 0) && (_windowSend >= message->size()))
+        if (message->size() > 0)
         {
             _windowSend -= message->size();
             Botan::secure_vector<Botan::byte> buf;
             CppsshPacket packet(&buf);
             packet.addByte(SSH2_MSG_CHANNEL_DATA);
-            packet.addInt(_session->getSendChannel());
+            packet.addInt(_txChannel);
             packet.addInt(message->size());
             packet.addVector(*message);
             ret = _session->_transport->sendPacket(buf);
@@ -148,24 +232,22 @@ bool CppsshChannel::flushOutgoingChannelData()
     return ret;
 }
 
-bool CppsshChannel::read(CppsshMessage* data)
+bool CppsshSubChannel::readChannel(CppsshMessage* data)
 {
-    bool ret = false;
-    std::unique_lock<std::mutex> lock(_incomingMessagesMutex);
-    if (_incomingMessages.empty() == false)
+    std::shared_ptr<CppsshMessage> m;
+    bool ret = _incomingChannelData.dequeue(&m);
+    if (ret == true)
     {
-        *data = *_incomingMessages.front();
-        _incomingMessages.pop();
-        ret = true;
+        *data = *m;
     }
     return ret;
 }
 
-bool CppsshChannel::send(const uint8_t* data, uint32_t bytes)
+bool CppsshSubChannel::writeChannel(const uint8_t* data, uint32_t bytes)
 {
     uint32_t totalBytesSent = 0;
     std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
-    uint32_t maxPacketSize = _session->getMaxPacket() - 64;
+    uint32_t maxPacketSize = _maxPacket - 64;
     while (totalBytesSent < bytes)
     {
         uint32_t bytesSent = std::min(bytes, maxPacketSize);
@@ -173,52 +255,51 @@ bool CppsshChannel::send(const uint8_t* data, uint32_t bytes)
         CppsshPacket packet(message.get());
         packet.addRawData(data, bytesSent);
         totalBytesSent += bytesSent;
-        std::unique_lock<std::mutex> lock(_outgoingMessagesMutex);
-        _outgoingMessages.push(message);
+        _outgoingChannelData.enqueue(message);
     }
     return (totalBytesSent == bytes);
 }
 
-bool CppsshChannel::handleChannelConfirm(const Botan::secure_vector<Botan::byte>& buf)
+bool CppsshSubChannel::handleChannelConfirm()
 {
     bool ret = false;
-    Botan::secure_vector<Botan::byte> tmp(buf);
-    const CppsshConstPacket packet(&tmp);
-    uint32_t field;
-
-    if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
+    Botan::secure_vector<Botan::byte> buf;
+    if (_incomingControlData.dequeue(&buf, _timeout) == false)
     {
-        packet.skipHeader();
-        // Receive Channel
-        packet.getInt();
-        // Send Channel
-        field = packet.getInt();
-        _session->setSendChannel(field);
+        _session->_logger->pushMessage(std::stringstream() << "New channel: " << /* channelId << FIXME: rx channel id */" could not be open. ");
+    }
+    else
+    {
+        const CppsshConstPacket packet(&buf);
 
-        // Window Size
-        field = packet.getInt();
-        _windowSend = field;
-
-        // Max Packet
-        field = packet.getInt();
-        _session->setMaxPacket(field);
-        ret = true;
+        if (packet.getCommand() == SSH2_MSG_CHANNEL_OPEN_CONFIRMATION)
+        {
+            packet.skipHeader();
+            // Receive Channel
+            //uint32_t rxChannel = packet.getInt();
+            packet.getInt();
+            _txChannel = packet.getInt();
+            _windowSend = packet.getInt();
+            _maxPacket = packet.getInt();
+            ret = true;
+        }
     }
     return ret;
 }
 
-bool CppsshChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata)
+bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
-    packet.addInt(_session->getSendChannel());
+    packet.addInt(_txChannel);
     packet.addString(req);
     packet.addByte(1);// want reply == true
     packet.addVector(reqdata);
+
     if ((_session->_transport->sendPacket(buf) == true) &&
-        (_session->_transport->waitForPacket(0, &packet) == true) &&
+        (_incomingControlData.dequeue(&buf, _timeout) == true) &&
         (packet.getCommand() == SSH2_MSG_CHANNEL_SUCCESS))
     {
         ret = true;
@@ -242,10 +323,11 @@ bool CppsshChannel::getShell()
     packet.addInt(0);
     packet.addInt(0);
     packet.addString("");
-    if (doChannelRequest("pty-req", buf) == true)
+
+    if (_channels.at(_mainChannel)->doChannelRequest("pty-req", buf) == true)
     {
         buf.clear();
-        if (doChannelRequest("shell", buf) == true)
+        if (_channels.at(_mainChannel)->doChannelRequest("shell", buf) == true)
         {
             ret = true;
         }
@@ -259,7 +341,7 @@ bool CppsshChannel::runXauth(const char* display, std::string* method, std::stri
     std::stringstream xauth;
     char tmpname[L_tmpnam];
     std::tmpnam(tmpname);
-    xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
+    xauth << "/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
     if (system(xauth.str().c_str()) == 0)
     {
         Botan::secure_vector<Botan::byte> buf;
@@ -304,25 +386,56 @@ bool CppsshChannel::getX11()
     char* display = getenv("DISPLAY");
     if (display != NULL)
     {
-        if ((runXauth(display, &_realX11Method, &_realX11Cookie) == true) &&
-            (getFakeX11Cookie(_realX11Cookie.size(), &_fakeX11Cookie) == true))
+        if (runXauth(display, &_X11Method, &_realX11Cookie) == false)
         {
-            Botan::secure_vector<Botan::byte> x11req;
-            CppsshPacket x11packet(&x11req);
-            x11packet.addByte(0);// single connection
-            x11packet.addString(_realX11Method);
-            x11packet.addString(_fakeX11Cookie);
-            x11packet.addInt(0);
-            ret = doChannelRequest("x11-req", x11req);
+            getFakeX11Cookie(16, &_fakeX11Cookie);
+            _realX11Cookie = _fakeX11Cookie;
+            _X11Method = "MIT-MAGIC-COOKIE-1";
         }
+        else
+        {
+            getFakeX11Cookie(_realX11Cookie.size(), &_fakeX11Cookie);
+        }
+        Botan::secure_vector<Botan::byte> x11req;
+        CppsshPacket x11packet(&x11req);
+        x11packet.addByte(0);// single connection
+        x11packet.addString(_X11Method);
+        x11packet.addString(_fakeX11Cookie);
+        x11packet.addInt(0);
+        // FIXME: 
+        //ret = doChannelRequest("x11-req", x11req);
     }
     return ret;
 }
 
-bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
+void CppsshChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    uint32_t rxChannel = packet.getInt();
+    _channels.at(rxChannel)->handleIncomingChannelData(buf);
+}
+
+void CppsshChannel::handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    uint32_t rxChannel = packet.getInt();
+    _channels.at(rxChannel)->handleIncomingControlData(buf);
+}
+
+void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    uint32_t rxChannel = packet.getInt();
+    uint32_t size = packet.getInt();
+    _channels.at(rxChannel)->increaseWindowSend(size);
+}
+
+void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
     const CppsshConstPacket packet(&buf);
-    bool ret = false;
     int cmd = packet.getCommand();
     switch (cmd)
     {
@@ -334,6 +447,13 @@ bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         case SSH2_MSG_CHANNEL_FAILURE:
         case SSH2_MSG_CHANNEL_OPEN_CONFIRMATION:
         case SSH2_MSG_CHANNEL_OPEN_FAILURE:
+            handleIncomingControlData(buf);
+            break;
+
+        case SSH2_MSG_CHANNEL_DATA:
+            handleIncomingChannelData(buf);
+            break;
+
         case SSH2_MSG_USERAUTH_FAILURE:
         case SSH2_MSG_USERAUTH_SUCCESS:
         case SSH2_MSG_USERAUTH_PK_OK:
@@ -346,12 +466,8 @@ bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 
         case SSH2_MSG_USERAUTH_BANNER:
             _session->_transport->handleData(buf);
-            handleIncomingChannelData(buf, true);
             break;
 
-        case SSH2_MSG_CHANNEL_DATA:
-            handleIncomingChannelData(buf, false);
-            break;
 
         case SSH2_MSG_CHANNEL_EXTENDED_DATA:
             //handleExtendedData(newPacket.value());
@@ -364,8 +480,7 @@ bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             break;
 
         case SSH2_MSG_CHANNEL_OPEN:
-            //handleOpen(buf);
-            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_OPEN: " << cmd);
+            handleOpen(buf);
             break;
 
         case SSH2_MSG_CHANNEL_CLOSE:
@@ -389,30 +504,27 @@ bool CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             _session->_logger->pushMessage(std::stringstream() << "Unhandled command encountered: " << cmd);
             break;
     }
-    return ret;
 }
 
-void CppsshChannel::sendAdjustWindow()
+void CppsshSubChannel::sendAdjustWindow()
 {
     uint32_t len = CPPSSH_RX_WINDOW_SIZE - _windowRecv;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_WINDOW_ADJUST);
-    packet.addInt(_session->getSendChannel());
+    packet.addInt(_txChannel);
     packet.addInt(len);
     _windowRecv += len;
-
     _session->_transport->sendPacket(buf);
 }
 
-void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf)
+CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
+    : _session(session),
+    _windowRecv(CPPSSH_RX_WINDOW_SIZE),
+    _windowSend(0),
+    _txChannel(0),
+    _maxPacket(0),
+    _timeout(timeout * 1000)
 {
-    CppsshConstPacket packet(&buf);
-    packet.skipHeader();
-    // channel number
-    packet.getInt();
-    // add bytes to the window
-    uint32_t size = packet.getInt();
-    _windowSend += size;
 }
 

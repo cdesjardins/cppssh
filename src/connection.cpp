@@ -25,12 +25,12 @@
 #include "messages.h"
 #include "cppssh.h"
 
-CppsshConnection::CppsshConnection(int channelId, unsigned int timeout)
-    : _channelId(channelId),
+CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
+    : _connectionId(connectionId),
     _session(new CppsshSession()),
     _crypto(new CppsshCrypto(_session)),
     _transport(new CppsshTransport(_session, timeout)),
-    _channel(new CppsshChannel(_session)),
+    _channel(new CppsshChannel(_session, timeout)),
     _connected(false)
 {
     _session->_transport = _transport;
@@ -51,7 +51,7 @@ CppsshConnection::~CppsshConnection()
 
 int CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell)
 {
-    if (_transport->establish(host, port) == -1)
+    if (_transport->establish(host, port) == false)
     {
         return -1;
     }
@@ -89,30 +89,30 @@ int CppsshConnection::connect(const char* host, const short port, const char* us
     {
         return -1;
     }
-    if (_channel->open(_channelId) == false)
+    if (_channel->openChannel() == false)
     {
         return -1;
     }
     if (shell == true)
     {
-        _channel->getX11();
+        //_channel->getX11();
         if (_channel->getShell() == false)
         {
             return -1;
         }
     }
     _connected = true;
-    return _channelId;
+    return _connectionId;
 }
 
 bool CppsshConnection::read(CppsshMessage* data)
 {
-    return _channel->read(data);
+    return _channel->readMainChannel(data);
 }
 
-bool CppsshConnection::send(const uint8_t* data, uint32_t bytes)
+bool CppsshConnection::write(const uint8_t* data, uint32_t bytes)
 {
-    return _channel->send(data, bytes);
+    return _channel->writeMainChannel(data, bytes);
 }
 
 bool CppsshConnection::isConnected()

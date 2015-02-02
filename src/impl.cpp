@@ -78,15 +78,15 @@ CppsshImpl::~CppsshImpl()
     _init.reset();
 }
 
-bool CppsshImpl::connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
+bool CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
 {
     bool ret = false;
     int channel;
     std::shared_ptr<CppsshConnection> con;
     {// new scope for mutex
         std::unique_lock<std::mutex> lock(_connectionsMutex);
-        *channelId = _connections.size();
-        con.reset(new CppsshConnection(*channelId, timeout));
+        *connectionId = _connections.size();
+        con.reset(new CppsshConnection(*connectionId, timeout));
         _connections.push_back(con);
     }
     if (con != NULL)
@@ -100,10 +100,10 @@ bool CppsshImpl::connect(int* channelId, const char* host, const short port, con
     return ret;
 }
 
-bool CppsshImpl::isConnected(const int channelId)
+bool CppsshImpl::isConnected(const int connectionId)
 {
     bool ret = false;
-    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
     if (con != NULL)
     {
         ret = con->isConnected();
@@ -111,21 +111,21 @@ bool CppsshImpl::isConnected(const int channelId)
     return ret;
 }
 
-bool CppsshImpl::send(const int channelId, const uint8_t* data, size_t bytes)
+bool CppsshImpl::write(const int connectionId, const uint8_t* data, size_t bytes)
 {
     bool ret = false;
-    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
     if (con != NULL)
     {
-        ret = con->send(data, bytes);
+        ret = con->write(data, bytes);
     }
     return ret;
 }
 
-bool CppsshImpl::read(const int channelId, CppsshMessage* data)
+bool CppsshImpl::read(const int connectionId, CppsshMessage* data)
 {
     bool ret = false;
-    std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+    std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
     if (con != NULL)
     {
         ret = con->read(data);
@@ -133,10 +133,10 @@ bool CppsshImpl::read(const int channelId, CppsshMessage* data)
     return ret;
 }
 
-bool CppsshImpl::close(int channelId)
+bool CppsshImpl::close(int connectionId)
 {
     std::unique_lock<std::mutex> lock(_connectionsMutex);
-    _connections[channelId].reset();
+    _connections[connectionId].reset();
     return true;
 }
 
@@ -168,12 +168,12 @@ bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
     return CppsshKeys::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
-bool CppsshImpl::getLogMessage(const int channelId, CppsshMessage* message)
+bool CppsshImpl::getLogMessage(const int connectionId, CppsshMessage* message)
 {
     bool ret = GLOBAL_LOGGER->popMessage(message);
     if (ret == false)
     {
-        std::shared_ptr<CppsshConnection> con = getConnection(channelId);
+        std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
         if (con != NULL)
         {
             ret = con->getLogMessage(message);
@@ -199,12 +199,12 @@ void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::stri
     }
 }
 
-std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int channelId)
+std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connectionId)
 {
     std::shared_ptr<CppsshConnection> con;
     {
         std::unique_lock<std::mutex> lock(_connectionsMutex);
-        con = _connections[channelId];
+        con = _connections[connectionId];
     }
     return con;
 }

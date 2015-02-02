@@ -40,8 +40,13 @@ public:
     {
         WSACleanup();
     }
-}
-;
+};
+
+struct	sockaddr_un {
+    short sun_family;       /* AF_UNIX */
+    char sun_path[108];
+};
+
 WSockInitializer _wsock32_;
 #else
 #   define SOCKET_BUFFER_TYPE void
@@ -75,39 +80,114 @@ CppsshTransport::~CppsshTransport()
     }
 }
 
-int CppsshTransport::establish(const char* host, short port)
+bool CppsshTransport::establish(const std::string& host, short port)
 {
+    bool ret = false;
     sockaddr_in remoteAddr;
     hostent* remoteHost;
 
-    remoteHost = gethostbyname(host);
+    remoteHost = gethostbyname(host.c_str());
     if (!remoteHost || remoteHost->h_length == 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Host" << host << "not found.");
-        return -1;
     }
-    remoteAddr.sin_family = AF_INET;
-    remoteAddr.sin_addr.s_addr = *(long*) remoteHost->h_addr_list[0];
-    remoteAddr.sin_port = htons(port);
-
-    _sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (_sock < 0)
+    else
     {
-        _session->_logger->pushMessage("Failure to bind to socket.");
-        return -1;
-    }
-    if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "Unable to connect to remote server: '" << host << "'.");
-        return -1;
+        remoteAddr.sin_family = AF_INET;
+        remoteAddr.sin_addr.s_addr = *(long*)remoteHost->h_addr_list[0];
+        remoteAddr.sin_port = htons(port);
+
+        _sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (_sock < 0)
+        {
+            _session->_logger->pushMessage("Failure to bind to socket.");
+        }
+        else
+        {
+            if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
+            {
+                _session->_logger->pushMessage(std::stringstream() << "Unable to connect to remote server: '" << host << "'.");
+            }
+            else
+            {
+                ret = setNonBlocking(true);
+            }
+        }
     }
 
-    if (setNonBlocking(true) == false)
-    {
-        return -1;
-    }
+    return ret;
+}
 
-    return _sock;
+bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum) const
+{
+    bool ret = false;
+    size_t start = display.find(':') + 1;
+    size_t mid = display.find('.');
+    std::string dn(display.substr(start, mid - start));
+    std::string sn(display.substr(mid + 1));
+    if ((dn.length() > 0) && (sn.length() > 0))
+    {
+        std::istringstream dss(dn);
+        dss >> *displayNum;
+
+        std::istringstream sss(sn);
+        sss >> *screenNum;
+        ret = true;
+    }
+    return ret;
+}
+
+bool CppsshTransport::establishX11()
+{
+    bool ret = false;
+    std::string display(getenv("DISPLAY"));
+
+    if ((display.find("unix:") == 0) || (display.find(":") == 0))
+    {
+        int displayNum;
+        int screenNum;
+        parseDisplay(display, &displayNum, &screenNum);
+        std::stringstream path;
+        path << "/tmp/.X11-unix/X" << displayNum;
+
+        ret = establishLocalX11(path.str());
+    }
+    else
+    {
+        // FIXME: Connect to remote x11
+    }
+    return ret;
+}
+
+bool CppsshTransport::establishLocalX11(const std::string& path)
+{
+    bool ret = false;
+    SOCKET sock;
+    struct sockaddr_un addr;
+
+    sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0)
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Unable to open to X11 socket");
+    }
+    else
+    {
+        memset(&addr, 0, sizeof(addr));
+        addr.sun_family = AF_UNIX;
+        strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
+        int connectRet = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+        if (connectRet == 0)
+        {
+            // success
+            ret = true;
+        }
+        else
+        {
+            _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << path << " " << strerror(errno));
+            close(sock);
+        }
+    }
+    return ret;
 }
 
 bool CppsshTransport::start()
