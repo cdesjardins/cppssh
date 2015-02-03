@@ -40,11 +40,11 @@ public:
     {
         bool ret = false;
         std::unique_lock<std::mutex> lock(_queueMutex);
-        if (_queue.size() == 0)
+        if (_queue.empty() == true)
         {
             _queueCondVar.wait_for(lock, std::chrono::milliseconds(timeout));
         }
-        if (_queue.size() > 0)
+        if (_queue.empty() == false)
         {
             ret = true;
             *data = _queue.front();

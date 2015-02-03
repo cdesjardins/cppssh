@@ -33,7 +33,8 @@
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
     : _session(session),
     _channelOpened(false),
-    _timeout(timeout)
+    _timeout(timeout),
+    _mainChannel(0)
 {
 }
 

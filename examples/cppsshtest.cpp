@@ -77,8 +77,6 @@ int main(int argc, char** argv)
     try
     {
         Cppssh::create();
-        std::vector<std::string> ciphers;
-        std::vector<std::string> macs;
         Cppssh::setOptions("aes256-cbc", "hmac-md5");
 
         //Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);

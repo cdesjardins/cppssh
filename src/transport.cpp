@@ -61,7 +61,8 @@ WSockInitializer _wsock32_;
 #endif
 
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
-    : _session(session),
+    : _sock(-1),
+    _session(session),
     _timeout(timeout),
     _txSeq(0),
     _rxSeq(0),

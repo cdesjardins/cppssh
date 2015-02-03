@@ -39,6 +39,8 @@ SMART_ENUM_DEFINE(cryptoMethods);
 
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
+    _encryptFilter(NULL),
+    _decryptFilter(NULL),
     _encryptBlock(0),
     _decryptBlock(0),
     _c2sMacDigestLen(0),
@@ -49,7 +51,9 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     _kexMethod(kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1),
     _hostkeyMethod(hostkeyMethods::SSH_DSS),
     _c2sCryptoMethod(cryptoMethods::AES128_CBC),
-    _s2cCryptoMethod(cryptoMethods::AES128_CBC)
+    _s2cCryptoMethod(cryptoMethods::AES128_CBC),
+    _c2sCmprsMethod(cmprsMethods::NONE),
+    _s2cCmprsMethod(cmprsMethods::NONE)
 {
 }
 

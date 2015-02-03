@@ -53,7 +53,6 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket privKeyPacket(&buf);
-    std::string buffer;
 #ifndef WIN32
     struct stat privKeyStatus;
 
@@ -158,13 +157,13 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     bool ret = false;
     Botan::secure_vector<Botan::byte> keyDataRaw;
     Botan::BigInt p, q, e, d, n;
-    size_t version = 0;
     Botan::secure_vector<Botan::byte> key(findKeyBegin(privateKey, HEADER_RSA), findKeyEnd(privateKey, FOOTER_RSA));
     Botan::Pipe base64dec(new Botan::Base64_Decoder);
     base64dec.process_msg(key);
     keyDataRaw = base64dec.read_all();
     try
     {
+        size_t version = 0;
         Botan::BER_Decoder decoder(keyDataRaw);
         Botan::BER_Decoder sequence = decoder.start_cons(Botan::SEQUENCE);
 
@@ -213,7 +212,6 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     bool ret = false;
     Botan::secure_vector<Botan::byte> keyDataRaw;
     Botan::BigInt p, q, g, y, x;
-    size_t version;
     Botan::secure_vector<Botan::byte> key(findKeyBegin(privateKey, HEADER_DSA), findKeyEnd(privateKey, FOOTER_DSA));
 
     Botan::Pipe base64dec(new Botan::Base64_Decoder);
@@ -222,6 +220,7 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 
     try
     {
+        size_t version;
         Botan::BER_Decoder decoder(keyDataRaw);
         Botan::BER_Decoder sequence = decoder.start_cons(Botan::SEQUENCE);
         sequence.decode(version);

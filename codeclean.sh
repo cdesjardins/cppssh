@@ -1,0 +1,5 @@
+#!/bin/bash
+~/Downloads/cppcheck-1.68/cppcheck -Iinclude/ -I../botan/install/include/botan-1.11/ --std=c++11 --enable=all --force . 2> err.txt
+call_Uncrustify.sh . cpp
+call_Uncrustify.sh . h
+cat err.txt

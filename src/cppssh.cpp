@@ -103,6 +103,7 @@ const uint8_t* const CppsshMessage::message() const
 CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
 {
     _message = other._message;
+    _len = other._len;
     return *this;
 }
 
@@ -118,3 +119,4 @@ size_t CppsshMessage::length() const
 {
     return _len;
 }
+

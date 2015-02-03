@@ -81,7 +81,6 @@ CppsshImpl::~CppsshImpl()
 bool CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
 {
     bool ret = false;
-    int channel;
     std::shared_ptr<CppsshConnection> con;
     {// new scope for mutex
         std::unique_lock<std::mutex> lock(_connectionsMutex);
@@ -91,8 +90,7 @@ bool CppsshImpl::connect(int* connectionId, const char* host, const short port, 
     }
     if (con != NULL)
     {
-        channel = con->connect(host, port, username, privKeyFileNameOrPassword, shell);
-        if (channel != -1)
+        if (con->connect(host, port, username, privKeyFileNameOrPassword, shell) == -1)
         {
             ret = true;
         }
