@@ -26,8 +26,6 @@
 #include <iterator>
 #include <iomanip>
 
-#include <iostream>
-
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
@@ -197,7 +195,6 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
         {
             if (_session->_transport->establishX11() == true)
             {
-                std::cout << "x11 established " << rxChannel << " " << txChannel << std::endl;
                 _channels.at(rxChannel)->sendOpenConfirmation(rxChannel);
             }
             else
