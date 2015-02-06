@@ -100,27 +100,38 @@ public:
         return _map.erase(k);
     }
 
-    size_t size()
+    size_t size() const
     {
         std::unique_lock<std::mutex> lock(_mapMutex);
         return _map.size();
     }
 
-    std::shared_ptr<std::unique_lock<std::mutex> > getLock()
+    std::shared_ptr<std::unique_lock<std::mutex> > getLock() const
     {
         std::shared_ptr<std::unique_lock<std::mutex> > ret(new std::unique_lock<std::mutex>());
         return ret;
     }
 
     // Remember to getLock around begin/end loops
-    typename std::map<keyType, valType>::iterator begin()
+    typename std::map<keyType, valType>::iterator begin() const
     {
         return _map.begin();
     }
 
-    typename std::map<keyType, valType>::iterator end()
+    typename std::map<keyType, valType>::iterator end() const
     {
         return _map.end();
+    }
+
+    // Remember to getLock around begin/end loops
+    typename std::map<keyType, valType>::const_iterator cbegin() const
+    {
+        return _map.cbegin();
+    }
+
+    typename std::map<keyType, valType>::const_iterator cend() const
+    {
+        return _map.cend();
     }
 
 private:

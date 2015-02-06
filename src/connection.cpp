@@ -51,7 +51,7 @@ CppsshConnection::~CppsshConnection()
 
 int CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell)
 {
-    if (_transport->establish(host, port) == false)
+    if (_channel->establish(host, port) == false)
     {
         return -1;
     }
@@ -151,7 +151,7 @@ bool CppsshConnection::sendLocalVersion()
     lv.assign(localVer.begin(), localVer.end());
     lv.push_back('\r');
     lv.push_back('\n');
-    return _transport->send(lv);
+    return _transport->send(lv, _channel->getMainSocket());
 }
 
 bool CppsshConnection::requestService(const std::string& service)
@@ -162,7 +162,7 @@ bool CppsshConnection::requestService(const std::string& service)
 
     packet.addByte(SSH2_MSG_SERVICE_REQUEST);
     packet.addString(service);
-    if (_transport->sendPacket(buf) == true)
+    if (_transport->sendPacket(buf, _channel->getMainSocket()) == true)
     {
         if ((_channel->waitForGlobalMessage(&buf) == false) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
         {
@@ -182,7 +182,7 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_transport->sendPacket(userAuthRequest) == true) && (_channel->waitForGlobalMessage(&buf) == true))
+    if ((_transport->sendPacket(userAuthRequest, _channel->getMainSocket()) == true) && (_channel->waitForGlobalMessage(&buf) == true))
     {
         if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {

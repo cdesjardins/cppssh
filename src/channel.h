@@ -30,9 +30,11 @@ class CppsshChannel
 {
 public:
     CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
+    bool establish(const std::string& host, short port);
     bool openChannel();
     bool readMainChannel(CppsshMessage* data);
     bool writeMainChannel(const uint8_t* data, uint32_t bytes);
+    SOCKET getMainSocket();
     bool isConnected();
     bool getShell();
     bool getX11();
@@ -40,7 +42,7 @@ public:
     bool flushOutgoingChannelData();
     void disconnect();
     bool waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf);
-
+    void getSockList(std::vector<SOCKET>* socks) const;
 private:
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
@@ -86,9 +88,24 @@ public:
         _windowSend += bytes;
     }
 
-    uint32_t getWindowRecv()
+    uint32_t getWindowRecv() const
     {
         return _windowRecv;
+    }
+
+    void setSock(SOCKET sock)
+    {
+        _sock = sock;
+    }
+
+    int getSock() const
+    {
+        return _sock;
+    }
+
+    const std::string& getChannelName() const
+    {
+        return _channelName;
     }
 
     bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
@@ -118,6 +135,7 @@ private:
     uint32_t _maxPacket;
     unsigned int _timeout;
     std::string _channelName;
+    SOCKET _sock;
 };
 
 #endif

@@ -61,8 +61,7 @@ WSockInitializer _wsock32_;
 #endif
 
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
-    : _sock(-1),
-    _session(session),
+    : _session(session),
     _timeout(timeout),
     _txSeq(0),
     _rxSeq(0),
@@ -83,7 +82,7 @@ CppsshTransport::~CppsshTransport()
     }
 }
 
-bool CppsshTransport::establish(const std::string& host, short port)
+bool CppsshTransport::establish(const std::string& host, short port, SOCKET* sock)
 {
     bool ret = false;
     sockaddr_in remoteAddr;
@@ -100,20 +99,20 @@ bool CppsshTransport::establish(const std::string& host, short port)
         remoteAddr.sin_addr.s_addr = *(long*)remoteHost->h_addr_list[0];
         remoteAddr.sin_port = htons(port);
 
-        _sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (_sock < 0)
+        *sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (*sock < 0)
         {
             _session->_logger->pushMessage("Failure to bind to socket.");
         }
         else
         {
-            if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
+            if (connect(*sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
             {
                 _session->_logger->pushMessage(std::stringstream() << "Unable to connect to remote server: '" << host << "'.");
             }
             else
             {
-                ret = setNonBlocking(true);
+                ret = setNonBlocking(true, *sock);
             }
         }
     }
@@ -200,11 +199,11 @@ bool CppsshTransport::start()
     return true;
 }
 
-bool CppsshTransport::setNonBlocking(bool on)
+bool CppsshTransport::setNonBlocking(bool on, SOCKET sock)
 {
 #if !defined(WIN32) && !defined(__MINGW32__)
     int options;
-    if ((options = fcntl(_sock, F_GETFL)) < 0)
+    if ((options = fcntl(sock, F_GETFL)) < 0)
     {
         _session->_logger->pushMessage("Cannot read options of the socket.");
         return false;
@@ -218,10 +217,10 @@ bool CppsshTransport::setNonBlocking(bool on)
     {
         options = (options & ~O_NONBLOCK);
     }
-    fcntl(_sock, F_SETFL, options);
+    fcntl(sock, F_SETFL, options);
 #else
     unsigned long options = on;
-    if (ioctlsocket(_sock, FIONBIO, &options))
+    if (ioctlsocket(sock, FIONBIO, &options))
     {
         _session->_logger->pushMessage("Cannot set asynch I/O on the socket.");
         return false;
@@ -230,44 +229,61 @@ bool CppsshTransport::setNonBlocking(bool on)
     return true;
 }
 
-void CppsshTransport::setupFd(fd_set* fd)
+SOCKET CppsshTransport::setupFd(const std::vector<SOCKET>& socks, fd_set* fd)
 {
+    SOCKET maxFd = -1;
 #if defined(WIN32)
 #pragma warning(push)
 #pragma warning(disable : 4127)
 #endif
     FD_ZERO(fd);
-    FD_SET(_sock, fd);
+    for (std::vector<SOCKET>::const_iterator it = socks.cbegin(); it != socks.cend(); it++)
+    {
+        FD_SET(*it, fd);
+        if (*it > maxFd)
+        {
+            maxFd = *it;
+        }
+    }
 #if defined(WIN32)
 #pragma warning(pop)
 #endif
+    return maxFd;
 }
 
-bool CppsshTransport::wait(bool isWrite)
+bool CppsshTransport::wait(bool isWrite, SOCKET* sock)
 {
     bool ret = false;
     int status = 0;
     struct timeval waitTime;
     waitTime.tv_sec = 0;
     waitTime.tv_usec = 1000;
-
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-    while ((_running == true) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_timeout))))
+    while ((_running == true) && (ret == false) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_timeout))))
     {
         fd_set fds;
-        setupFd(&fds);
+        std::vector<SOCKET> socks;
+        SOCKET maxFd;
         if (isWrite == false)
         {
-            status = select(_sock + 1, &fds, NULL, NULL, &waitTime);
+            _session->_channel->getSockList(&socks);
+            maxFd = setupFd(socks, &fds);
+            status = select(maxFd + 1, &fds, NULL, NULL, &waitTime);
         }
         else
         {
-            status = select(_sock + 1, NULL, &fds, NULL, &waitTime);
+            socks.push_back(*sock);
+            maxFd = setupFd(socks, &fds);
+            status = select(maxFd + 1, NULL, &fds, NULL, &waitTime);
         }
-        if ((status > 0) && (FD_ISSET(_sock, &fds)))
+        for (std::vector<SOCKET>::const_iterator it = socks.cbegin(); it != socks.cend(); it++)
         {
-            ret = true;
-            break;
+            if ((status > 0) && (FD_ISSET(*it, &fds)))
+            {
+                ret = true;
+                *sock = *it;
+                break;
+            }
         }
     }
 
@@ -280,11 +296,12 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
     bool ret = true;
     int len = 0;
     int bufferLen = buffer->size();
+    SOCKET sock;
     buffer->resize(CPPSSH_MAX_PACKET_LEN + bufferLen);
 
-    if (wait(false) == true)
+    if (wait(false, &sock) == true)
     {
-        len = ::recv(_sock, (char*)buffer->data() + bufferLen, CPPSSH_MAX_PACKET_LEN, 0);
+        len = ::recv(sock, (char*)buffer->data() + bufferLen, CPPSSH_MAX_PACKET_LEN, 0);
         if (len > 0)
         {
             bufferLen += len;
@@ -302,15 +319,15 @@ bool CppsshTransport::receive(Botan::secure_vector<Botan::byte>* buffer)
     return ret;
 }
 
-bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
 {
     int len;
     size_t sent = 0;
     while ((sent < buffer.size()) && (_running == true))
     {
-        if (wait(true) == true)
+        if (wait(true, &sock) == true)
         {
-            len = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
+            len = ::send(sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
         }
         else
         {
@@ -327,7 +344,7 @@ bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
     return sent == buffer.size();
 }
 
-bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
 {
     bool ret = true;
     size_t length = buffer.size();
@@ -363,12 +380,12 @@ bool CppsshTransport::sendPacket(const Botan::secure_vector<Botan::byte>& buffer
             return false;
         }
         crypted += hmac;
-        if (send(crypted) == false)
+        if (send(crypted, sock) == false)
         {
             ret = false;
         }
     }
-    else if (send(buf) == false)
+    else if (send(buf, sock) == false)
     {
         ret = false;
     }
