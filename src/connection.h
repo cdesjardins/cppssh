@@ -32,7 +32,7 @@ class CppsshConnection
 public:
     CppsshConnection(int connectionId, unsigned int timeout);
     ~CppsshConnection();
-    int connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell);
+    bool connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell);
 
     bool read(CppsshMessage* data);
     bool write(const uint8_t* data, uint32_t bytes);

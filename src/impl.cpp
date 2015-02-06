@@ -90,10 +90,7 @@ bool CppsshImpl::connect(int* connectionId, const char* host, const short port, 
     }
     if (con != NULL)
     {
-        if (con->connect(host, port, username, privKeyFileNameOrPassword, shell) == -1)
-        {
-            ret = true;
-        }
+        ret = con->connect(host, port, username, privKeyFileNameOrPassword, shell);
     }
     return ret;
 }

@@ -231,7 +231,7 @@ bool CppsshTransport::setNonBlocking(bool on, SOCKET sock)
 
 SOCKET CppsshTransport::setupFd(const std::vector<SOCKET>& socks, fd_set* fd)
 {
-    SOCKET maxFd = -1;
+    SOCKET maxFd = (SOCKET)-1;
 #if defined(WIN32)
 #pragma warning(push)
 #pragma warning(disable : 4127)

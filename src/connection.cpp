@@ -49,60 +49,60 @@ CppsshConnection::~CppsshConnection()
     _session.reset();
 }
 
-int CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell)
+bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell)
 {
     if (_channel->establish(host, port) == false)
     {
-        return -1;
+        return false;
     }
     if (checkRemoteVersion() == false)
     {
-        return -1;
+        return false;
     }
     if (sendLocalVersion() == false)
     {
-        return -1;
+        return false;
     }
     if (_transport->start() == false)
     {
-        return -1;
+        return false;
     }
     CppsshKex kex(_session);
 
     if (kex.handleInit() == false)
     {
-        return -1;
+        return false;
     }
     if (kex.handleKexDHReply() == false)
     {
-        return -1;
+        return false;
     }
     if (kex.sendKexNewKeys() == 0)
     {
-        return -1;
+        return false;
     }
     if (requestService("ssh-userauth") == false)
     {
-        return -1;
+        return false;
     }
     if ((authWithKey(username, privKeyFileNameOrPassword) == false) && (authWithPassword(username, privKeyFileNameOrPassword) == false))
     {
-        return -1;
+        return false;
     }
     if (_channel->openChannel() == false)
     {
-        return -1;
+        return false;
     }
     if (shell == true)
     {
         _channel->getX11();
         if (_channel->getShell() == false)
         {
-            return -1;
+            return false;
         }
     }
     _connected = true;
-    return _connectionId;
+    return true;
 }
 
 bool CppsshConnection::read(CppsshMessage* data)
