@@ -49,6 +49,8 @@ public:
     void skipHeader() const;
 
     size_t size() const;
+    void dumpPacket() const;
+    void dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len) const;
 
 private:
     CppsshConstPacket();
@@ -73,6 +75,7 @@ public:
     void addBigInt(const Botan::BigInt& bn);
     bool addFile(const std::string& fileName);
     void copy(const Botan::secure_vector<Botan::byte>& src);
+    void replace(size_t startingPos, const Botan::secure_vector<Botan::byte>& src);
     void clear();
 
 private:

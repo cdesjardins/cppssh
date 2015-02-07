@@ -19,8 +19,10 @@
 
 #include "packet.h"
 #include "cppssh.h"
+#include "logger.h"
 #include <fstream>
 #include <iterator>
+#include <iomanip>
 
 #if !defined(WIN32) && !defined(__MINGW32__)
 #   include <arpa/inet.h>
@@ -218,6 +220,20 @@ void CppsshPacket::copy(const Botan::secure_vector<Botan::byte>& src)
     *_data = src;
 }
 
+void CppsshPacket::replace(size_t startingPos, const Botan::secure_vector<Botan::byte>& src)
+{
+    Botan::secure_vector<Botan::byte>::iterator it;
+    if (startingPos < _data->size())
+    {
+        size_t len = std::min(_data->size() - startingPos, src.size());
+        _data->erase(_data->begin() + startingPos, _data->begin() + startingPos + len);
+        for (size_t i = 0; i < len; i++)
+        {
+            _data->push_back(src[i]);
+        }
+    }
+}
+
 void CppsshPacket::clear()
 {
     _data->clear();
@@ -301,3 +317,38 @@ bool CppsshPacket::addFile(const std::string& fileName)
     return ret;
 }
 
+void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len) const
+{
+#ifndef NDEBUG
+    size_t i;
+    for (i = 0; i < 16 - len; i++)
+    {
+        std::cout << "   ";
+    }
+    for (i = 0; ((i < len) && (it != _cdata->end())); i++)
+    {
+        std::cout << (char)(isprint(it[i]) ? it[i] : '.');
+    }
+    std::cout << std::endl;
+#endif
+}
+
+
+void CppsshConstPacket::dumpPacket() const
+{
+#ifndef NDEBUG
+    size_t cnt = 0;
+    Botan::secure_vector<Botan::byte>::const_iterator it;
+    for (it = _cdata->begin() + _index; it != _cdata->end(); it++)
+    {
+        if ((cnt % 16) == 0)
+        {
+            dumpAscii(it - cnt, cnt);
+            cnt = 0;
+        }
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)*it << std::dec << std::setw(0) << std::setfill(' ') << " ";
+        cnt++;
+    }
+    dumpAscii(it - cnt, cnt);
+#endif
+}

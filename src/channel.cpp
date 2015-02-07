@@ -28,8 +28,6 @@
 
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
-#include <iostream>
-
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
     : _session(session),
     _channelOpened(false),
@@ -132,9 +130,16 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
     {
         sendAdjustWindow();
     }
+    // FIXME: Once I figure this out, I should make it not suck
     if (rxChannel == 101)
     {
-        //std::cout << message->length() << std::endl;
+        if (_first == true)
+        {
+            Botan::secure_vector<Botan::byte> magicVec((Botan::byte*)message->message(), (Botan::byte*)message->message() + message->length());
+            CppsshPacket magicPacket(&magicVec);
+            magicPacket.replace(message->length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
+            _first = false;
+        }
         writeChannel(message->message(), message->length());
     }
     else
@@ -400,7 +405,7 @@ bool CppsshChannel::runXauth(const char* display, std::string* method, Botan::se
     std::stringstream xauth;
     char tmpname[L_tmpnam];
     std::tmpnam(tmpname);
-    xauth << "/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
+    xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
     if (system(xauth.str().c_str()) == 0)
     {
         Botan::secure_vector<Botan::byte> buf;
@@ -417,11 +422,11 @@ bool CppsshChannel::runXauth(const char* display, std::string* method, Botan::se
             {
                 *method = cookies[1];
                 std::string c(cookies[2]);
-                for (size_t i = 0; i < c.length(); i++)
+                for (size_t i = 0; i < c.length(); i += 2)
                 {
-                    Botan::byte x;
+                    int x;
                     std::istringstream css(c.substr(i, 2));
-                    css >> x;
+                    css >> std::hex >> x;
                     cookie->push_back(x);
                 }
                 ret = true;
@@ -481,7 +486,6 @@ void CppsshChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::
     CppsshConstPacket packet(&buf);
     packet.skipHeader();
     uint32_t rxChannel = packet.getInt();
-    std::cout << "cd: " << rxChannel << std::endl;
     _channels.at(rxChannel)->handleIncomingChannelData(buf);
 }
 
@@ -499,7 +503,7 @@ void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& 
     packet.skipHeader();
     uint32_t rxChannel = packet.getInt();
     uint32_t size = packet.getInt();
-    std::cout << "handleWindowAdjust " << rxChannel << " " << size << std::endl;
+    //std::cout << "handleWindowAdjust " << rxChannel << " " << size << std::endl;
     _channels.at(rxChannel)->increaseWindowSend(size);
 }
 
@@ -613,7 +617,8 @@ CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session
     _txChannel(0),
     _maxPacket(0),
     _timeout(timeout),
-    _channelName(channelName)
+    _channelName(channelName),
+    _first(true)
 {
 }
 

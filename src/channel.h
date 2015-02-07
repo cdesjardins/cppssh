@@ -69,6 +69,7 @@ private:
     CppsshTsMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
     unsigned int _timeout;
     uint32_t _mainChannel;
+    friend class CppsshSubChannel;
 };
 
 class CppsshSubChannel
@@ -139,6 +140,7 @@ private:
     unsigned int _timeout;
     std::string _channelName;
     SOCKET _sock;
+    bool _first;
 };
 
 #endif

@@ -24,7 +24,7 @@
 #include <queue>
 #include <sstream>
 #include <string.h>
-#ifdef _DEBUG
+#ifndef NDEBUG
 #include <iostream>
 #endif
 
@@ -36,7 +36,7 @@ public:
     {
         std::unique_lock<std::recursive_mutex> lock(_mutex);
         _messages.push(dynamic_cast<const std::stringstream&>(message).str());
-#ifdef _DEBUG
+#ifndef NDEBUG
         std::cout << "DEBUG: " << dynamic_cast<const std::stringstream&>(message).str() << std::endl;
 #endif
     }
@@ -45,7 +45,7 @@ public:
     {
         std::unique_lock<std::recursive_mutex> lock(_mutex);
         _messages.push(message);
-#ifdef _DEBUG
+#ifndef NDEBUG
         std::cout << "DEBUG: " << message << std::endl;
 #endif
     }
