@@ -139,20 +139,14 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     return ret;
 }
 
-bool CppsshTransport::establishX11()
+bool CppsshTransport::establishX11(SOCKET* sock)
 {
     bool ret = false;
     std::string display(getenv("DISPLAY"));
 
     if ((display.find("unix:") == 0) || (display.find(":") == 0))
     {
-        int displayNum;
-        int screenNum;
-        parseDisplay(display, &displayNum, &screenNum);
-        std::stringstream path;
-        path << "/tmp/.X11-unix/X" << displayNum;
-
-        ret = establishLocalX11(path.str());
+        ret = establishLocalX11(display, sock);
     }
     else
     {
@@ -161,32 +155,38 @@ bool CppsshTransport::establishX11()
     return ret;
 }
 
-bool CppsshTransport::establishLocalX11(const std::string& path)
+bool CppsshTransport::establishLocalX11(const std::string& display, SOCKET* sock)
 {
     bool ret = false;
-    SOCKET sock;
     struct sockaddr_un addr;
 
-    sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock < 0)
+    *sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (*sock < 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Unable to open to X11 socket");
     }
     else
     {
+        int displayNum;
+        int screenNum;
+        parseDisplay(display, &displayNum, &screenNum);
+        std::stringstream path;
+        path << "/tmp/.X11-unix/X" << displayNum;
+
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
-        int connectRet = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
+        strncpy(addr.sun_path, path.str().c_str(), sizeof(addr.sun_path));
+        int connectRet = connect(*sock, (struct sockaddr*)&addr, sizeof(addr));
         if (connectRet == 0)
         {
             // success
             ret = true;
+            setNonBlocking(true, *sock);
         }
         else
         {
-            _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << path << " " << strerror(errno));
-            close(sock);
+            _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << path.str() << " " << strerror(errno));
+            close(*sock);
         }
     }
     return ret;

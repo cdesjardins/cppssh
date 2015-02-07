@@ -42,17 +42,19 @@ void runConnectionTest(char* hostname, char* username, char* password)
             {
                 output << message.message();
             }
-            if (sentGvim == false)
-            {
-                Cppssh::writeString(channel, "gvim\n");
-                sentGvim = true;
-            }
 
             if ((txCount < 100) && (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(100))))
             {
                 // send ls -l every 100 milliseconds
                 Cppssh::writeString(channel, "ls -l\n");
                 txTime = std::chrono::steady_clock::now();
+
+                if ((sentGvim == false) && (txCount > 5))
+                {
+                    Cppssh::writeString(channel, "gvim\n");
+                    sentGvim = true;
+                }
+
                 txCount++;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));

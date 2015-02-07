@@ -57,6 +57,7 @@ private:
     bool createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket, uint32_t* rxChannel);
     bool createNewSubChannel(const std::string& channelName, uint32_t* rxChannel);
     void sendOpenFailure(uint32_t txChannel, CppsshOpenFailureReason reason);
+    void sendOpenConfirmation(uint32_t rxChannel);
 
     std::shared_ptr<CppsshSession> _session;
     bool _channelOpened;
@@ -108,13 +109,15 @@ public:
         return _channelName;
     }
 
+    uint32_t getTxChannel() const
+    {
+        return _txChannel;
+    }
+
     bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     bool handleChannelConfirm();
-
-    void sendOpenConfirmation(uint32_t rxChannel);
-
     void sendAdjustWindow();
     bool flushOutgoingChannelData();
     bool readChannel(CppsshMessage* data);

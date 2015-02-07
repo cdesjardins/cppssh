@@ -39,7 +39,7 @@ public:
     CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
     ~CppsshTransport();
     bool establish(const std::string& host, short port, SOCKET* sock);
-    bool establishX11();
+    bool establishX11(SOCKET* sock);
     bool start();
 
     bool sendPacket(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
@@ -54,7 +54,7 @@ public:
 
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 private:
-    bool establishLocalX11(const std::string& path);
+    bool establishLocalX11(const std::string& display, SOCKET* sock);
     bool setNonBlocking(bool on, SOCKET sock);
     SOCKET setupFd(const std::vector<SOCKET>& socks, fd_set* fd);
     bool wait(bool isWrite, SOCKET* sock);
