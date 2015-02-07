@@ -52,7 +52,7 @@ private:
 
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
-    bool runXauth(const char* display, std::string* method, std::string* cookie) const;
+    bool runXauth(const char* display, std::string* method, Botan::secure_vector<Botan::byte>* cookie) const;
     bool getFakeX11Cookie(const int size, std::string* fakeX11Cookie) const;
     bool createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket, uint32_t* rxChannel);
     bool createNewSubChannel(const std::string& channelName, uint32_t* rxChannel);
@@ -62,7 +62,7 @@ private:
     std::shared_ptr<CppsshSession> _session;
     bool _channelOpened;
     std::string _X11Method;
-    std::string _realX11Cookie;
+    Botan::secure_vector<Botan::byte> _realX11Cookie;
     std::string _fakeX11Cookie;
 
     CppsshTsQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;

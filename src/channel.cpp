@@ -394,7 +394,7 @@ bool CppsshChannel::getShell()
     return ret;
 }
 
-bool CppsshChannel::runXauth(const char* display, std::string* method, std::string* cookie) const
+bool CppsshChannel::runXauth(const char* display, std::string* method, Botan::secure_vector<Botan::byte>* cookie) const
 {
     bool ret = false;
     std::stringstream xauth;
@@ -416,7 +416,14 @@ bool CppsshChannel::runXauth(const char* display, std::string* method, std::stri
             if (cookies.size() == 3)
             {
                 *method = cookies[1];
-                *cookie = cookies[2];
+                std::string c(cookies[2]);
+                for (size_t i = 0; i < c.length(); i++)
+                {
+                    Botan::byte x;
+                    std::istringstream css(c.substr(i, 2));
+                    css >> x;
+                    cookie->push_back(x);
+                }
                 ret = true;
             }
         }
@@ -448,7 +455,6 @@ bool CppsshChannel::getX11()
         if (runXauth(display, &_X11Method, &_realX11Cookie) == false)
         {
             getFakeX11Cookie(16, &_fakeX11Cookie);
-            _realX11Cookie = _fakeX11Cookie;
             _X11Method = "MIT-MAGIC-COOKIE-1";
         }
         else
