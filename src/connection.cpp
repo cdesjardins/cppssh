@@ -129,7 +129,7 @@ bool CppsshConnection::checkRemoteVersion()
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> remoteVer, tmpVar;
-    if (_transport->receive(&remoteVer) == true)
+    if (_transport->receiveMessage(&remoteVer) == true)
     {
         std::string sshVer("SSH-2.0");
         if ((remoteVer.size() >= sshVer.length()) && equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
@@ -151,7 +151,7 @@ bool CppsshConnection::sendLocalVersion()
     lv.assign(localVer.begin(), localVer.end());
     lv.push_back('\r');
     lv.push_back('\n');
-    return _transport->send(lv, _channel->getMainSocket());
+    return _transport->sendMessage(lv, _channel->getMainSocket());
 }
 
 bool CppsshConnection::requestService(const std::string& service)
@@ -162,7 +162,7 @@ bool CppsshConnection::requestService(const std::string& service)
 
     packet.addByte(SSH2_MSG_SERVICE_REQUEST);
     packet.addString(service);
-    if (_transport->sendPacket(buf, _channel->getMainSocket()) == true)
+    if (_transport->sendMessage(buf, _channel->getMainSocket()) == true)
     {
         if ((_channel->waitForGlobalMessage(&buf) == false) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
         {
@@ -182,7 +182,7 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_transport->sendPacket(userAuthRequest, _channel->getMainSocket()) == true) && (_channel->waitForGlobalMessage(&buf) == true))
+    if ((_transport->sendMessage(userAuthRequest, _channel->getMainSocket()) == true) && (_channel->waitForGlobalMessage(&buf) == true))
     {
         if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {

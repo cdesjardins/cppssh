@@ -59,7 +59,7 @@ bool CppsshChannel::openChannel()
     packet.addInt(CPPSSH_RX_WINDOW_SIZE);
     packet.addInt(CPPSSH_MAX_PACKET_LEN);
 
-    if (_session->_transport->sendPacket(buf, getMainSocket()) == true)
+    if (_session->_transport->sendMessage(buf, getMainSocket()) == true)
     {
         _channelOpened = _channels.at(_mainChannel)->handleChannelConfirm();
     }
@@ -200,7 +200,7 @@ void CppsshChannel::sendOpenConfirmation(uint32_t rxChannel)
     openConfirmation.addInt(rxChannel);
     openConfirmation.addInt(channel->getWindowRecv());
     openConfirmation.addInt(CPPSSH_MAX_PACKET_LEN);
-    _session->_transport->sendPacket(buf, getMainSocket());
+    _session->_transport->sendMessage(buf, getMainSocket());
 }
 
 void CppsshChannel::sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason reason)
@@ -211,7 +211,7 @@ void CppsshChannel::sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason 
     openFaulure.addInt(reason);
     openFaulure.addString("Bad request");
     openFaulure.addString("EN");
-    _session->_transport->sendPacket(buf, getMainSocket());
+    _session->_transport->sendMessage(buf, getMainSocket());
 }
 
 void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
@@ -282,7 +282,7 @@ bool CppsshSubChannel::flushOutgoingChannelData()
             packet.addInt(_txChannel);
             packet.addInt(message->size());
             packet.addVector(*message);
-            ret = _session->_transport->sendPacket(buf, _sock);
+            ret = _session->_transport->sendMessage(buf, _sock);
             if (ret == false)
             {
                 break;
@@ -362,7 +362,7 @@ bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::sec
     packet.addByte(1);// want reply == true
     packet.addVector(reqdata);
 
-    if ((_session->_transport->sendPacket(buf, _sock) == true) &&
+    if ((_session->_transport->sendMessage(buf, _sock) == true) &&
         (_incomingControlData.dequeue(&buf, _timeout) == true) &&
         (packet.getCommand() == SSH2_MSG_CHANNEL_SUCCESS))
     {
@@ -607,7 +607,7 @@ void CppsshSubChannel::sendAdjustWindow()
     packet.addInt(_txChannel);
     packet.addInt(len);
     _windowRecv += len;
-    _session->_transport->sendPacket(buf, _sock);
+    _session->_transport->sendMessage(buf, _sock);
 }
 
 CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName, unsigned int timeout)

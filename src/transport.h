@@ -37,35 +37,27 @@ class CppsshTransport
 {
 public:
     CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
-    ~CppsshTransport();
+    virtual ~CppsshTransport();
     bool establish(const std::string& host, short port, SOCKET* sock);
     bool establishX11(SOCKET* sock);
     bool start();
 
-    bool sendPacket(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
-    //bool waitForPacket(Botan::byte command, CppsshPacket* packet);
-    //void handleData(const Botan::secure_vector<Botan::byte>& data);
-
-    // send/receive are just here for early link bringup, these
-    // are the raw socket io calls. Alsmost everything should
-    // go through the sendPacket/waitForPacket path.
-    bool receive(Botan::secure_vector<Botan::byte>* buffer);
-    bool send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
+    virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
+    virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
 
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
-private:
+
+protected:
+
     bool establishLocalX11(const std::string& display, SOCKET* sock);
     bool setNonBlocking(bool on, SOCKET sock);
     SOCKET setupFd(const std::vector<SOCKET>& socks, fd_set* fd);
     bool wait(bool isWrite, SOCKET* sock);
-    void rxThread();
-    void txThread();
+    virtual void rxThread();
+    virtual void txThread();
 
     std::shared_ptr<CppsshSession> _session;
     unsigned int _timeout;
-    uint32_t _txSeq;
-    uint32_t _rxSeq;
-    Botan::secure_vector<Botan::byte> _in;
     std::thread _rxThread;
     std::thread _txThread;
     volatile bool _running;
