@@ -49,6 +49,10 @@ public:
 
 protected:
 
+    virtual bool send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
+
+    friend class CppsshConnection;
+
     bool establishLocalX11(const std::string& display, SOCKET* sock);
     bool setNonBlocking(bool on, SOCKET sock);
     SOCKET setupFd(const std::vector<SOCKET>& socks, fd_set* fd);

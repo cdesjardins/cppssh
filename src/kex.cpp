@@ -293,10 +293,7 @@ bool CppsshKex::handleKexDHReply()
         return false;
     }
 
-    if (_session->_crypto->isInited() == false)
-    {
-        _session->setSessionID(hVector);
-    }
+    _session->setSessionID(hVector);
 
     if (_session->_crypto->verifySig(_hostKey, hSig) == false)
     {

@@ -151,7 +151,7 @@ bool CppsshConnection::sendLocalVersion()
     lv.assign(localVer.begin(), localVer.end());
     lv.push_back('\r');
     lv.push_back('\n');
-    return _transport->sendMessage(lv, _channel->getMainSocket());
+    return _transport->send(lv, _channel->getMainSocket());
 }
 
 bool CppsshConnection::requestService(const std::string& service)

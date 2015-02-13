@@ -319,6 +319,39 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
 
 bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
 {
+    bool ret = true;
+    size_t length = buffer.size();
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket out(&buf);
+    Botan::byte padLen;
+    uint32_t packetLen;
+
+    uint32_t cryptBlock = _session->_crypto->getEncryptBlock();
+    if (cryptBlock == 0)
+    {
+        cryptBlock = 8;
+    }
+
+    padLen = (Botan::byte)(3 + cryptBlock - ((length + 8) % cryptBlock));
+    packetLen = 1 + length + padLen;
+
+    out.addInt(packetLen);
+    out.addByte(padLen);
+    out.addVector(buffer);
+
+    Botan::secure_vector<Botan::byte> padBytes;
+    padBytes.resize(padLen, 0);
+    out.addVector(padBytes);
+
+    if (send(buf, sock) == false)
+    {
+        ret = false;
+    }
+    return ret;
+}
+
+bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
+{
     int len;
     size_t sent = 0;
     while ((sent < buffer.size()) && (_running == true))

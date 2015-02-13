@@ -28,48 +28,18 @@ CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession
 
 }
 
-bool CppsshCryptoTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
+bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
 {
     bool ret = true;
-    size_t length = buffer.size();
-    Botan::secure_vector<Botan::byte> buf;
-    CppsshPacket out(&buf);
-    Botan::byte padLen;
-    uint32_t packetLen;
-
-    uint32_t cryptBlock = _session->_crypto->getEncryptBlock();
-    if (cryptBlock == 0)
+    Botan::secure_vector<Botan::byte> crypted;
+    Botan::secure_vector<Botan::byte> hmac;
+    if (_session->_crypto->encryptPacket(&crypted, &hmac, buffer, _txSeq) == false)
     {
-        cryptBlock = 8;
+        _session->_logger->pushMessage("Failure to encrypt the payload.");
+        return false;
     }
-
-    padLen = (Botan::byte)(3 + cryptBlock - ((length + 8) % cryptBlock));
-    packetLen = 1 + length + padLen;
-
-    out.addInt(packetLen);
-    out.addByte(padLen);
-    out.addVector(buffer);
-
-    Botan::secure_vector<Botan::byte> padBytes;
-    padBytes.resize(padLen, 0);
-    out.addVector(padBytes);
-
-    if (_session->_crypto->isInited() == true)
-    {
-        Botan::secure_vector<Botan::byte> crypted;
-        Botan::secure_vector<Botan::byte> hmac;
-        if (_session->_crypto->encryptPacket(&crypted, &hmac, buf, _txSeq) == false)
-        {
-            _session->_logger->pushMessage("Failure to encrypt the payload.");
-            return false;
-        }
-        crypted += hmac;
-        if (CppsshTransport::sendMessage(crypted, sock) == false)
-        {
-            ret = false;
-        }
-    }
-    else if (CppsshTransport::sendMessage(buf, sock) == false)
+    crypted += hmac;
+    if (CppsshTransport::send(crypted, sock) == false)
     {
         ret = false;
     }
