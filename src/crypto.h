@@ -50,11 +50,6 @@ public:
         return _decryptBlock;
     }
 
-    bool isInited()
-    {
-        return _inited;
-    }
-
     bool encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
     bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len);
 
@@ -112,7 +107,6 @@ private:
     uint32_t _decryptBlock;
     uint32_t _c2sMacDigestLen;
     uint32_t _s2cMacDigestLen;
-    bool _inited;
 
     macMethods _c2sMacMethod;
     macMethods _s2cMacMethod;
