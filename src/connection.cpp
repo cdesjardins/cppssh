@@ -165,13 +165,13 @@ bool CppsshConnection::requestService(const std::string& service)
     packet.addString(service);
     if (_session->_transport->sendMessage(buf, _session->_channel->getMainSocket()) == true)
     {
-        if ((_session->_channel->waitForGlobalMessage(&buf) == false) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
+        if ((_session->_channel->waitForGlobalMessage(&buf) == true) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
         {
-            _session->_logger->pushMessage("Service request failed.");
+            ret = true;
         }
         else
         {
-            ret = true;
+            _session->_logger->pushMessage("Service request failed.");
         }
     }
     return ret;

@@ -22,8 +22,8 @@
 
 CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session)
     : CppsshTransport(session),
-    _txSeq(0),
-    _rxSeq(0)
+    _txSeq(3),
+    _rxSeq(3)
 {
 
 }

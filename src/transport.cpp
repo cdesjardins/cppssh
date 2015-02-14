@@ -302,7 +302,6 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
         if (len > 0)
         {
             bufferLen += len;
-            std::cout << "got buffer " << len << std::endl;
         }
     }
     buffer->resize(bufferLen);
