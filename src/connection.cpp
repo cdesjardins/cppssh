@@ -23,26 +23,21 @@
 #include "cryptstr.h"
 #include "packet.h"
 #include "messages.h"
+#include "cryptotransport.h"
 #include "cppssh.h"
 
 CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
     : _connectionId(connectionId),
-    _session(new CppsshSession()),
-    _crypto(new CppsshCrypto(_session)),
-    _transport(new CppsshTransport(_session, timeout)),
-    _channel(new CppsshChannel(_session, timeout)),
+    _session(new CppsshSession(timeout)),
     _connected(false)
 {
-    _session->_transport = _transport;
-    _session->_crypto = _crypto;
-    _session->_channel = _channel;
+    _session->_transport.reset(new CppsshTransport(_session));
+    _session->_crypto.reset(new CppsshCrypto(_session));
+    _session->_channel.reset(new CppsshChannel(_session));
 }
 
 CppsshConnection::~CppsshConnection()
 {
-    _transport.reset();
-    _crypto.reset();
-    _channel.reset();
     _session->_transport.reset();
     _session->_crypto.reset();
     _session->_channel.reset();
@@ -51,7 +46,7 @@ CppsshConnection::~CppsshConnection()
 
 bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell)
 {
-    if (_channel->establish(host, port) == false)
+    if (_session->_channel->establish(host, port) == false)
     {
         return false;
     }
@@ -63,7 +58,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if (_transport->start() == false)
+    if (_session->_transport->start() == false)
     {
         return false;
     }
@@ -81,6 +76,12 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
+
+    _session->_transport.reset(new CppsshCryptoTransport(_session));
+    if (_session->_transport->start() == false)
+    {
+        return false;
+    }
     if (requestService("ssh-userauth") == false)
     {
         return false;
@@ -89,14 +90,14 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if (_channel->openChannel() == false)
+    if (_session->_channel->openChannel() == false)
     {
         return false;
     }
     if (shell == true)
     {
-        _channel->getX11();
-        if (_channel->getShell() == false)
+        _session->_channel->getX11();
+        if (_session->_channel->getShell() == false)
         {
             return false;
         }
@@ -107,17 +108,17 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
 
 bool CppsshConnection::read(CppsshMessage* data)
 {
-    return _channel->readMainChannel(data);
+    return _session->_channel->readMainChannel(data);
 }
 
 bool CppsshConnection::write(const uint8_t* data, uint32_t bytes)
 {
-    return _channel->writeMainChannel(data, bytes);
+    return _session->_channel->writeMainChannel(data, bytes);
 }
 
 bool CppsshConnection::isConnected()
 {
-    return _channel->isConnected();
+    return _session->_channel->isConnected();
 }
 
 bool CppsshConnection::getLogMessage(CppsshMessage* message)
@@ -129,7 +130,7 @@ bool CppsshConnection::checkRemoteVersion()
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> remoteVer, tmpVar;
-    if (_transport->receiveMessage(&remoteVer) == true)
+    if (_session->_transport->receiveMessage(&remoteVer) == true)
     {
         std::string sshVer("SSH-2.0");
         if ((remoteVer.size() >= sshVer.length()) && equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
@@ -151,7 +152,7 @@ bool CppsshConnection::sendLocalVersion()
     lv.assign(localVer.begin(), localVer.end());
     lv.push_back('\r');
     lv.push_back('\n');
-    return _transport->send(lv, _channel->getMainSocket());
+    return _session->_transport->send(lv, _session->_channel->getMainSocket());
 }
 
 bool CppsshConnection::requestService(const std::string& service)
@@ -162,9 +163,9 @@ bool CppsshConnection::requestService(const std::string& service)
 
     packet.addByte(SSH2_MSG_SERVICE_REQUEST);
     packet.addString(service);
-    if (_transport->sendMessage(buf, _channel->getMainSocket()) == true)
+    if (_session->_transport->sendMessage(buf, _session->_channel->getMainSocket()) == true)
     {
-        if ((_channel->waitForGlobalMessage(&buf) == false) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
+        if ((_session->_channel->waitForGlobalMessage(&buf) == false) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
         {
             _session->_logger->pushMessage("Service request failed.");
         }
@@ -182,11 +183,11 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_transport->sendMessage(userAuthRequest, _channel->getMainSocket()) == true) && (_channel->waitForGlobalMessage(&buf) == true))
+    if ((_session->_transport->sendMessage(userAuthRequest, _session->_channel->getMainSocket()) == true) && (_session->_channel->waitForGlobalMessage(&buf) == true))
     {
         if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {
-            _channel->waitForGlobalMessage(&buf);
+            _session->_channel->waitForGlobalMessage(&buf);
         }
         if ((packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS) || (packet.getCommand() == SSH2_MSG_USERAUTH_PK_OK))
         {

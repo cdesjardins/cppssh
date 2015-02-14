@@ -24,14 +24,12 @@
 class CppsshCryptoTransport : public CppsshTransport
 {
 public:
-    CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
-    virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
+    CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session);
 
 protected:
     virtual bool send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
 private:
     virtual void rxThread();
-    virtual void txThread();
 
     uint32_t _txSeq;
     uint32_t _rxSeq;

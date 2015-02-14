@@ -31,8 +31,9 @@ class CppsshChannel;
 class CppsshSession
 {
 public:
-    CppsshSession()
-        : _logger(new CppsshLogger())
+    CppsshSession(unsigned int timeout)
+        : _logger(new CppsshLogger()),
+        _timeout(timeout)
     {
     }
 
@@ -70,6 +71,11 @@ public:
         return _sessionID;
     }
 
+    unsigned int getTimeout()
+    {
+        return _timeout;
+    }
+
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;
     std::shared_ptr<CppsshChannel> _channel;
@@ -78,6 +84,7 @@ private:
     std::string _remoteVer;
     std::string _localVer;
     Botan::secure_vector<Botan::byte> _sessionID;
+    unsigned int _timeout;
 };
 
 #endif

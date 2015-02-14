@@ -21,6 +21,7 @@
 #include "messages.h"
 #include "impl.h"
 #include "packet.h"
+#include "crypto.h"
 
 CppsshKex::CppsshKex(const std::shared_ptr<CppsshSession>& session)
     : _session(session)

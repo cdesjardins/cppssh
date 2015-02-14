@@ -20,8 +20,6 @@
 #define _CONNECTION_Hxx
 
 #include "session.h"
-#include "crypto.h"
-#include "transport.h"
 #include "channel.h"
 #include "logger.h"
 #include "cppssh.h"
@@ -48,9 +46,6 @@ private:
 
     int _connectionId;
     std::shared_ptr<CppsshSession> _session;
-    std::shared_ptr<CppsshCrypto> _crypto;
-    std::shared_ptr<CppsshTransport> _transport;
-    std::shared_ptr<CppsshChannel> _channel;
     bool _connected;
 };
 

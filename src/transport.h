@@ -36,19 +36,18 @@
 class CppsshTransport
 {
 public:
-    CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
+    CppsshTransport(const std::shared_ptr<CppsshSession>& session);
     virtual ~CppsshTransport();
     bool establish(const std::string& host, short port, SOCKET* sock);
     bool establishX11(SOCKET* sock);
     bool start();
 
-    virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
-
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 
 protected:
 
+    virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
     virtual bool send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
 
     friend class CppsshConnection;
@@ -61,7 +60,6 @@ protected:
     virtual void txThread();
 
     std::shared_ptr<CppsshSession> _session;
-    unsigned int _timeout;
     std::thread _rxThread;
     std::thread _txThread;
     volatile bool _running;

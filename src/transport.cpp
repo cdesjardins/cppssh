@@ -60,9 +60,8 @@ WSockInitializer _wsock32_;
 #   include <sys/un.h>
 #endif
 
-CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
+CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
-    _timeout(timeout),
     _running(true)
 {
 }
@@ -257,7 +256,7 @@ bool CppsshTransport::wait(bool isWrite, SOCKET* sock)
     waitTime.tv_sec = 0;
     waitTime.tv_usec = 1000;
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-    while ((_running == true) && (ret == false) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_timeout))))
+    while ((_running == true) && (ret == false) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
     {
         fd_set fds;
         std::vector<SOCKET> socks;
@@ -303,6 +302,7 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
         if (len > 0)
         {
             bufferLen += len;
+            std::cout << "got buffer " << len << std::endl;
         }
     }
     buffer->resize(bufferLen);
@@ -380,12 +380,14 @@ void CppsshTransport::rxThread()
     try
     {
         Botan::secure_vector<Botan::byte> incoming;
+        size_t size = 0;
 
         while (_running == true)
         {
-            incoming.clear();
-            size_t size = sizeof(uint32_t);
-
+            if (incoming.size() < sizeof(uint32_t))
+            {
+                size = sizeof(uint32_t);
+            }
             while ((incoming.size() < size) && (_running == true))
             {
                 if (receiveMessage(&incoming) == false)
@@ -408,6 +410,8 @@ void CppsshTransport::rxThread()
                 else
                 {
                     incoming.erase(incoming.begin(), incoming.begin() + size);
+                    CppsshPacket packet(&incoming);
+                    size = packet.getCryptoLength();
                 }
             }
         }

@@ -20,8 +20,8 @@
 #include "crypto.h"
 #include "channel.h"
 
-CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session, unsigned int timeout)
-    : CppsshTransport(session, timeout),
+CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session)
+    : CppsshTransport(session),
     _txSeq(0),
     _rxSeq(0)
 {
@@ -50,7 +50,6 @@ bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer
     return ret;
 }
 
-
 void CppsshCryptoTransport::rxThread()
 {
     try
@@ -62,12 +61,8 @@ void CppsshCryptoTransport::rxThread()
             decrypted.clear();
             uint32_t cryptoLen = 0;
             int macLen = 0;
-            size_t size = sizeof(uint32_t);
+            size_t size = _session->_crypto->getDecryptBlock();
 
-            if (_session->_crypto->isInited() == true)
-            {
-                size = _session->_crypto->getDecryptBlock();
-            }
             while ((_in.size() < size) && (_running == true))
             {
                 if (CppsshTransport::receiveMessage(&_in) == false)
@@ -75,12 +70,7 @@ void CppsshCryptoTransport::rxThread()
                     return;
                 }
             }
-            if (_session->_crypto->isInited() == false)
-            {
-                cryptoLen = packet.getCryptoLength();
-                decrypted = _in;
-            }
-            else if (_in.size() >= _session->_crypto->getDecryptBlock())
+            if (_in.size() >= _session->_crypto->getDecryptBlock())
             {
                 _session->_crypto->decryptPacket(&decrypted, _in, _session->_crypto->getDecryptBlock());
                 macLen = _session->_crypto->getMacInLen();
