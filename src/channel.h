@@ -23,13 +23,14 @@
 #include "session.h"
 #include "messages.h"
 #include "tsmem.h"
+#include "transport.h"
 
 class CppsshSubChannel;
 
 class CppsshChannel
 {
 public:
-    CppsshChannel(const std::shared_ptr<CppsshSession>& session, unsigned int timeout);
+    CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     bool establish(const std::string& host, short port);
     bool openChannel();
     bool readMainChannel(CppsshMessage* data);
@@ -67,7 +68,6 @@ private:
 
     CppsshTsQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;
     CppsshTsMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
-    unsigned int _timeout;
     uint32_t _mainChannel;
     friend class CppsshSubChannel;
 };
@@ -75,7 +75,7 @@ private:
 class CppsshSubChannel
 {
 public:
-    CppsshSubChannel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName, unsigned int timeout);
+    CppsshSubChannel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName);
     ~CppsshSubChannel()
     {
     }
@@ -137,7 +137,6 @@ private:
     uint32_t _windowSend;
     uint32_t _txChannel;
     uint32_t _maxPacket;
-    unsigned int _timeout;
     std::string _channelName;
     SOCKET _sock;
     bool _first;

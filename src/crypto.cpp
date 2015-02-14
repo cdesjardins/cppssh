@@ -45,7 +45,6 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     _decryptBlock(0),
     _c2sMacDigestLen(0),
     _s2cMacDigestLen(0),
-    _inited(false),
     _c2sMacMethod(macMethods::HMAC_MD5),
     _s2cMacMethod(macMethods::HMAC_MD5),
     _kexMethod(kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1),
@@ -709,7 +708,6 @@ bool CppsshCrypto::makeNewKeys()
     }
     //  if (s2cCmprsMethod == ZLIB) decompress = new Pipe (new Zlib_Decompression);
 
-    _inited = true;
     return true;
 }
 
