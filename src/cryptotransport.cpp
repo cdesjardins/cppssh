@@ -25,7 +25,6 @@ CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession
     _txSeq(3),
     _rxSeq(3)
 {
-
 }
 
 bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)

@@ -34,6 +34,7 @@ CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
     _mainChannel(0)
 {
 }
+
 bool CppsshChannel::establish(const std::string& host, short port)
 {
     bool ret = false;

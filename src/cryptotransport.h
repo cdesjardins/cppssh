@@ -36,5 +36,4 @@ private:
     Botan::secure_vector<Botan::byte> _in;
 };
 
-
 #endif

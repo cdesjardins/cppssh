@@ -333,7 +333,6 @@ void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_itera
 #endif
 }
 
-
 void CppsshConstPacket::dumpPacket() const
 {
 #ifndef NDEBUG
@@ -352,3 +351,4 @@ void CppsshConstPacket::dumpPacket() const
     dumpAscii(it - cnt, cnt);
 #endif
 }
+
