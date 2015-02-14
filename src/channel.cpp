@@ -139,8 +139,7 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
             magicPacket.replace(message->length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
             _first = false;
         }
-        _session->_transport->send(magicVec, _sock);
-        //writeChannel(message->message(), message->length());
+        _session->_channel->writeMainChannel(message->message(), message->length());
     }
     else
     {

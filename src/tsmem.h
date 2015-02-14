@@ -23,6 +23,7 @@
 #include <queue>
 #include <map>
 #include <memory>
+#include <condition_variable>
 
 // Simple thread safe queue
 
