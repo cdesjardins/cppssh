@@ -133,14 +133,15 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
     // FIXME: Once I figure this out, I should make it not suck
     if (rxChannel == 101)
     {
+        Botan::secure_vector<Botan::byte> magicVec((Botan::byte*)message->message(), (Botan::byte*)message->message() + message->length());
         if (_first == true)
         {
-            Botan::secure_vector<Botan::byte> magicVec((Botan::byte*)message->message(), (Botan::byte*)message->message() + message->length());
             CppsshPacket magicPacket(&magicVec);
             magicPacket.replace(message->length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
             _first = false;
         }
-        writeChannel(message->message(), message->length());
+        _session->_transport->send(magicVec, _sock);
+        //writeChannel(message->message(), message->length());
     }
     else
     {
@@ -271,9 +272,7 @@ bool CppsshSubChannel::flushOutgoingChannelData()
     while (_outgoingChannelData.size() > 0)
     {
         std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
-        _outgoingChannelData.dequeue(&message);
-
-        if (message->size() > 0)
+        if ((_outgoingChannelData.dequeue(&message) == true) && (message->size() > 0))
         {
             _windowSend -= message->size();
             Botan::secure_vector<Botan::byte> buf;
