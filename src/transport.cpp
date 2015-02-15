@@ -182,10 +182,15 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
         else
         {
             _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << path.str() << " " << strerror(errno));
-            close(_sock);
+            disconnect();
         }
     }
     return ret;
+}
+
+void CppsshBaseTransport::disconnect()
+{
+    close(_sock);
 }
 
 bool CppsshTransport::start()

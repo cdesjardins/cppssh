@@ -43,6 +43,7 @@ public:
 
     bool establish(const std::string& host, short port);
     bool establishX11();
+    void disconnect();
     SOCKET getSocket()
     {
         return _sock;

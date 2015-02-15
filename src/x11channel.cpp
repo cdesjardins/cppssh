@@ -27,9 +27,18 @@ CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session
 
 CppsshX11Channel::~CppsshX11Channel()
 {
+}
+
+void CppsshX11Channel::disconnect()
+{
     _running = false;
     _x11RxThread.join();
     _x11TxThread.join();
+    if (_x11transport != NULL)
+    {
+        _x11transport->disconnect();
+        _x11transport.reset();
+    }
 }
 
 bool CppsshX11Channel::startChannel()
@@ -75,5 +84,16 @@ void CppsshX11Channel::x11TxThread()
             writeChannel(x11buf.data(), x11buf.size());
         }
     }
+}
+
+void CppsshX11Channel::handleEof()
+{
+    CppsshSubChannel::handleEof();
+    disconnect();
+}
+
+void CppsshX11Channel::handleClose()
+{
+    CppsshSubChannel::handleClose();
 }
 

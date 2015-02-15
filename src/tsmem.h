@@ -140,6 +140,11 @@ public:
         return _map.cend();
     }
 
+    void clear()
+    {
+        std::shared_ptr<std::unique_lock<std::mutex> > ret(new std::unique_lock<std::mutex>());
+        _map.clear();
+    }
 private:
     std::mutex _mapMutex;
     std::map<keyType, valType> _map;

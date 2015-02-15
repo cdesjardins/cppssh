@@ -48,6 +48,8 @@ private:
     void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingGlobalData(const Botan::secure_vector<Botan::byte>& buf);
     void handleBanner(const Botan::secure_vector<Botan::byte>& buf);
+    void handleEof(const Botan::secure_vector<Botan::byte>& buf);
+    void handleClose(const Botan::secure_vector<Botan::byte>& buf);
 
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
@@ -111,10 +113,12 @@ public:
         return _txChannel;
     }
 
-    bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
-    void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
-    void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
-    bool handleChannelConfirm();
+    virtual bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
+    virtual void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
+    virtual void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
+    virtual bool handleChannelConfirm();
+    virtual void handleEof();
+    virtual void handleClose();
     void sendAdjustWindow();
     bool flushOutgoingChannelData();
     bool readChannel(CppsshMessage* data);

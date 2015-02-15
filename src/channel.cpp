@@ -77,23 +77,36 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
 
 void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 {
-    if (packet.size() > 0)
-    {
-        std::string err;
-        if (packet.getCommand() == SSH2_MSG_DISCONNECT)
-        {
-            packet.skipHeader();
-            packet.getInt();
-            packet.getString(&err);
-            _session->_logger->pushMessage(err);
-            disconnect();
-        }
-    }
+    std::string err;
+    packet.skipHeader();
+    packet.getInt();
+    packet.getString(&err);
+    _session->_logger->pushMessage(err);
+    disconnect();
 }
 
 void CppsshChannel::disconnect()
 {
+    std::cout << "disconnect" << std::endl;
     _channelOpened = false;
+    _channels.clear();
+}
+
+void CppsshChannel::handleEof(const Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    uint32_t rxChannel = packet.getInt();
+    _channels.at(rxChannel)->handleEof();
+}
+
+void CppsshChannel::handleClose(const Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    uint32_t rxChannel = packet.getInt();
+    _channels.at(rxChannel)->handleClose();
+    _channels.erase(rxChannel);
 }
 
 bool CppsshChannel::isConnected()
@@ -491,6 +504,7 @@ void CppsshChannel::handleBanner(const Botan::secure_vector<Botan::byte>& buf)
     // FIXME: enqueue the banner to mainChannel incomingChannelData
 }
 
+
 void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
     const CppsshConstPacket packet(&buf);
@@ -533,8 +547,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             break;
 
         case SSH2_MSG_CHANNEL_EOF:
-            //handleEof(newPacket.value());
-            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EOF: " << cmd);
+            handleEof(buf);
             break;
 
         case SSH2_MSG_CHANNEL_OPEN:
@@ -542,8 +555,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             break;
 
         case SSH2_MSG_CHANNEL_CLOSE:
-            //handleClose(newPacket.value());
-            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_CLOSE: " << cmd);
+            handleClose(buf);
             break;
 
         case SSH2_MSG_CHANNEL_REQUEST:
@@ -584,5 +596,23 @@ CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session
     _maxPacket(0),
     _channelName(channelName)
 {
+}
+
+void CppsshSubChannel::handleEof()
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+    packet.addByte(SSH2_MSG_CHANNEL_EOF);
+    packet.addInt(_txChannel);
+    _session->_transport->sendMessage(buf);
+}
+
+void CppsshSubChannel::handleClose()
+{
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+    packet.addByte(SSH2_MSG_CHANNEL_CLOSE);
+    packet.addInt(_txChannel);
+    _session->_transport->sendMessage(buf);
 }
 

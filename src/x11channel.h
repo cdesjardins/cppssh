@@ -29,10 +29,13 @@ public:
     CppsshX11Channel(const CppsshX11Channel&) = delete;
     ~CppsshX11Channel();
     virtual bool startChannel();
+    virtual void handleEof();
+    virtual void handleClose();
 protected:
+    void disconnect();
     void x11RxThread();
     void x11TxThread();
-    std::shared_ptr<CppsshBaseTransport> _x11transport;
+    std::unique_ptr<CppsshBaseTransport> _x11transport;
 
     std::thread _x11RxThread;
     std::thread _x11TxThread;
