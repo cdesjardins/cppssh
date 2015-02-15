@@ -65,7 +65,7 @@ bool CppsshChannel::openChannel()
             ret = _channels.at(_mainChannel)->handleChannelConfirm();
         }
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::out_of_range& )
     {
     }
     return ret;
@@ -78,7 +78,7 @@ bool CppsshChannel::readMainChannel(CppsshMessage* data)
     {
         ret = _channels.at(_mainChannel)->readChannel(data);
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::out_of_range& )
     {
     }
     return ret;
@@ -91,7 +91,7 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
     {
         ret = _channels.at(_mainChannel)->writeChannel(data, bytes);
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::out_of_range& )
     {
     }
     return ret;
@@ -399,7 +399,7 @@ bool CppsshChannel::getShell()
         }
     }
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::out_of_range& )
     {
     }
     return ret;
@@ -486,7 +486,7 @@ bool CppsshChannel::getX11()
         {
             ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
         }
-        catch (const std::out_of_range& ex)
+        catch (const std::out_of_range& )
         {
         }
     }
@@ -616,7 +616,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             break;
     }
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::out_of_range& )
     {
     }
 }
@@ -688,7 +688,7 @@ void CppsshSubChannel::handleChannelRequest(const Botan::secure_vector<Botan::by
     {
         _session->_logger->pushMessage(std::stringstream() << "Unknown channel request: " << request);
     }
-    if (wantReply == true)
+    if (wantReply != 0)
     {
         Botan::secure_vector<Botan::byte> buf;
         CppsshPacket packet(&buf);
