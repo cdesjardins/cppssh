@@ -47,6 +47,7 @@ private:
     void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     void handleWindowAdjust(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingGlobalData(const Botan::secure_vector<Botan::byte>& buf);
+    void handleChannelRequest(const Botan::secure_vector<Botan::byte>& buf);
     void handleBanner(const Botan::secure_vector<Botan::byte>& buf);
     void handleEof(const Botan::secure_vector<Botan::byte>& buf);
     void handleClose(const Botan::secure_vector<Botan::byte>& buf);
@@ -117,6 +118,7 @@ public:
     virtual void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     virtual void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     virtual bool handleChannelConfirm();
+    void handleChannelRequest(const Botan::secure_vector<Botan::byte>& buf);
     virtual void handleEof();
     virtual void handleClose();
     void sendAdjustWindow();

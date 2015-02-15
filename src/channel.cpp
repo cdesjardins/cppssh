@@ -219,6 +219,7 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
     if (channelName == "x11")
     {
         uint32_t rxChannel;
+        std::cout << "handleOpen " << channelName << std::endl;
         if (createNewSubChannel(channelName, windowSend, txChannel, maxPacket, &rxChannel) == true)
         {
             sendOpenConfirmation(rxChannel);
@@ -504,6 +505,13 @@ void CppsshChannel::handleBanner(const Botan::secure_vector<Botan::byte>& buf)
     // FIXME: enqueue the banner to mainChannel incomingChannelData
 }
 
+void CppsshChannel::handleChannelRequest(const Botan::secure_vector<Botan::byte>& buf)
+{
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    uint32_t rxChannel = packet.getInt();
+    _channels.at(rxChannel)->handleChannelRequest(buf);
+}
 
 void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
@@ -559,8 +567,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             break;
 
         case SSH2_MSG_CHANNEL_REQUEST:
-            //handleRequest(newPacket.value());
-            _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_REQUEST: " << cmd);
+            handleChannelRequest(buf);
             break;
 
         case SSH2_MSG_IGNORE:
@@ -600,6 +607,7 @@ CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session
 
 void CppsshSubChannel::handleEof()
 {
+    std::cout << "handleeof " << _channelName << _txChannel << std::endl;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_EOF);
@@ -609,6 +617,7 @@ void CppsshSubChannel::handleEof()
 
 void CppsshSubChannel::handleClose()
 {
+    std::cout << "handleclose " << _channelName << _txChannel << std::endl;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_CLOSE);
@@ -616,3 +625,8 @@ void CppsshSubChannel::handleClose()
     _session->_transport->sendMessage(buf);
 }
 
+void CppsshSubChannel::handleChannelRequest(const Botan::secure_vector<Botan::byte>& buf)
+{
+    std::cout << "handleChannelRequest " << _channelName << _txChannel<< std::endl;
+
+}
