@@ -30,6 +30,11 @@
 template <class T> class CppsshTsQueue
 {
 public:
+    ~CppsshTsQueue()
+    {
+        _queueCondVar.notify_all();
+    }
+
     void enqueue(const T& data)
     {
         std::unique_lock<std::mutex> lock(_queueMutex);
