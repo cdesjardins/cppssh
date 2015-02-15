@@ -27,7 +27,7 @@ public:
     CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session);
 
 protected:
-    virtual bool send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
+    virtual bool send(const Botan::secure_vector<Botan::byte>& buffer);
 private:
     virtual void rxThread();
 

@@ -33,6 +33,10 @@ class CppsshChannel;
 class Cppssh
 {
 public:
+    Cppssh() = delete;
+    Cppssh(const Cppssh&) = delete;
+    Cppssh& operator=(const Cppssh&) = delete;
+
     CPPSSH_EXPORT static void create();
     CPPSSH_EXPORT static void destroy();
     // Timeout is in milliseconds
@@ -49,9 +53,6 @@ public:
 
 private:
     static std::shared_ptr<CppsshImpl> s_cppsshInst;
-    Cppssh();
-    Cppssh(const Cppssh&);
-    Cppssh& operator=(const Cppssh&);
 };
 
 class CppsshMessage

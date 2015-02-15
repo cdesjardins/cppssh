@@ -62,7 +62,8 @@ WSockInitializer _wsock32_;
 
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
-    _running(true)
+    _running(true),
+    _sock(-1)
 {
 }
 
@@ -79,7 +80,7 @@ CppsshTransport::~CppsshTransport()
     }
 }
 
-bool CppsshTransport::establish(const std::string& host, short port, SOCKET* sock)
+bool CppsshTransport::establish(const std::string& host, short port)
 {
     bool ret = false;
     sockaddr_in remoteAddr;
@@ -96,20 +97,20 @@ bool CppsshTransport::establish(const std::string& host, short port, SOCKET* soc
         remoteAddr.sin_addr.s_addr = *(long*)remoteHost->h_addr_list[0];
         remoteAddr.sin_port = htons(port);
 
-        *sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (*sock < 0)
+        _sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (_sock < 0)
         {
             _session->_logger->pushMessage("Failure to bind to socket.");
         }
         else
         {
-            if (connect(*sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
+            if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
             {
                 _session->_logger->pushMessage(std::stringstream() << "Unable to connect to remote server: '" << host << "'.");
             }
             else
             {
-                ret = setNonBlocking(true, *sock);
+                ret = setNonBlocking(true);
             }
         }
     }
@@ -136,14 +137,14 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     return ret;
 }
 
-bool CppsshTransport::establishX11(SOCKET* sock)
+bool CppsshTransport::establishX11()
 {
     bool ret = false;
     std::string display(getenv("DISPLAY"));
 
     if ((display.find("unix:") == 0) || (display.find(":") == 0))
     {
-        ret = establishLocalX11(display, sock);
+        ret = establishLocalX11(display);
     }
     else
     {
@@ -152,13 +153,13 @@ bool CppsshTransport::establishX11(SOCKET* sock)
     return ret;
 }
 
-bool CppsshTransport::establishLocalX11(const std::string& display, SOCKET* sock)
+bool CppsshTransport::establishLocalX11(const std::string& display)
 {
     bool ret = false;
     struct sockaddr_un addr;
 
-    *sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (*sock < 0)
+    _sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (_sock < 0)
     {
         _session->_logger->pushMessage(std::stringstream() << "Unable to open to X11 socket");
     }
@@ -173,17 +174,17 @@ bool CppsshTransport::establishLocalX11(const std::string& display, SOCKET* sock
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, path.str().c_str(), sizeof(addr.sun_path));
-        int connectRet = connect(*sock, (struct sockaddr*)&addr, sizeof(addr));
+        int connectRet = connect(_sock, (struct sockaddr*)&addr, sizeof(addr));
         if (connectRet == 0)
         {
             // success
             ret = true;
-            setNonBlocking(true, *sock);
+            setNonBlocking(true);
         }
         else
         {
             _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << path.str() << " " << strerror(errno));
-            close(*sock);
+            close(_sock);
         }
     }
     return ret;
@@ -196,11 +197,11 @@ bool CppsshTransport::start()
     return true;
 }
 
-bool CppsshTransport::setNonBlocking(bool on, SOCKET sock)
+bool CppsshTransport::setNonBlocking(bool on)
 {
 #if !defined(WIN32) && !defined(__MINGW32__)
     int options;
-    if ((options = fcntl(sock, F_GETFL)) < 0)
+    if ((options = fcntl(_sock, F_GETFL)) < 0)
     {
         _session->_logger->pushMessage("Cannot read options of the socket.");
         return false;
@@ -214,10 +215,10 @@ bool CppsshTransport::setNonBlocking(bool on, SOCKET sock)
     {
         options = (options & ~O_NONBLOCK);
     }
-    fcntl(sock, F_SETFL, options);
+    fcntl(_sock, F_SETFL, options);
 #else
     unsigned long options = on;
-    if (ioctlsocket(sock, FIONBIO, &options))
+    if (ioctlsocket(_sock, FIONBIO, &options))
     {
         _session->_logger->pushMessage("Cannot set asynch I/O on the socket.");
         return false;
@@ -226,29 +227,20 @@ bool CppsshTransport::setNonBlocking(bool on, SOCKET sock)
     return true;
 }
 
-SOCKET CppsshTransport::setupFd(const std::vector<SOCKET>& socks, fd_set* fd)
+void CppsshTransport::setupFd(fd_set* fd)
 {
-    SOCKET maxFd = (SOCKET)-1;
 #if defined(WIN32)
 #pragma warning(push)
 #pragma warning(disable : 4127)
 #endif
     FD_ZERO(fd);
-    for (std::vector<SOCKET>::const_iterator it = socks.cbegin(); it != socks.cend(); it++)
-    {
-        FD_SET(*it, fd);
-        if (*it > maxFd)
-        {
-            maxFd = *it;
-        }
-    }
+    FD_SET(_sock, fd);
 #if defined(WIN32)
 #pragma warning(pop)
 #endif
-    return maxFd;
 }
 
-bool CppsshTransport::wait(bool isWrite, SOCKET* sock)
+bool CppsshTransport::wait(bool isWrite)
 {
     bool ret = false;
     int status = 0;
@@ -259,28 +251,20 @@ bool CppsshTransport::wait(bool isWrite, SOCKET* sock)
     while ((_running == true) && (ret == false) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
     {
         fd_set fds;
-        std::vector<SOCKET> socks;
-        SOCKET maxFd;
         if (isWrite == false)
         {
-            _session->_channel->getSockList(&socks);
-            maxFd = setupFd(socks, &fds);
-            status = select(maxFd + 1, &fds, NULL, NULL, &waitTime);
+            setupFd(&fds);
+            status = select(_sock + 1, &fds, NULL, NULL, &waitTime);
         }
         else
         {
-            socks.push_back(*sock);
-            maxFd = setupFd(socks, &fds);
-            status = select(maxFd + 1, NULL, &fds, NULL, &waitTime);
+            setupFd(&fds);
+            status = select(_sock + 1, NULL, &fds, NULL, &waitTime);
         }
-        for (std::vector<SOCKET>::const_iterator it = socks.cbegin(); it != socks.cend(); it++)
+        if ((status > 0) && (FD_ISSET(_sock, &fds)))
         {
-            if ((status > 0) && (FD_ISSET(*it, &fds)))
-            {
-                ret = true;
-                *sock = *it;
-                break;
-            }
+            ret = true;
+            break;
         }
     }
 
@@ -293,18 +277,26 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
     bool ret = true;
     int len = 0;
     int bufferLen = buffer->size();
-    SOCKET sock;
     buffer->resize(CPPSSH_MAX_PACKET_LEN + bufferLen);
 
-    if (wait(false, &sock) == true)
+    if (wait(false) == true)
     {
-        len = ::recv(sock, (char*)buffer->data() + bufferLen, CPPSSH_MAX_PACKET_LEN, 0);
+        len = ::recv(_sock, (char*)buffer->data() + bufferLen, CPPSSH_MAX_PACKET_LEN, 0);
         if (len > 0)
         {
             bufferLen += len;
         }
     }
     buffer->resize(bufferLen);
+
+    {
+        if (len > 0)
+        {
+            CppsshConstPacket dbg(buffer);
+            std::cout << "rx sock: " << _sock << " " << dbg.getCryptoLength() << std::endl;
+            dbg.dumpPacket("rx");
+        }
+    }
 
     if ((_running == true) && (len < 0))
     {
@@ -316,7 +308,7 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
     return ret;
 }
 
-bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
+bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     bool ret = true;
     size_t length = buffer.size();
@@ -342,22 +334,30 @@ bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffe
     padBytes.resize(padLen, 0);
     out.addVector(padBytes);
 
-    if (send(buf, sock) == false)
+    if (send(buf) == false)
     {
         ret = false;
     }
     return ret;
 }
 
-bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
+bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
 {
     int len;
     size_t sent = 0;
+    {
+        if (buffer.size() > 0)
+        {
+            CppsshConstPacket dbg(&buffer);
+            std::cout << "tx sock: " << _sock << std::endl;
+            dbg.dumpPacket("tx");
+        }
+    }
     while ((sent < buffer.size()) && (_running == true))
     {
-        if (wait(true, &sock) == true)
+        if (wait(true) == true)
         {
-            len = ::send(sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
+            len = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
         }
         else
         {
@@ -411,6 +411,7 @@ void CppsshTransport::rxThread()
                     incoming.erase(incoming.begin(), incoming.begin() + size);
                     CppsshPacket packet(&incoming);
                     size = packet.getCryptoLength();
+                    std::cout << "ERASE" << std::endl;
                 }
             }
         }
@@ -419,6 +420,7 @@ void CppsshTransport::rxThread()
     {
         _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
     }
+    std::cout << "DONE" << std::endl;
 }
 
 void CppsshTransport::txThread()

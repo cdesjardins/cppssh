@@ -38,24 +38,24 @@ class CppsshTransport
 public:
     CppsshTransport(const std::shared_ptr<CppsshSession>& session);
     virtual ~CppsshTransport();
-    bool establish(const std::string& host, short port, SOCKET* sock);
-    bool establishX11(SOCKET* sock);
+    bool establish(const std::string& host, short port);
+    bool establishX11();
     bool start();
 
-    virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
+    virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 
+    virtual bool send(const Botan::secure_vector<Botan::byte>& buffer);
 protected:
 
     virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
-    virtual bool send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock);
 
     friend class CppsshConnection;
 
-    bool establishLocalX11(const std::string& display, SOCKET* sock);
-    bool setNonBlocking(bool on, SOCKET sock);
-    SOCKET setupFd(const std::vector<SOCKET>& socks, fd_set* fd);
-    bool wait(bool isWrite, SOCKET* sock);
+    bool establishLocalX11(const std::string& display);
+    bool setNonBlocking(bool on);
+    void setupFd(fd_set* fd);
+    bool wait(bool isWrite);
     virtual void rxThread();
     virtual void txThread();
 
@@ -63,6 +63,7 @@ protected:
     std::thread _rxThread;
     std::thread _txThread;
     volatile bool _running;
+    SOCKET _sock;
 };
 
 #endif

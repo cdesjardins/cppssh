@@ -321,34 +321,41 @@ void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_itera
 {
 #ifndef NDEBUG
     size_t i;
-    for (i = 0; i < 16 - len; i++)
+    if (len > 0)
     {
-        std::cout << "   ";
+        for (i = 0; i < 16 - len; i++)
+        {
+            std::cout << "   ";
+        }
+        for (i = 0; ((i < len) && (it != _cdata->end())); i++)
+        {
+            std::cout << (char)(isprint(it[i]) ? it[i] : '.');
+        }
+        std::cout << std::endl;
     }
-    for (i = 0; ((i < len) && (it != _cdata->end())); i++)
-    {
-        std::cout << (char)(isprint(it[i]) ? it[i] : '.');
-    }
-    std::cout << std::endl;
 #endif
 }
 
-void CppsshConstPacket::dumpPacket() const
+void CppsshConstPacket::dumpPacket(const std::string& tag) const
 {
 #ifndef NDEBUG
     size_t cnt = 0;
+    size_t offs = 0;
     Botan::secure_vector<Botan::byte>::const_iterator it;
     for (it = _cdata->begin() + _index; it != _cdata->end(); it++)
     {
         if ((cnt % 16) == 0)
         {
             dumpAscii(it - cnt, cnt);
+            std::cout << tag << " " << std::hex << std::setw(6) << std::setfill('0') << offs << ": ";
             cnt = 0;
         }
         std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)*it << std::dec << std::setw(0) << std::setfill(' ') << " ";
         cnt++;
+        offs++;
     }
     dumpAscii(it - cnt, cnt);
+    std::cout << std::endl;
 #endif
 }
 

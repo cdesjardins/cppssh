@@ -27,7 +27,7 @@ CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession
 {
 }
 
-bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer, SOCKET sock)
+bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
 {
     bool ret = true;
     Botan::secure_vector<Botan::byte> crypted;
@@ -38,7 +38,7 @@ bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer
         return false;
     }
     crypted += hmac;
-    if (CppsshTransport::send(crypted, sock) == false)
+    if (CppsshTransport::send(crypted) == false)
     {
         ret = false;
     }

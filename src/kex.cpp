@@ -78,7 +78,7 @@ bool CppsshKex::sendInit(Botan::secure_vector<Botan::byte>* buf)
 
     constructLocalKex();
 
-    if (_session->_transport->sendMessage(_localKex, _session->_channel->getMainSocket()) == true)
+    if (_session->_channel->writeMainChannel(_localKex.data(), _localKex.size()) == true)
     {
         if ((_session->_channel->waitForGlobalMessage(buf) == true) && (packet.getCommand() == SSH2_MSG_KEXINIT))
         {
@@ -232,7 +232,7 @@ bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>* buf)
         _e.clear();
         CppsshConstPacket::bn2vector(&_e, publicKey);
 
-        if (_session->_transport->sendMessage(*buf, _session->_channel->getMainSocket()) == true)
+        if (_session->_transport->sendMessage(*buf) == true)
         {
             if ((_session->_channel->waitForGlobalMessage(buf) == true) && (dhInit.getCommand() == SSH2_MSG_KEXDH_REPLY))
             {
@@ -332,7 +332,7 @@ bool CppsshKex::sendKexNewKeys()
         Botan::secure_vector<Botan::byte> newKeys;
         CppsshPacket newKeysPacket(&newKeys);
         newKeysPacket.addByte(SSH2_MSG_NEWKEYS);
-        if (_session->_transport->sendMessage(newKeys, _session->_channel->getMainSocket()) == true)
+        if (_session->_transport->sendMessage(newKeys) == true)
         {
             if (_session->_crypto->makeNewKeys() == false)
             {

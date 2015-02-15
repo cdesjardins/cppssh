@@ -28,6 +28,10 @@ class CppsshMessage;
 class CppsshConstPacket
 {
 public:
+    CppsshConstPacket() = delete;
+    CppsshConstPacket(const CppsshConstPacket&) = delete;
+    CppsshConstPacket& operator=(const CppsshConstPacket& data) = delete;
+
     CppsshConstPacket(const Botan::secure_vector<Botan::byte>* const data);
 
     static void bn2vector(Botan::secure_vector<Botan::byte>* result, const Botan::BigInt& bi);
@@ -49,13 +53,10 @@ public:
     void skipHeader() const;
 
     size_t size() const;
-    void dumpPacket() const;
-    void dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len) const;
+    void dumpPacket(const std::string& tag) const;
 
 private:
-    CppsshConstPacket();
-    CppsshConstPacket(const CppsshConstPacket&);
-    CppsshConstPacket& operator=(const CppsshConstPacket& data);
+    void dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len) const;
 
     const Botan::secure_vector<Botan::byte>* const _cdata;
     mutable int _index;
