@@ -78,7 +78,7 @@ bool CppsshKex::sendInit(Botan::secure_vector<Botan::byte>* buf)
 
     constructLocalKex();
 
-    if (_session->_channel->writeMainChannel(_localKex.data(), _localKex.size()) == true)
+    if (_session->_transport->sendMessage(_localKex) == true)
     {
         if ((_session->_channel->waitForGlobalMessage(buf) == true) && (packet.getCommand() == SSH2_MSG_KEXINIT))
         {

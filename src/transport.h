@@ -46,6 +46,10 @@ public:
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 
     virtual bool send(const Botan::secure_vector<Botan::byte>& buffer);
+    SOCKET getSocket()
+    {
+        return _sock;
+    }
 protected:
 
     virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);

@@ -63,7 +63,7 @@ WSockInitializer _wsock32_;
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _running(true),
-    _sock(-1)
+    _sock((SOCKET)-1)
 {
 }
 

@@ -77,7 +77,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
         return false;
     }
 
-    _session->_transport.reset(new CppsshCryptoTransport(_session));
+    _session->_transport.reset(new CppsshCryptoTransport(_session, _session->_transport->getSocket()));
     if (_session->_transport->start() == false)
     {
         return false;
@@ -163,7 +163,7 @@ bool CppsshConnection::requestService(const std::string& service)
 
     packet.addByte(SSH2_MSG_SERVICE_REQUEST);
     packet.addString(service);
-    if (_session->_channel->writeMainChannel(buf.data(), buf.size()) == true)
+    if (_session->_transport->sendMessage(buf) == true)
     {
         if ((_session->_channel->waitForGlobalMessage(&buf) == true) && (packet.getCommand() == SSH2_MSG_SERVICE_ACCEPT))
         {
@@ -183,7 +183,7 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_session->_channel->writeMainChannel(userAuthRequest.data(), userAuthRequest.size()) == true) && (_session->_channel->waitForGlobalMessage(&buf) == true))
+    if ((_session->_transport->sendMessage(userAuthRequest) == true) && (_session->_channel->waitForGlobalMessage(&buf) == true))
     {
         if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
         {

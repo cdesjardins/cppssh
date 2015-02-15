@@ -58,7 +58,7 @@ bool CppsshChannel::openChannel()
     packet.addInt(CPPSSH_RX_WINDOW_SIZE);
     packet.addInt(CPPSSH_MAX_PACKET_LEN);
 
-    if (writeMainChannel(buf.data(), buf.size()) == true)
+    if (_session->_transport->sendMessage(buf) == true)
     {
         _channelOpened = _channels.at(_mainChannel)->handleChannelConfirm();
     }
@@ -179,7 +179,7 @@ void CppsshChannel::sendOpenConfirmation(uint32_t rxChannel)
     openConfirmation.addInt(rxChannel);
     openConfirmation.addInt(channel->getWindowRecv());
     openConfirmation.addInt(CPPSSH_MAX_PACKET_LEN);
-    writeMainChannel(buf.data(), buf.size());
+    _session->_transport->sendMessage(buf);
 }
 
 void CppsshChannel::sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason reason)
@@ -190,7 +190,7 @@ void CppsshChannel::sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason 
     openFaulure.addInt(reason);
     openFaulure.addString("Bad request");
     openFaulure.addString("EN");
-    writeMainChannel(buf.data(), buf.size());
+    _session->_transport->sendMessage(buf);
 }
 
 void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)

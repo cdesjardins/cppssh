@@ -20,11 +20,12 @@
 #include "crypto.h"
 #include "channel.h"
 
-CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session)
+CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session, SOCKET sock)
     : CppsshTransport(session),
     _txSeq(3),
     _rxSeq(3)
 {
+    _sock = sock;
 }
 
 bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
