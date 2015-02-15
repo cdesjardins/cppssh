@@ -31,7 +31,6 @@
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
-    _channelOpened(false),
     _mainChannel(0)
 {
 }
@@ -49,6 +48,7 @@ bool CppsshChannel::establish(const std::string& host, short port)
 
 bool CppsshChannel::openChannel()
 {
+    bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_OPEN);
@@ -60,9 +60,9 @@ bool CppsshChannel::openChannel()
 
     if (_session->_transport->sendMessage(buf) == true)
     {
-        _channelOpened = _channels.at(_mainChannel)->handleChannelConfirm();
+        ret = _channels.at(_mainChannel)->handleChannelConfirm();
     }
-    return _channelOpened;
+    return ret;
 }
 
 bool CppsshChannel::readMainChannel(CppsshMessage* data)
@@ -87,8 +87,7 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 
 void CppsshChannel::disconnect()
 {
-    std::cout << "disconnect" << std::endl;
-    _channelOpened = false;
+    std::cerr << "disconnect" << std::endl;
     _channels.clear();
 }
 
@@ -111,7 +110,7 @@ void CppsshChannel::handleClose(const Botan::secure_vector<Botan::byte>& buf)
 
 bool CppsshChannel::isConnected()
 {
-    return _channelOpened;
+    return (_channels.size() > 0);
 }
 
 void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf)
@@ -627,6 +626,35 @@ void CppsshSubChannel::handleClose()
 
 void CppsshSubChannel::handleChannelRequest(const Botan::secure_vector<Botan::byte>& buf)
 {
-    std::cout << "handleChannelRequest " << _channelName << _txChannel<< std::endl;
+    Botan::byte response = SSH2_MSG_CHANNEL_FAILURE;
+    std::string request;
 
+    CppsshConstPacket packet(&buf);
+    packet.skipHeader();
+    packet.getInt();
+    packet.getString(&request);
+    Botan::byte wantReply = packet.getByte();
+    if (request == "exit-status")
+    {
+        response = SSH2_MSG_CHANNEL_SUCCESS;
+    }
+    else if ((request == "pty-req") || (request == "x11-req") || (request == "env") ||
+        (request == "shell") || (request == "exec") || (request == "subsystem") ||
+        (request == "window-change") || (request == "xon-xoff") || (request == "signal") ||
+        (request == "exit-status") || (request == "exit-signal"))
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Unhandled channel request: " << request);
+    }
+    else
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Unknown channel request: " << request);
+    }
+    if (wantReply == true)
+    {
+        Botan::secure_vector<Botan::byte> buf;
+        CppsshPacket packet(&buf);
+        packet.addByte(response);
+        packet.addInt(_txChannel);
+        _session->_transport->sendMessage(buf);
+    }
 }

@@ -114,7 +114,7 @@ public:
 
     std::shared_ptr<std::unique_lock<std::mutex> > getLock() const
     {
-        std::shared_ptr<std::unique_lock<std::mutex> > ret(new std::unique_lock<std::mutex>());
+        std::shared_ptr<std::unique_lock<std::mutex> > ret(new std::unique_lock<std::mutex>(_mapMutex));
         return ret;
     }
 
@@ -142,11 +142,11 @@ public:
 
     void clear()
     {
-        std::shared_ptr<std::unique_lock<std::mutex> > ret(new std::unique_lock<std::mutex>());
+        std::unique_lock<std::mutex> lock(_mapMutex);
         _map.clear();
     }
 private:
-    std::mutex _mapMutex;
+    mutable std::mutex _mapMutex;
     std::map<keyType, valType> _map;
 };
 #endif

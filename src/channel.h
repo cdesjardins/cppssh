@@ -62,7 +62,6 @@ private:
     void sendOpenConfirmation(uint32_t rxChannel);
 
     std::shared_ptr<CppsshSession> _session;
-    bool _channelOpened;
     std::string _X11Method;
     Botan::secure_vector<Botan::byte> _realX11Cookie;
     std::string _fakeX11Cookie;

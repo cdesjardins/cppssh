@@ -38,6 +38,7 @@ CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
 
 CppsshConnection::~CppsshConnection()
 {
+    std::cerr << "~CppsshConnection" << std::endl;
     _session->_transport.reset();
     _session->_crypto.reset();
     _session->_channel.reset();
