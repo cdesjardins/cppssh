@@ -28,18 +28,20 @@ CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession
     _sock = sock;
 }
 
-bool CppsshCryptoTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshCryptoTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     bool ret = true;
     Botan::secure_vector<Botan::byte> crypted;
     Botan::secure_vector<Botan::byte> hmac;
-    if (_session->_crypto->encryptPacket(&crypted, &hmac, buffer, _txSeq) == false)
+    Botan::secure_vector<Botan::byte> buf;
+    setupMessage(buffer, &buf);
+    if (_session->_crypto->encryptPacket(&crypted, &hmac, buf, _txSeq) == false)
     {
         _session->_logger->pushMessage("Failure to encrypt the payload.");
         return false;
     }
     crypted += hmac;
-    if (CppsshTransport::send(crypted) == false)
+    if (CppsshBaseTransport::sendMessage(crypted) == false)
     {
         ret = false;
     }

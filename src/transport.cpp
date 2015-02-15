@@ -61,9 +61,7 @@ WSockInitializer _wsock32_;
 #endif
 
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
-    : _session(session),
-    _running(true),
-    _sock((SOCKET)-1)
+    : CppsshBaseTransport(session)
 {
 }
 
@@ -227,7 +225,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     return true;
 }
 
-void CppsshTransport::setupFd(fd_set* fd)
+void CppsshBaseTransport::setupFd(fd_set* fd)
 {
 #if defined(WIN32)
 #pragma warning(push)
@@ -240,7 +238,7 @@ void CppsshTransport::setupFd(fd_set* fd)
 #endif
 }
 
-bool CppsshTransport::wait(bool isWrite)
+bool CppsshBaseTransport::wait(bool isWrite)
 {
     bool ret = false;
     int status = 0;
@@ -272,7 +270,7 @@ bool CppsshTransport::wait(bool isWrite)
 }
 
 // Append new receive data to the end of the buffer
-bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
+bool CppsshBaseTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
 {
     bool ret = true;
     int len = 0;
@@ -292,9 +290,9 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
     {
         if (len > 0)
         {
-            CppsshConstPacket dbg(buffer);
-            std::cout << "rx sock: " << _sock << " " << dbg.getCryptoLength() << std::endl;
-            dbg.dumpPacket("rx");
+            //CppsshConstPacket dbg(buffer);
+            //std::cout << "rx sock: " << _sock << " " << dbg.getCryptoLength() << std::endl;
+            //dbg.dumpPacket("rx");
         }
     }
 
@@ -308,12 +306,11 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
     return ret;
 }
 
-bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransport::setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf)
 {
     bool ret = true;
     size_t length = buffer.size();
-    Botan::secure_vector<Botan::byte> buf;
-    CppsshPacket out(&buf);
+    CppsshPacket out(outBuf);
     Botan::byte padLen;
     uint32_t packetLen;
 
@@ -333,15 +330,19 @@ bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffe
     Botan::secure_vector<Botan::byte> padBytes;
     padBytes.resize(padLen, 0);
     out.addVector(padBytes);
-
-    if (send(buf) == false)
-    {
-        ret = false;
-    }
     return ret;
 }
 
-bool CppsshTransport::send(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
+{
+    bool ret;
+    Botan::secure_vector<Botan::byte> buf;
+    setupMessage(buffer, &buf);
+    ret = CppsshBaseTransport::sendMessage(buf);
+    return ret;
+}
+
+bool CppsshBaseTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     int len;
     size_t sent = 0;
@@ -442,3 +443,15 @@ void CppsshTransport::txThread()
     }
 }
 
+CppsshBaseTransport::CppsshBaseTransport(const std::shared_ptr<CppsshSession>& session)
+    : _session(session),
+    _sock((SOCKET)-1),
+    _running(true)
+{
+
+}
+
+CppsshBaseTransport::~CppsshBaseTransport()
+{
+    _running = false;
+}

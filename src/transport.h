@@ -33,7 +33,27 @@
 
 #define CPPSSH_MAX_PACKET_LEN 0x4000
 
-class CppsshTransport
+class CppsshBaseTransport
+{
+public:
+    CppsshBaseTransport(const std::shared_ptr<CppsshSession>& session);
+    virtual ~CppsshBaseTransport();
+    virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
+    virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
+
+    SOCKET getSocket()
+    {
+        return _sock;
+    }
+protected:
+    void setupFd(fd_set* fd);
+    std::shared_ptr<CppsshSession> _session;
+    bool wait(bool isWrite);
+    SOCKET _sock;
+    volatile bool _running;
+};
+
+class CppsshTransport : public CppsshBaseTransport
 {
 public:
     CppsshTransport(const std::shared_ptr<CppsshSession>& session);
@@ -41,34 +61,22 @@ public:
     bool establish(const std::string& host, short port);
     bool establishX11();
     bool start();
-
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
+
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 
-    virtual bool send(const Botan::secure_vector<Botan::byte>& buffer);
-    SOCKET getSocket()
-    {
-        return _sock;
-    }
 protected:
-
-    virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
-
-    friend class CppsshConnection;
+    bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
 
     bool establishLocalX11(const std::string& display);
     bool setNonBlocking(bool on);
-    void setupFd(fd_set* fd);
-    bool wait(bool isWrite);
     virtual void rxThread();
     virtual void txThread();
 
-    std::shared_ptr<CppsshSession> _session;
     std::thread _rxThread;
     std::thread _txThread;
-    volatile bool _running;
-    SOCKET _sock;
 };
+
 
 #endif
 

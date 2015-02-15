@@ -60,7 +60,7 @@ void CppsshX11Channel::x11Thread()
                 CppsshPacket p(&buf);
                 p.dumpPacket("x11 stuff");
             }
-            _session->_transport->CppsshTransport::send(buf);
+            _session->_transport->CppsshBaseTransport::sendMessage(buf);
         }
     }
 }
