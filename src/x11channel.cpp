@@ -75,3 +75,4 @@ void CppsshX11Channel::x11TxThread()
         }
     }
 }
+

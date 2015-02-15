@@ -47,6 +47,7 @@ public:
     {
         return _sock;
     }
+
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 protected:
     bool establishLocalX11(const std::string& display);
@@ -67,7 +68,6 @@ public:
     bool start();
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
-
 protected:
     bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
 
@@ -77,7 +77,6 @@ protected:
     std::thread _rxThread;
     std::thread _txThread;
 };
-
 
 #endif
 

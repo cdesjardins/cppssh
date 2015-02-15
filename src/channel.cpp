@@ -107,7 +107,7 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
     std::shared_ptr<CppsshMessage> message(new CppsshMessage());
     packet.skipHeader();
     // rx channel
-    /*uint32_t rxChannel = */packet.getInt();
+    /*uint32_t rxChannel = */ packet.getInt();
     packet.getChannelData(message.get());
     _windowRecv -= message->length();
     if (_windowRecv < (CPPSSH_RX_WINDOW_SIZE / 2))
@@ -137,7 +137,7 @@ bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t
 {
     int chan;
     bool ret = false;
-    std::shared_ptr<CppsshSubChannel> channel;;
+    std::shared_ptr<CppsshSubChannel> channel;
     if (channelName == "x11")
     {
         channel.reset(new CppsshX11Channel(_session, channelName));

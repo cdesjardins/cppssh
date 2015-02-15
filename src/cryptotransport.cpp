@@ -128,3 +128,4 @@ void CppsshCryptoTransport::rxThread()
         _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
     }
 }
+

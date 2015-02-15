@@ -337,7 +337,7 @@ bool CppsshBaseTransport::sendMessage(const Botan::secure_vector<Botan::byte>& b
 {
     int len;
     size_t sent = 0;
-    
+
     while ((sent < buffer.size()) && (_running == true))
     {
         if (wait(true) == true)
@@ -430,10 +430,10 @@ CppsshBaseTransport::CppsshBaseTransport(const std::shared_ptr<CppsshSession>& s
     _sock((SOCKET)-1),
     _running(true)
 {
-
 }
 
 CppsshBaseTransport::~CppsshBaseTransport()
 {
     _running = false;
 }
+
