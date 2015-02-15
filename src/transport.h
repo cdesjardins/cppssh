@@ -41,12 +41,18 @@ public:
     virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
+    bool establish(const std::string& host, short port);
+    bool establishX11();
     SOCKET getSocket()
     {
         return _sock;
     }
+    static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 protected:
+    bool establishLocalX11(const std::string& display);
+    bool setNonBlocking(bool on);
     void setupFd(fd_set* fd);
+
     std::shared_ptr<CppsshSession> _session;
     bool wait(bool isWrite);
     SOCKET _sock;
@@ -58,18 +64,13 @@ class CppsshTransport : public CppsshBaseTransport
 public:
     CppsshTransport(const std::shared_ptr<CppsshSession>& session);
     virtual ~CppsshTransport();
-    bool establish(const std::string& host, short port);
-    bool establishX11();
     bool start();
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
-    static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
 
 protected:
     bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
 
-    bool establishLocalX11(const std::string& display);
-    bool setNonBlocking(bool on);
     virtual void rxThread();
     virtual void txThread();
 

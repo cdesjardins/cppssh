@@ -30,9 +30,12 @@ public:
     ~CppsshX11Channel();
     virtual void startChannel();
 protected:
-    void x11Thread();
+    void x11RxThread();
+    void x11TxThread();
+    std::shared_ptr<CppsshBaseTransport> _x11transport;
 
-    std::thread _x11Thread;
+    std::thread _x11RxThread;
+    std::thread _x11TxThread;
     volatile bool _running;
 private:
 };

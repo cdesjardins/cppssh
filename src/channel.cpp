@@ -115,7 +115,6 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
         sendAdjustWindow();
     }
     _incomingChannelData.enqueue(message);
-    std::cout << "len: " << packet.getPacketLength() << " cmd: " << (int)packet.getCommand() << " chan: " << rxChannel << std::endl;
 }
 
 void CppsshSubChannel::handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf)
@@ -210,14 +209,16 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
         uint32_t rxChannel;
         if (createNewSubChannel(channelName, windowSend, txChannel, maxPacket, &rxChannel) == true)
         {
-            if (_session->_transport->establishX11() == true)
+            //if (_session->_transport->establishX11() == true)
             {
                 sendOpenConfirmation(rxChannel);
             }
+            /*
             else
             {
                 sendOpenFailure(txChannel, SSH2_OPEN_CONNECT_FAILED);
             }
+            */
         }
         else
         {
@@ -451,7 +452,6 @@ bool CppsshChannel::getX11()
         x11packet.addString(_X11Method);
         x11packet.addString(_fakeX11Cookie);
         x11packet.addInt(screenNum);
-        std::cout << "x11-req" << std::endl;
         ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
     }
     return ret;

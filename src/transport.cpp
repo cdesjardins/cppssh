@@ -78,7 +78,7 @@ CppsshTransport::~CppsshTransport()
     }
 }
 
-bool CppsshTransport::establish(const std::string& host, short port)
+bool CppsshBaseTransport::establish(const std::string& host, short port)
 {
     bool ret = false;
     sockaddr_in remoteAddr;
@@ -116,7 +116,7 @@ bool CppsshTransport::establish(const std::string& host, short port)
     return ret;
 }
 
-bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
+bool CppsshBaseTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
 {
     bool ret = false;
     size_t start = display.find(':') + 1;
@@ -135,7 +135,7 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     return ret;
 }
 
-bool CppsshTransport::establishX11()
+bool CppsshBaseTransport::establishX11()
 {
     bool ret = false;
     std::string display(getenv("DISPLAY"));
@@ -151,7 +151,7 @@ bool CppsshTransport::establishX11()
     return ret;
 }
 
-bool CppsshTransport::establishLocalX11(const std::string& display)
+bool CppsshBaseTransport::establishLocalX11(const std::string& display)
 {
     bool ret = false;
     struct sockaddr_un addr;
@@ -195,7 +195,7 @@ bool CppsshTransport::start()
     return true;
 }
 
-bool CppsshTransport::setNonBlocking(bool on)
+bool CppsshBaseTransport::setNonBlocking(bool on)
 {
 #if !defined(WIN32) && !defined(__MINGW32__)
     int options;
@@ -287,15 +287,6 @@ bool CppsshBaseTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buff
     }
     buffer->resize(bufferLen);
 
-    {
-        if (len > 0)
-        {
-            //CppsshConstPacket dbg(buffer);
-            //std::cout << "rx sock: " << _sock << " " << dbg.getCryptoLength() << std::endl;
-            //dbg.dumpPacket("rx");
-        }
-    }
-
     if ((_running == true) && (len < 0))
     {
         _session->_logger->pushMessage("Connection dropped.");
@@ -346,14 +337,7 @@ bool CppsshBaseTransport::sendMessage(const Botan::secure_vector<Botan::byte>& b
 {
     int len;
     size_t sent = 0;
-    {
-        if (buffer.size() > 0)
-        {
-            CppsshConstPacket dbg(&buffer);
-            std::cout << "tx sock: " << _sock << std::endl;
-            dbg.dumpPacket("tx");
-        }
-    }
+    
     while ((sent < buffer.size()) && (_running == true))
     {
         if (wait(true) == true)
@@ -412,7 +396,6 @@ void CppsshTransport::rxThread()
                     incoming.erase(incoming.begin(), incoming.begin() + size);
                     CppsshPacket packet(&incoming);
                     size = packet.getCryptoLength();
-                    std::cout << "ERASE" << std::endl;
                 }
             }
         }
@@ -421,7 +404,6 @@ void CppsshTransport::rxThread()
     {
         _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
     }
-    std::cout << "DONE" << std::endl;
 }
 
 void CppsshTransport::txThread()

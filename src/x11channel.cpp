@@ -28,17 +28,22 @@ CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session
 CppsshX11Channel::~CppsshX11Channel()
 {
     _running = false;
-    _x11Thread.join();
+    _x11RxThread.join();
+    _x11TxThread.join();
 }
 
 void CppsshX11Channel::startChannel()
 {
-    std::cout << "start x11" << std::endl;
     _running = true;
-    _x11Thread = std::thread(&CppsshX11Channel::x11Thread, this);
+    _x11transport.reset(new CppsshBaseTransport(_session));
+    if (_x11transport->establishX11() == true)
+    {
+        _x11RxThread = std::thread(&CppsshX11Channel::x11RxThread, this);
+        _x11TxThread = std::thread(&CppsshX11Channel::x11TxThread, this);
+    }
 }
 
-void CppsshX11Channel::x11Thread()
+void CppsshX11Channel::x11RxThread()
 {
     bool first = true;
     while (_running == true)
@@ -53,14 +58,19 @@ void CppsshX11Channel::x11Thread()
                 magicPacket.replace(message.length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
                 first = false;
             }
-            
-            //_session->_channel->writeMainChannel(message.message(), message.length());
-            //writeChannel(message.message(), message.length());
-            {
-                CppsshPacket p(&buf);
-                p.dumpPacket("x11 stuff");
-            }
-            _session->_transport->CppsshBaseTransport::sendMessage(buf);
+            _x11transport->sendMessage(buf);
+        }
+    }
+}
+
+void CppsshX11Channel::x11TxThread()
+{
+    while (_running == true)
+    {
+        Botan::secure_vector<Botan::byte> x11buf;
+        if (_x11transport->receiveMessage(&x11buf) == true)
+        {
+            writeChannel(x11buf.data(), x11buf.size());
         }
     }
 }
