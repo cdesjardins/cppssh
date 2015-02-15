@@ -51,7 +51,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
 
                 if ((sentGvim == false) && (txCount > 5))
                 {
-                    Cppssh::writeString(channel, "ls -la /;exit;ls -la /\n");
+                    Cppssh::writeString(channel, "gvim;ls -la /;exit;ls -la /\n");
                     sentGvim = true;
                 }
 
