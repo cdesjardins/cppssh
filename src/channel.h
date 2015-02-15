@@ -81,8 +81,9 @@ public:
     {
     }
 
-    virtual void startChannel()
+    virtual bool startChannel()
     {
+        return true;
     }
 
     void reduceWindowRecv(uint32_t bytes)

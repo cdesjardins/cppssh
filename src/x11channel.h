@@ -28,7 +28,7 @@ public:
     CppsshX11Channel() = delete;
     CppsshX11Channel(const CppsshX11Channel&) = delete;
     ~CppsshX11Channel();
-    virtual void startChannel();
+    virtual bool startChannel();
 protected:
     void x11RxThread();
     void x11TxThread();

@@ -32,15 +32,16 @@ CppsshX11Channel::~CppsshX11Channel()
     _x11TxThread.join();
 }
 
-void CppsshX11Channel::startChannel()
+bool CppsshX11Channel::startChannel()
 {
-    _running = true;
     _x11transport.reset(new CppsshBaseTransport(_session));
     if (_x11transport->establishX11() == true)
     {
+        _running = true;
         _x11RxThread = std::thread(&CppsshX11Channel::x11RxThread, this);
         _x11TxThread = std::thread(&CppsshX11Channel::x11TxThread, this);
     }
+    return _running;
 }
 
 void CppsshX11Channel::x11RxThread()
