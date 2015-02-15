@@ -52,27 +52,49 @@ bool CppsshChannel::openChannel()
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_OPEN);
-    packet.addString(_channels.at(_mainChannel)->getChannelName());
-    packet.addInt(_mainChannel);
-
-    packet.addInt(CPPSSH_RX_WINDOW_SIZE);
-    packet.addInt(CPPSSH_MAX_PACKET_LEN);
-
-    if (_session->_transport->sendMessage(buf) == true)
+    try
     {
-        ret = _channels.at(_mainChannel)->handleChannelConfirm();
+        packet.addString(_channels.at(_mainChannel)->getChannelName());
+        packet.addInt(_mainChannel);
+
+        packet.addInt(CPPSSH_RX_WINDOW_SIZE);
+        packet.addInt(CPPSSH_MAX_PACKET_LEN);
+
+        if (_session->_transport->sendMessage(buf) == true)
+        {
+            ret = _channels.at(_mainChannel)->handleChannelConfirm();
+        }
+    }
+    catch (const std::out_of_range& ex)
+    {
     }
     return ret;
 }
 
 bool CppsshChannel::readMainChannel(CppsshMessage* data)
 {
-    return _channels.at(_mainChannel)->readChannel(data);
+    bool ret = false;
+    try
+    {
+        ret = _channels.at(_mainChannel)->readChannel(data);
+    }
+    catch (const std::out_of_range& ex)
+    {
+    }
+    return ret;
 }
 
 bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
 {
-    return _channels.at(_mainChannel)->writeChannel(data, bytes);
+    bool ret = false;
+    try
+    {
+        ret = _channels.at(_mainChannel)->writeChannel(data, bytes);
+    }
+    catch (const std::out_of_range& ex)
+    {
+    }
+    return ret;
 }
 
 void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
@@ -218,7 +240,6 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
     if (channelName == "x11")
     {
         uint32_t rxChannel;
-        std::cout << "handleOpen " << channelName << std::endl;
         if (createNewSubChannel(channelName, windowSend, txChannel, maxPacket, &rxChannel) == true)
         {
             sendOpenConfirmation(rxChannel);
@@ -367,6 +388,8 @@ bool CppsshChannel::getShell()
     packet.addInt(0);
     packet.addString("");
 
+    try
+    {
     if (_channels.at(_mainChannel)->doChannelRequest("pty-req", buf) == true)
     {
         buf.clear();
@@ -374,6 +397,10 @@ bool CppsshChannel::getShell()
         {
             ret = true;
         }
+    }
+    }
+    catch (const std::out_of_range& ex)
+    {
     }
     return ret;
 }
@@ -455,7 +482,13 @@ bool CppsshChannel::getX11()
         x11packet.addString(_X11Method);
         x11packet.addString(_fakeX11Cookie);
         x11packet.addInt(screenNum);
-        ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
+        try
+        {
+            ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
+        }
+        catch (const std::out_of_range& ex)
+        {
+        }
     }
     return ret;
 }
@@ -516,6 +549,8 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 {
     const CppsshConstPacket packet(&buf);
     Botan::byte cmd = packet.getCommand();
+    try
+    {
     switch (cmd)
     {
         case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
@@ -579,6 +614,10 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         default:
             _session->_logger->pushMessage(std::stringstream() << "Unhandled command encountered: " << cmd);
             break;
+    }
+    }
+    catch (const std::out_of_range& ex)
+    {
     }
 }
 

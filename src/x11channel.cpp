@@ -20,44 +20,44 @@
 #include "x11channel.h"
 
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
-    : CppsshSubChannel(session, channelName),
-    _running(false)
+    : CppsshSubChannel(session, channelName)
 {
 }
 
 CppsshX11Channel::~CppsshX11Channel()
 {
+    disconnect();
 }
 
 void CppsshX11Channel::disconnect()
 {
-    _running = false;
-    _x11RxThread.join();
-    _x11TxThread.join();
     if (_x11transport != NULL)
     {
         _x11transport->disconnect();
-        _x11transport.reset();
     }
+    _x11RxThread.join();
+    _x11TxThread.join();
+    _x11transport.reset();
 }
 
 bool CppsshX11Channel::startChannel()
 {
+    bool ret = false;
     _x11transport.reset(new CppsshBaseTransport(_session));
     if (_x11transport->establishX11() == true)
     {
-        std::cout << "starting x11 threads" << std::endl;
-        _running = true;
+        ret = true;
         _x11RxThread = std::thread(&CppsshX11Channel::x11RxThread, this);
         _x11TxThread = std::thread(&CppsshX11Channel::x11TxThread, this);
     }
-    return _running;
+    return ret;
 }
 
 void CppsshX11Channel::x11RxThread()
 {
     bool first = true;
-    while (_running == true)
+    std::cout << "starting x11 rx thread" << std::endl;
+    while (_x11transport->isRunning() == true)
     {
         CppsshMessage message;
         if (readChannel(&message) == true)
@@ -72,28 +72,20 @@ void CppsshX11Channel::x11RxThread()
             _x11transport->sendMessage(buf);
         }
     }
+    std::cout << "x11 rx thread done" << std::endl;
 }
 
 void CppsshX11Channel::x11TxThread()
 {
-    while (_running == true)
+    std::cout << "starting x11 tx thread" << std::endl;
+    while (_x11transport->isRunning() == true)
     {
-        Botan::secure_vector<Botan::byte> x11buf;
-        if (_x11transport->receiveMessage(&x11buf) == true)
+        Botan::secure_vector<Botan::byte> buf;
+        if (_x11transport->receiveMessage(&buf) == true)
         {
-            writeChannel(x11buf.data(), x11buf.size());
+            writeChannel(buf.data(), buf.size());
         }
     }
-}
-
-void CppsshX11Channel::handleEof()
-{
-    CppsshSubChannel::handleEof();
-    disconnect();
-}
-
-void CppsshX11Channel::handleClose()
-{
-    CppsshSubChannel::handleClose();
+    std::cout << "x11 tx thread done" << std::endl;
 }
 

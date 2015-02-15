@@ -50,6 +50,10 @@ public:
     }
 
     static bool parseDisplay(const std::string& display, int* displayNum, int* screenNum);
+    bool isRunning() const
+    {
+        return _running;
+    }
 protected:
     bool establishLocalX11(const std::string& display);
     bool setNonBlocking(bool on);

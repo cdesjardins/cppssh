@@ -54,6 +54,7 @@ bool CppsshCryptoTransport::sendMessage(const Botan::secure_vector<Botan::byte>&
 
 void CppsshCryptoTransport::rxThread()
 {
+    std::cout << "starting crypto rx thread" << std::endl;
     try
     {
         Botan::secure_vector<Botan::byte> decrypted;
@@ -127,5 +128,6 @@ void CppsshCryptoTransport::rxThread()
     {
         _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
     }
+    std::cout << "crypto rx thread done" << std::endl;
 }
 

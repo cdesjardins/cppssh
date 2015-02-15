@@ -67,6 +67,7 @@ CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
 
 CppsshTransport::~CppsshTransport()
 {
+    std::cout << "~CppsshTransport" << std::endl;
     _running = false;
     if (_rxThread.joinable() == true)
     {
@@ -190,6 +191,7 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
 
 void CppsshBaseTransport::disconnect()
 {
+    _running = false;
     close(_sock);
 }
 
@@ -367,11 +369,11 @@ bool CppsshBaseTransport::sendMessage(const Botan::secure_vector<Botan::byte>& b
 
 void CppsshTransport::rxThread()
 {
+    std::cout << "starting rx thread" << std::endl;
     try
     {
         Botan::secure_vector<Botan::byte> incoming;
         size_t size = 0;
-
         while (_running == true)
         {
             if (incoming.size() < sizeof(uint32_t))
@@ -410,10 +412,12 @@ void CppsshTransport::rxThread()
     {
         _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
     }
+    std::cout << "rx thread done" << std::endl;
 }
 
 void CppsshTransport::txThread()
 {
+    std::cout << "starting tx thread" << std::endl;
     try
     {
         while (_running == true)
@@ -429,6 +433,7 @@ void CppsshTransport::txThread()
     {
         _session->_logger->pushMessage(std::stringstream() << "txThread exception: " << ex.what());
     }
+    std::cout << "tx thread done" << std::endl;
 }
 
 CppsshBaseTransport::CppsshBaseTransport(const std::shared_ptr<CppsshSession>& session)
