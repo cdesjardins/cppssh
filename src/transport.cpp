@@ -244,7 +244,7 @@ bool CppsshBaseTransport::wait(bool isWrite)
     int status = 0;
     struct timeval waitTime;
     waitTime.tv_sec = 0;
-    waitTime.tv_usec = 1000;
+    waitTime.tv_usec = 0;
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     while ((_running == true) && (ret == false) && (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
     {
@@ -264,6 +264,7 @@ bool CppsshBaseTransport::wait(bool isWrite)
             ret = true;
             break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     return ret;

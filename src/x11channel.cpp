@@ -37,6 +37,7 @@ bool CppsshX11Channel::startChannel()
     _x11transport.reset(new CppsshBaseTransport(_session));
     if (_x11transport->establishX11() == true)
     {
+        std::cout << "starting x11 threads" << std::endl;
         _running = true;
         _x11RxThread = std::thread(&CppsshX11Channel::x11RxThread, this);
         _x11TxThread = std::thread(&CppsshX11Channel::x11TxThread, this);
