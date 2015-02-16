@@ -18,6 +18,7 @@
 */
 
 #include "x11channel.h"
+#include <iterator>
 
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
     : CppsshSubChannel(session, channelName)
@@ -119,8 +120,8 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
             std::istringstream iss(magic);
             std::vector<std::string> cookies;
             std::copy(std::istream_iterator<std::string>(iss),
-                std::istream_iterator<std::string>(),
-                std::back_inserter(cookies));
+                      std::istream_iterator<std::string>(),
+                      std::back_inserter(cookies));
             if (cookies.size() == 3)
             {
                 *method = cookies[1];
@@ -139,3 +140,4 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
     remove(tmpname);
     return ret;
 }
+

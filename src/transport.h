@@ -54,6 +54,7 @@ public:
     {
         return _running;
     }
+
 protected:
     bool establishLocalX11(const std::string& display);
     bool setNonBlocking(bool on);

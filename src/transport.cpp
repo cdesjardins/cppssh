@@ -153,6 +153,7 @@ bool CppsshBaseTransport::establishX11()
     }
     return ret;
 }
+
 #ifdef WIN32
 bool CppsshBaseTransport::establishLocalX11(const std::string& display)
 {
@@ -172,7 +173,7 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
         addr.sin_port = htons((short)0);
 
-        int bindRet = bind(_sock, (struct sockaddr *) &addr, sizeof(addr));
+        int bindRet = bind(_sock, (struct sockaddr*) &addr, sizeof(addr));
         if (bindRet == 0)
         {
             memset(&addr, 0, sizeof(addr));
@@ -200,6 +201,7 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
     }
     return ret;
 }
+
 #else
 bool CppsshBaseTransport::establishLocalX11(const std::string& display)
 {
@@ -237,6 +239,7 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
     }
     return ret;
 }
+
 #endif
 void CppsshBaseTransport::disconnect()
 {
