@@ -29,6 +29,9 @@ public:
     CppsshX11Channel(const CppsshX11Channel&) = delete;
     ~CppsshX11Channel();
     virtual bool startChannel();
+    static void getDisplay(std::string* display);
+    static bool runXauth(const std::string& display, std::string* method, Botan::secure_vector<Botan::byte>* cookie);
+
 protected:
     void disconnect();
     void x11RxThread();

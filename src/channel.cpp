@@ -405,44 +405,6 @@ bool CppsshChannel::getShell()
     return ret;
 }
 
-bool CppsshChannel::runXauth(const char* display, std::string* method, Botan::secure_vector<Botan::byte>* cookie) const
-{
-    bool ret = false;
-    std::stringstream xauth;
-    char tmpname[L_tmpnam];
-    std::tmpnam(tmpname);
-    xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
-    if (system(xauth.str().c_str()) == 0)
-    {
-        Botan::secure_vector<Botan::byte> buf;
-        CppsshPacket packet(&buf);
-        if (packet.addFile(tmpname) == true)
-        {
-            std::string magic(buf.begin(), buf.end());
-            std::istringstream iss(magic);
-            std::vector<std::string> cookies;
-            std::copy(std::istream_iterator<std::string>(iss),
-                      std::istream_iterator<std::string>(),
-                      std::back_inserter(cookies));
-            if (cookies.size() == 3)
-            {
-                *method = cookies[1];
-                std::string c(cookies[2]);
-                for (size_t i = 0; i < c.length(); i += 2)
-                {
-                    int x;
-                    std::istringstream css(c.substr(i, 2));
-                    css >> std::hex >> x;
-                    cookie->push_back((Botan::byte)x);
-                }
-                ret = true;
-            }
-        }
-    }
-    remove(tmpname);
-    return ret;
-}
-
 bool CppsshChannel::getFakeX11Cookie(const int size, std::string* fakeX11Cookie) const
 {
     std::vector<Botan::byte> random;
@@ -460,10 +422,11 @@ bool CppsshChannel::getFakeX11Cookie(const int size, std::string* fakeX11Cookie)
 bool CppsshChannel::getX11()
 {
     bool ret = false;
-    char* display = getenv("DISPLAY");
-    if (display != NULL)
+    std::string display;
+    CppsshX11Channel::getDisplay(&display);
+    if (display.length() > 0)
     {
-        if (runXauth(display, &_X11Method, &_realX11Cookie) == false)
+        if (CppsshX11Channel::runXauth(display, &_X11Method, &_realX11Cookie) == false)
         {
             getFakeX11Cookie(16, &_fakeX11Cookie);
             _X11Method = "MIT-MAGIC-COOKIE-1";

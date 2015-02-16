@@ -22,6 +22,7 @@
 #include "channel.h"
 #include "packet.h"
 #include "messages.h"
+#include "x11channel.h"
 
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
@@ -139,9 +140,10 @@ bool CppsshBaseTransport::parseDisplay(const std::string& display, int* displayN
 bool CppsshBaseTransport::establishX11()
 {
     bool ret = false;
-    std::string display(getenv("DISPLAY"));
+    std::string display;
+    CppsshX11Channel::getDisplay(&display);
 
-    if ((display.find("unix:") == 0) || (display.find(":") == 0))
+    if ((display.find("unix:") == 0) || (display.find(":") == 0) || (display.find("localhost:") == 0))
     {
         ret = establishLocalX11(display);
     }
@@ -151,7 +153,54 @@ bool CppsshBaseTransport::establishX11()
     }
     return ret;
 }
+#ifdef WIN32
+bool CppsshBaseTransport::establishLocalX11(const std::string& display)
+{
+    bool ret = false;
 
+    _sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (_sock < 0)
+    {
+        _session->_logger->pushMessage(std::stringstream() << "Unable to open to X11 socket");
+    }
+    else
+    {
+        SOCKADDR_IN addr;
+        memset(&addr, 0, sizeof(addr));
+
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        addr.sin_port = htons((short)0);
+
+        int bindRet = bind(_sock, (struct sockaddr *) &addr, sizeof(addr));
+        if (bindRet == 0)
+        {
+            memset(&addr, 0, sizeof(addr));
+            addr.sin_family = AF_INET;
+            addr.sin_addr.s_addr = htonl(0x7f000001);
+            addr.sin_port = htons((short)6000);
+            int connectRet = connect(_sock, (struct sockaddr*)&addr, sizeof(addr));
+            if (connectRet == 0)
+            {
+                // success
+                ret = true;
+                setNonBlocking(true);
+            }
+            else
+            {
+                _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << WSAGetLastError());
+                disconnect();
+            }
+        }
+        else
+        {
+            _session->_logger->pushMessage(std::stringstream() << "Unable to bind to X11 socket " << strerror(errno));
+            disconnect();
+        }
+    }
+    return ret;
+}
+#else
 bool CppsshBaseTransport::establishLocalX11(const std::string& display)
 {
     bool ret = false;
@@ -188,7 +237,7 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
     }
     return ret;
 }
-
+#endif
 void CppsshBaseTransport::disconnect()
 {
     _running = false;

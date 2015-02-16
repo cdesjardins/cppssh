@@ -89,3 +89,53 @@ void CppsshX11Channel::x11TxThread()
     std::cout << "x11 tx thread done" << std::endl;
 }
 
+void CppsshX11Channel::getDisplay(std::string* display)
+{
+    char* d = getenv("DISPLAY");
+    if (d != NULL)
+    {
+        *display = d;
+    }
+    if (display->length() == 0)
+    {
+        *display = ":0";
+    }
+}
+
+bool CppsshX11Channel::runXauth(const std::string& display, std::string* method, Botan::secure_vector<Botan::byte>* cookie)
+{
+    bool ret = false;
+    std::stringstream xauth;
+    char tmpname[L_tmpnam];
+    std::tmpnam(tmpname);
+    xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
+    if (system(xauth.str().c_str()) == 0)
+    {
+        Botan::secure_vector<Botan::byte> buf;
+        CppsshPacket packet(&buf);
+        if (packet.addFile(tmpname) == true)
+        {
+            std::string magic(buf.begin(), buf.end());
+            std::istringstream iss(magic);
+            std::vector<std::string> cookies;
+            std::copy(std::istream_iterator<std::string>(iss),
+                std::istream_iterator<std::string>(),
+                std::back_inserter(cookies));
+            if (cookies.size() == 3)
+            {
+                *method = cookies[1];
+                std::string c(cookies[2]);
+                for (size_t i = 0; i < c.length(); i += 2)
+                {
+                    int x;
+                    std::istringstream css(c.substr(i, 2));
+                    css >> std::hex >> x;
+                    cookie->push_back((Botan::byte)x);
+                }
+                ret = true;
+            }
+        }
+    }
+    remove(tmpname);
+    return ret;
+}
