@@ -145,6 +145,7 @@ public:
         std::unique_lock<std::mutex> lock(_mapMutex);
         _map.clear();
     }
+
 private:
     mutable std::mutex _mapMutex;
     std::map<keyType, valType> _map;

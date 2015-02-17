@@ -54,6 +54,7 @@ public:
     {
         return _running;
     }
+
     virtual bool start()
     {
         return false;
