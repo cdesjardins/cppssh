@@ -33,11 +33,11 @@
 
 #define CPPSSH_MAX_PACKET_LEN 0x4000
 
-class CppsshBaseTransport
+class CppsshTransport
 {
 public:
-    CppsshBaseTransport(const std::shared_ptr<CppsshSession>& session);
-    virtual ~CppsshBaseTransport();
+    CppsshTransport(const std::shared_ptr<CppsshSession>& session);
+    virtual ~CppsshTransport();
     virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
@@ -54,6 +54,11 @@ public:
     {
         return _running;
     }
+    virtual bool start()
+    {
+        return false;
+    }
+
 protected:
     bool establishLocalX11(const std::string& display);
     bool setNonBlocking(bool on);
@@ -63,24 +68,6 @@ protected:
     bool wait(bool isWrite);
     SOCKET _sock;
     volatile bool _running;
-};
-
-class CppsshTransport : public CppsshBaseTransport
-{
-public:
-    CppsshTransport(const std::shared_ptr<CppsshSession>& session);
-    virtual ~CppsshTransport();
-    bool start();
-    virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
-
-protected:
-    bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
-
-    virtual void rxThread();
-    virtual void txThread();
-
-    std::thread _rxThread;
-    std::thread _txThread;
 };
 
 #endif

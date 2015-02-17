@@ -43,7 +43,7 @@ void CppsshX11Channel::disconnect()
 bool CppsshX11Channel::startChannel()
 {
     bool ret = false;
-    _x11transport.reset(new CppsshBaseTransport(_session));
+    _x11transport.reset(new CppsshTransport(_session));
     if (_x11transport->establishX11() == true)
     {
         ret = true;

@@ -61,26 +61,7 @@ WSockInitializer _wsock32_;
 #   include <sys/un.h>
 #endif
 
-CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
-    : CppsshBaseTransport(session)
-{
-}
-
-CppsshTransport::~CppsshTransport()
-{
-    std::cout << "~CppsshTransport" << std::endl;
-    _running = false;
-    if (_rxThread.joinable() == true)
-    {
-        _rxThread.join();
-    }
-    if (_txThread.joinable() == true)
-    {
-        _txThread.join();
-    }
-}
-
-bool CppsshBaseTransport::establish(const std::string& host, short port)
+bool CppsshTransport::establish(const std::string& host, short port)
 {
     bool ret = false;
     sockaddr_in remoteAddr;
@@ -118,7 +99,7 @@ bool CppsshBaseTransport::establish(const std::string& host, short port)
     return ret;
 }
 
-bool CppsshBaseTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
+bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
 {
     bool ret = false;
     size_t start = display.find(':') + 1;
@@ -137,7 +118,7 @@ bool CppsshBaseTransport::parseDisplay(const std::string& display, int* displayN
     return ret;
 }
 
-bool CppsshBaseTransport::establishX11()
+bool CppsshTransport::establishX11()
 {
     bool ret = false;
     std::string display;
@@ -154,7 +135,7 @@ bool CppsshBaseTransport::establishX11()
     return ret;
 }
 #ifdef WIN32
-bool CppsshBaseTransport::establishLocalX11(const std::string& display)
+bool CppsshTransport::establishLocalX11(const std::string& display)
 {
     bool ret = false;
 
@@ -201,7 +182,7 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
     return ret;
 }
 #else
-bool CppsshBaseTransport::establishLocalX11(const std::string& display)
+bool CppsshTransport::establishLocalX11(const std::string& display)
 {
     bool ret = false;
     struct sockaddr_un addr;
@@ -238,20 +219,13 @@ bool CppsshBaseTransport::establishLocalX11(const std::string& display)
     return ret;
 }
 #endif
-void CppsshBaseTransport::disconnect()
+void CppsshTransport::disconnect()
 {
     _running = false;
     close(_sock);
 }
 
-bool CppsshTransport::start()
-{
-    _rxThread = std::thread(&CppsshTransport::rxThread, this);
-    _txThread = std::thread(&CppsshTransport::txThread, this);
-    return true;
-}
-
-bool CppsshBaseTransport::setNonBlocking(bool on)
+bool CppsshTransport::setNonBlocking(bool on)
 {
 #if !defined(WIN32) && !defined(__MINGW32__)
     int options;
@@ -281,7 +255,7 @@ bool CppsshBaseTransport::setNonBlocking(bool on)
     return true;
 }
 
-void CppsshBaseTransport::setupFd(fd_set* fd)
+void CppsshTransport::setupFd(fd_set* fd)
 {
 #if defined(WIN32)
 #pragma warning(push)
@@ -294,7 +268,7 @@ void CppsshBaseTransport::setupFd(fd_set* fd)
 #endif
 }
 
-bool CppsshBaseTransport::wait(bool isWrite)
+bool CppsshTransport::wait(bool isWrite)
 {
     bool ret = false;
     int status = 0;
@@ -327,7 +301,7 @@ bool CppsshBaseTransport::wait(bool isWrite)
 }
 
 // Append new receive data to the end of the buffer
-bool CppsshBaseTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
+bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
 {
     bool ret = true;
     int len = 0;
@@ -354,43 +328,8 @@ bool CppsshBaseTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buff
     return ret;
 }
 
-bool CppsshTransport::setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf)
-{
-    bool ret = true;
-    size_t length = buffer.size();
-    CppsshPacket out(outBuf);
-    Botan::byte padLen;
-    uint32_t packetLen;
-
-    uint32_t cryptBlock = _session->_crypto->getEncryptBlock();
-    if (cryptBlock == 0)
-    {
-        cryptBlock = 8;
-    }
-
-    padLen = (Botan::byte)(3 + cryptBlock - ((length + 8) % cryptBlock));
-    packetLen = 1 + length + padLen;
-
-    out.addInt(packetLen);
-    out.addByte(padLen);
-    out.addVector(buffer);
-
-    Botan::secure_vector<Botan::byte> padBytes;
-    padBytes.resize(padLen, 0);
-    out.addVector(padBytes);
-    return ret;
-}
 
 bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
-{
-    bool ret;
-    Botan::secure_vector<Botan::byte> buf;
-    setupMessage(buffer, &buf);
-    ret = CppsshBaseTransport::sendMessage(buf);
-    return ret;
-}
-
-bool CppsshBaseTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     int len;
     size_t sent = 0;
@@ -416,83 +355,16 @@ bool CppsshBaseTransport::sendMessage(const Botan::secure_vector<Botan::byte>& b
     return sent == buffer.size();
 }
 
-void CppsshTransport::rxThread()
-{
-    std::cout << "starting rx thread" << std::endl;
-    try
-    {
-        Botan::secure_vector<Botan::byte> incoming;
-        size_t size = 0;
-        while (_running == true)
-        {
-            if (incoming.size() < sizeof(uint32_t))
-            {
-                size = sizeof(uint32_t);
-            }
-            while ((incoming.size() < size) && (_running == true))
-            {
-                if (receiveMessage(&incoming) == false)
-                {
-                    return;
-                }
-                if (incoming.size() >= size)
-                {
-                    CppsshPacket packet(&incoming);
-                    size = packet.getCryptoLength();
-                }
-            }
-            if (incoming.empty() == false)
-            {
-                _session->_channel->handleReceived(incoming);
-                if (incoming.size() == size)
-                {
-                    incoming.clear();
-                }
-                else
-                {
-                    incoming.erase(incoming.begin(), incoming.begin() + size);
-                    CppsshPacket packet(&incoming);
-                    size = packet.getCryptoLength();
-                }
-            }
-        }
-    }
-    catch (const std::exception& ex)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
-    }
-    std::cout << "rx thread done" << std::endl;
-}
 
-void CppsshTransport::txThread()
-{
-    std::cout << "starting tx thread" << std::endl;
-    try
-    {
-        while (_running == true)
-        {
-            if (_session->_channel->flushOutgoingChannelData() == false)
-            {
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    }
-    catch (const std::exception& ex)
-    {
-        _session->_logger->pushMessage(std::stringstream() << "txThread exception: " << ex.what());
-    }
-    std::cout << "tx thread done" << std::endl;
-}
 
-CppsshBaseTransport::CppsshBaseTransport(const std::shared_ptr<CppsshSession>& session)
+CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _sock((SOCKET)-1),
     _running(true)
 {
 }
 
-CppsshBaseTransport::~CppsshBaseTransport()
+CppsshTransport::~CppsshTransport()
 {
     _running = false;
 }

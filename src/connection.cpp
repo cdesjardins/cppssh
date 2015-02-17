@@ -23,7 +23,7 @@
 #include "cryptstr.h"
 #include "packet.h"
 #include "messages.h"
-#include "cryptotransport.h"
+#include "transportcrypto.h"
 #include "cppssh.h"
 
 CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
@@ -31,7 +31,7 @@ CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
     _session(new CppsshSession(timeout)),
     _connected(false)
 {
-    _session->_transport.reset(new CppsshTransport(_session));
+    _session->_transport.reset(new CppsshTransportThreaded(_session));
     _session->_crypto.reset(new CppsshCrypto(_session));
     _session->_channel.reset(new CppsshChannel(_session));
 }
@@ -83,7 +83,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
         return false;
     }
 
-    _session->_transport.reset(new CppsshCryptoTransport(_session, _session->_transport->getSocket()));
+    _session->_transport.reset(new CppsshTransportCrypto(_session, _session->_transport->getSocket()));
     if (_session->_transport->start() == false)
     {
         return false;
@@ -158,7 +158,7 @@ bool CppsshConnection::sendLocalVersion()
     lv.assign(localVer.begin(), localVer.end());
     lv.push_back('\r');
     lv.push_back('\n');
-    return _session->_transport->CppsshBaseTransport::sendMessage(lv);
+    return _session->_transport->CppsshTransport::sendMessage(lv);
 }
 
 bool CppsshConnection::requestService(const std::string& service)

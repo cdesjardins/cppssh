@@ -16,16 +16,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _CRYPTO_TRANSPORT_Hxx
-#define _CRYPTO_TRANSPORT_Hxx
+#ifndef _TRANSPORT_CRYPTO_Hxx
+#define _TRANSPORT_CRYPTO_Hxx
 
-#include "transport.h"
+#include "transportthreaded.h"
 
-class CppsshCryptoTransport : public CppsshTransport
+class CppsshTransportCrypto : public CppsshTransportThreaded
 {
 public:
-    CppsshCryptoTransport() = delete;
-    CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session, SOCKET sock);
+    CppsshTransportCrypto() = delete;
+    CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock);
 
 protected:
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);

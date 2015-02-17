@@ -16,32 +16,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _X11_CHANNEL_Hxx
-#define _X11_CHANNEL_Hxx
+#ifndef _TRANSPORT_THREADED_Hxx
+#define _TRANSPORT_THREADED_Hxx
 
-#include "channel.h"
-
-class CppsshX11Channel : public CppsshSubChannel
+#include "transport.h"
+class CppsshTransportThreaded : public CppsshTransport
 {
 public:
-    CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName);
-    CppsshX11Channel() = delete;
-    CppsshX11Channel(const CppsshX11Channel&) = delete;
-    ~CppsshX11Channel();
-    virtual bool startChannel();
-    static void getDisplay(std::string* display);
-    static bool runXauth(const std::string& display, std::string* method, Botan::secure_vector<Botan::byte>* cookie);
+    CppsshTransportThreaded(const std::shared_ptr<CppsshSession>& session);
+    virtual ~CppsshTransportThreaded();
+    bool start();
+    virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
 protected:
-    void disconnect();
-    void x11RxThread();
-    void x11TxThread();
-    std::unique_ptr<CppsshTransport> _x11transport;
+    bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
 
-    std::thread _x11RxThread;
-    std::thread _x11TxThread;
-private:
+    virtual void rxThread();
+    virtual void txThread();
+
+    std::thread _rxThread;
+    std::thread _txThread;
 };
 
 #endif
-

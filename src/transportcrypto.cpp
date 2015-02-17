@@ -16,19 +16,19 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "cryptotransport.h"
+#include "transportcrypto.h"
 #include "crypto.h"
 #include "channel.h"
 
-CppsshCryptoTransport::CppsshCryptoTransport(const std::shared_ptr<CppsshSession>& session, SOCKET sock)
-    : CppsshTransport(session),
+CppsshTransportCrypto::CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock)
+    : CppsshTransportThreaded(session),
     _txSeq(3),
     _rxSeq(3)
 {
     _sock = sock;
 }
 
-bool CppsshCryptoTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransportCrypto::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     bool ret = true;
     Botan::secure_vector<Botan::byte> crypted;
@@ -41,7 +41,7 @@ bool CppsshCryptoTransport::sendMessage(const Botan::secure_vector<Botan::byte>&
         return false;
     }
     crypted += hmac;
-    if (CppsshBaseTransport::sendMessage(crypted) == false)
+    if (CppsshTransport::sendMessage(crypted) == false)
     {
         ret = false;
     }
@@ -52,7 +52,7 @@ bool CppsshCryptoTransport::sendMessage(const Botan::secure_vector<Botan::byte>&
     return ret;
 }
 
-void CppsshCryptoTransport::rxThread()
+void CppsshTransportCrypto::rxThread()
 {
     std::cout << "starting crypto rx thread" << std::endl;
     try
@@ -68,7 +68,7 @@ void CppsshCryptoTransport::rxThread()
 
             while ((_in.size() < size) && (_running == true))
             {
-                if (CppsshTransport::receiveMessage(&_in) == false)
+                if (CppsshTransportThreaded::receiveMessage(&_in) == false)
                 {
                     return;
                 }
@@ -83,7 +83,7 @@ void CppsshCryptoTransport::rxThread()
                 {
                     while (((cryptoLen + macLen) > _in.size()) && (_running == true))
                     {
-                        if (CppsshTransport::receiveMessage(&_in) == false)
+                        if (CppsshTransportThreaded::receiveMessage(&_in) == false)
                         {
                             return;
                         }
