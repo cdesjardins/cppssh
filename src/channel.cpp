@@ -410,9 +410,9 @@ bool CppsshChannel::getFakeX11Cookie(const int size, std::string* fakeX11Cookie)
     random.resize(size / 2);
     CppsshImpl::RNG->randomize(random.data(), random.size());
     std::stringstream fake;
-    for (std::vector<Botan::byte>::const_iterator it = random.begin(); it != random.end(); it++)
+    for (Botan::byte it : random)
     {
-        fake << std::hex << std::setw(2) << std::setfill('0') << (int)*it;
+        fake << std::hex << std::setw(2) << std::setfill('0') << (int)it;
     }
     *fakeX11Cookie = fake.str();
     return true;

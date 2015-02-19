@@ -105,16 +105,14 @@ private:                                                                        
     {                                                                           \
         if (_itemMap.size() != max)                                             \
         {                                                                       \
-            std::vector<std::string>::iterator it;                              \
             E v = (E)0;                                                         \
             /* Build the itemList if it isn't already built */                  \
             itemName(v);                                                        \
             std::unique_lock<std::mutex> lock(_listMutex);                      \
             if (_itemMap.size() != max)                                         \
             {                                                                   \
-                for (it = _itemList.begin(); it != _itemList.end(); it++)       \
+                for (std::string& element : _itemList)                          \
                 {                                                               \
-                    std::string element = *it;                                  \
                     _itemMap[element] = v;                                      \
                     std::transform(element.begin(), element.end(),              \
                                    element.begin(), ::tolower);                 \

@@ -222,7 +222,6 @@ void CppsshPacket::copy(const Botan::secure_vector<Botan::byte>& src)
 
 void CppsshPacket::replace(size_t startingPos, const Botan::secure_vector<Botan::byte>& src)
 {
-    Botan::secure_vector<Botan::byte>::iterator it;
     if (startingPos < _data->size())
     {
         size_t len = std::min(_data->size() - startingPos, src.size());

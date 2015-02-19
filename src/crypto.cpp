@@ -120,16 +120,15 @@ void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Bot
 bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& local, const std::string& remote)
 {
     bool ret = false;
-    std::vector<std::string>::const_iterator it;
     std::vector<std::string>::const_iterator agreedAlgo;
     std::vector<std::string> remoteVec;
     std::string remoteStr((char*)remote.data(), 0, remote.size());
 
     CppsshCryptstr::split(remoteStr, ',', remoteVec);
 
-    for (it = local.begin(); it != local.end(); it++)
+    for (std::string it : local)
     {
-        agreedAlgo = std::find(remoteVec.begin(), remoteVec.end(), *it);
+        agreedAlgo = std::find(remoteVec.begin(), remoteVec.end(), it);
         if (agreedAlgo != remoteVec.end())
         {
             result->clear();
