@@ -21,7 +21,6 @@
 
 #include "session.h"
 #include "channel.h"
-#include "logger.h"
 #include "cppssh.h"
 #include <memory>
 

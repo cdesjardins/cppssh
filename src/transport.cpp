@@ -108,7 +108,7 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     size_t mid = display.find('.');
     std::string sn;
     std::string dn;
-    if (mid == -1)
+    if (mid == std::string::npos)
     {
         mid = display.length();
         sn = "0";
@@ -246,7 +246,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     int options;
     if ((options = fcntl(_sock, F_GETFL)) < 0)
     {
-        cdLog(LogLevel::Error)"Cannot read options of the socket.";
+        cdLog(LogLevel::Error) << "Cannot read options of the socket.";
         return false;
     }
 

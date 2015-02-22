@@ -405,7 +405,7 @@ bool CppsshChannel::getShell()
     return ret;
 }
 
-bool CppsshChannel::getFakeX11Cookie(const int size, std::string* fakeX11Cookie) const
+bool CppsshChannel::getRandomString(const int size, std::string* randomString)
 {
     std::vector<Botan::byte> random;
     random.resize(size / 2);
@@ -415,7 +415,7 @@ bool CppsshChannel::getFakeX11Cookie(const int size, std::string* fakeX11Cookie)
     {
         fake << std::hex << std::setw(2) << std::setfill('0') << (int)it;
     }
-    *fakeX11Cookie = fake.str();
+    *randomString = fake.str();
     return true;
 }
 
@@ -428,12 +428,12 @@ bool CppsshChannel::getX11()
     {
         if (CppsshX11Channel::runXauth(display, &_X11Method, &_realX11Cookie) == false)
         {
-            getFakeX11Cookie(16, &_fakeX11Cookie);
+            getRandomString(16, &_fakeX11Cookie);
             _X11Method = "MIT-MAGIC-COOKIE-1";
         }
         else
         {
-            getFakeX11Cookie(_realX11Cookie.size(), &_fakeX11Cookie);
+            getRandomString(_realX11Cookie.size(), &_fakeX11Cookie);
         }
         int displayNum;
         int screenNum;

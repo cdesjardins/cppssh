@@ -42,6 +42,7 @@ public:
     bool flushOutgoingChannelData();
     void disconnect();
     bool waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf);
+    static bool getRandomString(const int size, std::string* randomString);
 private:
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
@@ -55,7 +56,6 @@ private:
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
     bool runXauth(const char* display, std::string* method, Botan::secure_vector<Botan::byte>* cookie) const;
-    bool getFakeX11Cookie(const int size, std::string* fakeX11Cookie) const;
     bool createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket, uint32_t* rxChannel);
     bool createNewSubChannel(const std::string& channelName, uint32_t* rxChannel);
     void sendOpenFailure(uint32_t txChannel, CppsshOpenFailureReason reason);

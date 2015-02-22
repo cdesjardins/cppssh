@@ -67,7 +67,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
 
     if ((privKeyStatus.st_mode & (S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != 0)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Private key file permissions are read/write by others: " << privKeyFileName);
+        cdLog(LogLevel::Error) << "Private key file permissions are read/write by others: " << privKeyFileName;
         return false;
     }
 #endif

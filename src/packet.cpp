@@ -19,7 +19,7 @@
 
 #include "packet.h"
 #include "cppssh.h"
-#include "logger.h"
+#include "Logger.h"
 #include <fstream>
 #include <iterator>
 #include <iomanip>
