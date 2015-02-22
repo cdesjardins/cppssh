@@ -104,8 +104,18 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     bool ret = false;
     size_t start = display.find(':') + 1;
     size_t mid = display.find('.');
-    std::string dn(display.substr(start, mid - start));
-    std::string sn(display.substr(mid + 1));
+    std::string sn;
+    std::string dn;
+    if (mid == -1)
+    {
+        mid = display.length();
+        sn = "0";
+    }
+    else
+    {
+        display.substr(mid + 1);
+    }
+    dn = display.substr(start, mid - start);
     if ((dn.length() > 0) && (sn.length() > 0))
     {
         std::istringstream dss(dn);
