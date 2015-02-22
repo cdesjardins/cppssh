@@ -343,7 +343,6 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
     return ret;
 }
 
-
 bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     int len;
@@ -369,8 +368,6 @@ bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffe
     }
     return sent == buffer.size();
 }
-
-
 
 CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
     : _session(session),

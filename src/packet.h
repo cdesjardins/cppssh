@@ -57,7 +57,7 @@ public:
     void dumpPacket(const std::string& tag) const;
 
 private:
-    void dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream *ss) const;
+    void dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream* ss) const;
 
     const Botan::secure_vector<Botan::byte>* const _cdata;
     mutable int _index;

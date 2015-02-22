@@ -316,11 +316,11 @@ bool CppsshPacket::addFile(const std::string& fileName)
     return ret;
 }
 
-void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream *ss) const
+void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream* ss) const
 {
 #ifndef NDEBUG
     size_t i;
-    
+
     if (len > 0)
     {
         for (i = 0; i < 16 - len; i++)
