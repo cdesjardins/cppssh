@@ -29,7 +29,7 @@
 #else
 #   include <Winsock2.h>
 #endif
-
+#define LOG_TAG "packet"
 #define CPPSSH_PACKET_LENGTH_OFFS   0
 #define CPPSSH_PACKET_LENGTH_SIZE   4
 
@@ -316,21 +316,22 @@ bool CppsshPacket::addFile(const std::string& fileName)
     return ret;
 }
 
-void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len) const
+void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream *ss) const
 {
 #ifndef NDEBUG
     size_t i;
+    
     if (len > 0)
     {
         for (i = 0; i < 16 - len; i++)
         {
-            std::cout << "   ";
+            *ss << "   ";
         }
         for (i = 0; ((i < len) && (it != _cdata->end())); i++)
         {
-            std::cout << (char)(isprint(it[i]) ? it[i] : '.');
+            *ss << (char)(isprint(it[i]) ? it[i] : '.');
         }
-        std::cout << std::endl;
+        *ss << std::endl;
     }
 #endif
 }
@@ -340,21 +341,23 @@ void CppsshConstPacket::dumpPacket(const std::string& tag) const
 #ifndef NDEBUG
     size_t cnt = 0;
     size_t offs = 0;
+    std::stringstream ss;
     Botan::secure_vector<Botan::byte>::const_iterator it;
     for (it = _cdata->begin() + _index; it != _cdata->end(); it++)
     {
         if ((cnt % 16) == 0)
         {
-            dumpAscii(it - cnt, cnt);
-            std::cout << tag << " " << std::hex << std::setw(6) << std::setfill('0') << offs << ": ";
+            dumpAscii(it - cnt, cnt, &ss);
+            ss << tag << " " << std::hex << std::setw(6) << std::setfill('0') << offs << ": ";
             cnt = 0;
         }
-        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)*it << std::dec << std::setw(0) << std::setfill(' ') << " ";
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)*it << std::dec << std::setw(0) << std::setfill(' ') << " ";
         cnt++;
         offs++;
     }
-    dumpAscii(it - cnt, cnt);
-    std::cout << std::endl;
+    dumpAscii(it - cnt, cnt, &ss);
+    ss << std::endl;
+    cdLog(LogLevel::Debug) << ss.str();
 #endif
 }
 

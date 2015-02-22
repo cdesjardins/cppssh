@@ -49,7 +49,6 @@ public:
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-    CPPSSH_EXPORT static bool getLogMessage(const int channelId, CppsshMessage* message);
 
 private:
     static std::shared_ptr<CppsshImpl> s_cppsshInst;

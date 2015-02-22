@@ -5,7 +5,7 @@ file(GLOB cppssh_LIB_SRCS
     "../include/*.h"
 )
 
-include_directories (${HAVE_BOTAN} ../include)
+include_directories (${HAVE_BOTAN} ../include ${CMAKE_CURRENT_SOURCE_DIR}/../../CDLogger/include)
 
 find_file(HAVE_GIT git)
 if (HAVE_GIT)
@@ -31,6 +31,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(cppssh rt)
 endif()
 
+target_link_libraries(cppssh CDLogger)
 
 set_property(TARGET cppssh PROPERTY CXX_STANDARD 11)
 install(TARGETS cppssh DESTINATION lib)

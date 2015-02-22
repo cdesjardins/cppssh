@@ -23,6 +23,8 @@
 #include "packet.h"
 #include "crypto.h"
 
+#define LOG_TAG "kex"
+
 CppsshKex::CppsshKex(const std::shared_ptr<CppsshSession>& session)
     : _session(session)
 {
@@ -86,7 +88,7 @@ bool CppsshKex::sendInit(Botan::secure_vector<Botan::byte>* buf)
         }
         else
         {
-            _session->_logger->pushMessage(std::stringstream() << "Timeout while waiting for key exchange init reply.");
+            cdLog(LogLevel::Error) << "Timeout while waiting for key exchange init reply.";
         }
     }
 
@@ -117,7 +119,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::KEX_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible key exchange algorithms.");
+        cdLog(LogLevel::Error) << "No compatible key exchange algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedKex(agreed) == false)
@@ -130,7 +132,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::HOSTKEY_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible Hostkey algorithms.");
+        cdLog(LogLevel::Error) << "No compatible Hostkey algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedHostkey(agreed) == false)
@@ -143,7 +145,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible cryptographic algorithms.");
+        cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedCryptoC2s(agreed) == false)
@@ -156,7 +158,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible cryptographic algorithms.");
+        cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedCryptoS2c(agreed) == false)
@@ -169,7 +171,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible HMAC algorithms.");
+        cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedMacC2s(agreed) == false)
@@ -182,7 +184,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible HMAC algorithms.");
+        cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedMacS2c(agreed) == false)
@@ -195,7 +197,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible compression algorithms.");
+        cdLog(LogLevel::Error) << "No compatible compression algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedCmprsC2s(agreed) == false)
@@ -208,7 +210,7 @@ bool CppsshKex::handleInit()
     }
     if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
-        _session->_logger->pushMessage("No compatible compression algorithms.");
+        cdLog(LogLevel::Error) << "No compatible compression algorithms.";
         return false;
     }
     if (_session->_crypto->negotiatedCmprsS2c(agreed) == false)
@@ -240,7 +242,7 @@ bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>* buf)
             }
             else
             {
-                _session->_logger->pushMessage("Timeout while waiting for key exchange DH reply.");
+                cdLog(LogLevel::Error) << "Timeout while waiting for key exchange DH reply.";
             }
         }
     }
@@ -336,7 +338,7 @@ bool CppsshKex::sendKexNewKeys()
         {
             if (_session->_crypto->makeNewKeys() == false)
             {
-                _session->_logger->pushMessage("Could not make keys.");
+                cdLog(LogLevel::Error) << "Could not make keys.";
             }
             else
             {
@@ -346,7 +348,7 @@ bool CppsshKex::sendKexNewKeys()
     }
     else
     {
-        _session->_logger->pushMessage("Timeout while waiting for key exchange newkeys reply.");
+        cdLog(LogLevel::Error) << "Timeout while waiting for key exchange newkeys reply.";
     }
 
     return ret;

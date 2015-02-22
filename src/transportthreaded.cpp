@@ -21,6 +21,8 @@
 #include "crypto.h"
 #include "channel.h"
 
+#define LOG_TAG "transportthreaded"
+
 CppsshTransportThreaded::CppsshTransportThreaded(const std::shared_ptr<CppsshSession>& session)
     : CppsshTransport(session)
 {
@@ -28,7 +30,7 @@ CppsshTransportThreaded::CppsshTransportThreaded(const std::shared_ptr<CppsshSes
 
 CppsshTransportThreaded::~CppsshTransportThreaded()
 {
-    std::cout << "~CppsshTransportThreaded" << std::endl;
+    cdLog(LogLevel::Debug) << "~CppsshTransportThreaded";
     _running = false;
     if (_rxThread.joinable() == true)
     {
@@ -85,7 +87,7 @@ bool CppsshTransportThreaded::sendMessage(const Botan::secure_vector<Botan::byte
 
 void CppsshTransportThreaded::rxThread()
 {
-    std::cout << "starting rx thread" << std::endl;
+    cdLog(LogLevel::Debug) << "starting rx thread";
     try
     {
         Botan::secure_vector<Botan::byte> incoming;
@@ -126,14 +128,14 @@ void CppsshTransportThreaded::rxThread()
     }
     catch (const std::exception& ex)
     {
-        _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
+        cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
     }
-    std::cout << "rx thread done" << std::endl;
+    cdLog(LogLevel::Debug) << "rx thread done";
 }
 
 void CppsshTransportThreaded::txThread()
 {
-    std::cout << "starting tx thread" << std::endl;
+    cdLog(LogLevel::Debug) << "starting tx thread";
     try
     {
         while (_running == true)
@@ -147,7 +149,7 @@ void CppsshTransportThreaded::txThread()
     }
     catch (const std::exception& ex)
     {
-        _session->_logger->pushMessage(std::stringstream() << "txThread exception: " << ex.what());
+        cdLog(LogLevel::Error) << "txThread exception: " << ex.what();
     }
-    std::cout << "tx thread done" << std::endl;
+    cdLog(LogLevel::Debug) << "tx thread done";
 }

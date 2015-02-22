@@ -32,6 +32,8 @@
 #include <sys/stat.h>
 #endif
 
+#define LOG_TAG "keys"
+
 const std::string CppsshKeys::HEADER_DSA = "-----BEGIN DSA PRIVATE KEY-----\n";
 const std::string CppsshKeys::FOOTER_DSA = "-----END DSA PRIVATE KEY-----\n";
 const std::string CppsshKeys::HEADER_RSA = "-----BEGIN RSA PRIVATE KEY-----\n";
@@ -101,13 +103,13 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
                 break;
 
             default:
-                CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Unrecognized private key file format.");
+                cdLog(LogLevel::Error) << "Unrecognized private key file format.";
                 break;
         }
     }
     catch (const std::exception& ex)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(ex.what());
+        cdLog(LogLevel::Error) << ex.what();
     }
 
     return ret;
@@ -173,7 +175,7 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 
         if (version != 0)
         {
-            CppsshImpl::GLOBAL_LOGGER->pushMessage("Encountered unknown RSA key version.");
+            cdLog(LogLevel::Error) << "Encountered unknown RSA key version.";
         }
         else
         {
@@ -188,7 +190,7 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 
             if (n.is_zero() || e.is_zero() || d.is_zero() || p.is_zero() || q.is_zero())
             {
-                CppsshImpl::GLOBAL_LOGGER->pushMessage("Could not decode the supplied RSA key.");
+                cdLog(LogLevel::Error) << "Could not decode the supplied RSA key.";
             }
             else
             {
@@ -204,7 +206,7 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     }
     catch (const Botan::BER_Decoding_Error& ex)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Error decoding private key: " << ex.what());
+        cdLog(LogLevel::Error) << "Error decoding private key: " << ex.what();
     }
     return ret;
 }
@@ -229,7 +231,7 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 
         if (version)
         {
-            CppsshImpl::GLOBAL_LOGGER->pushMessage("Encountered unknown DSA key version.");
+            cdLog(LogLevel::Error) << "Encountered unknown DSA key version.";
         }
         else
         {
@@ -244,7 +246,7 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 
             if (p.is_zero() || q.is_zero() || g.is_zero() || y.is_zero() || x.is_zero())
             {
-                CppsshImpl::GLOBAL_LOGGER->pushMessage("Could not decode the supplied DSA key.");
+                cdLog(LogLevel::Error) << "Could not decode the supplied DSA key.";
             }
             else
             {
@@ -264,7 +266,7 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     }
     catch (const Botan::BER_Decoding_Error& ex)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Error decoding private key: " << ex.what());
+        cdLog(LogLevel::Error) << "Error decoding private key: " << ex.what();
     }
     return ret;
 }
@@ -283,7 +285,7 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(const Bot
             break;
 
         default:
-            CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Invalid key type (RSA, or DSA required).");
+            cdLog(LogLevel::Error) << "Invalid key type (RSA, or DSA required).";
             break;
     }
 
@@ -301,7 +303,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
 
     if (_rsaPrivateKey == NULL)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage("Private RSA key not initialized.");
+        cdLog(LogLevel::Error) << "Private RSA key not initialized.";
     }
     else
     {
@@ -311,7 +313,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
         signedRaw = RSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
         if (signedRaw.size() == 0)
         {
-            CppsshImpl::GLOBAL_LOGGER->pushMessage("Failure while generating RSA signature.");
+            cdLog(LogLevel::Error) << "Failure while generating RSA signature.";
         }
         else
         {
@@ -334,7 +336,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
 
     if (_dsaPrivateKey == NULL)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage("Private DSA key not initialized.");
+        cdLog(LogLevel::Error) << "Private DSA key not initialized.";
     }
     else
     {
@@ -344,13 +346,13 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
         signedRaw = DSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
         if (signedRaw.size() == 0)
         {
-            CppsshImpl::GLOBAL_LOGGER->pushMessage("Failure to generate DSA signature.");
+            cdLog(LogLevel::Error) << "Failure to generate DSA signature.";
         }
         else
         {
             if (signedRaw.size() != 40)
             {
-                CppsshImpl::GLOBAL_LOGGER->pushMessage("DSS signature block <> 320 bits. Make sure you are using 1024 bit keys for authentication!");
+                cdLog(LogLevel::Error) << "DSS signature block <> 320 bits. Make sure you are using 1024 bit keys for authentication!";
             }
             else
             {
@@ -402,7 +404,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
 
     if (pubKeyFile.is_open() == false)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Cannot open file where public key is stored. Filename: " << pubKeyFileName);
+        cdLog(LogLevel::Error) << "Cannot open file where public key is stored. Filename: " << pubKeyFileName;
     }
     else
     {
@@ -417,7 +419,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
         }
         catch (const std::ofstream::failure&)
         {
-            CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "I/O error while writting to file: " << pubKeyFileName);
+            cdLog(LogLevel::Error) << "I/O error while writting to file: " << pubKeyFileName;
         }
         if (pubKeyFile.fail() == false)
         {
@@ -438,14 +440,14 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
             privKeyFile.open(privKeyFileName);
             if (privKeyFile.is_open() == false)
             {
-                CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Cannot open file where the private key is stored.Filename: " << privKeyFileName);
+                cdLog(LogLevel::Error) << "Cannot open file where the private key is stored.Filename: " << privKeyFileName;
             }
             else
             {
                 privKeyFile.write(privKeyEncoded.c_str(), privKeyEncoded.length());
                 if (privKeyFile.fail() == true)
                 {
-                    CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "IO error while writting to file: " << privKeyFileName);
+                    cdLog(LogLevel::Error) << "IO error while writting to file: " << privKeyFileName;
                 }
                 else
                 {
@@ -493,7 +495,7 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
 
     if (pubKeyFile.is_open() == false)
     {
-        CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Cannot open file where public key is stored. Filename: " << pubKeyFileName);
+        cdLog(LogLevel::Error) << "Cannot open file where public key is stored. Filename: " << pubKeyFileName;
     }
     else
     {
@@ -508,7 +510,7 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
         }
         catch (const std::ofstream::failure&)
         {
-            CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "I/O error while writting to file: " << pubKeyFileName);
+            cdLog(LogLevel::Error) << "I/O error while writting to file: " << pubKeyFileName;
         }
         if (pubKeyFile.fail() == false)
         {
@@ -526,14 +528,14 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
 
             if (privKeyFile.is_open() == false)
             {
-                CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "Cannot open file where private key is stored. Filename: " << privKeyFileName);
+                cdLog(LogLevel::Error) << "Cannot open file where private key is stored. Filename: " << privKeyFileName;
             }
             else
             {
                 privKeyFile.write(privKeyEncoded.c_str(), privKeyEncoded.length());
                 if (privKeyFile.fail() == true)
                 {
-                    CppsshImpl::GLOBAL_LOGGER->pushMessage(std::stringstream() << "I/O error while writting to file: " << privKeyFileName);
+                    cdLog(LogLevel::Error) << "I/O error while writting to file: " << privKeyFileName;
                 }
                 else
                 {

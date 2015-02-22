@@ -39,6 +39,6 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install")
 
 add_subdirectory (src)
 add_subdirectory (examples)
-
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../CDLogger/src ${CMAKE_CURRENT_BINARY_DIR}/CDLogger)
 ########### install files ###############
 

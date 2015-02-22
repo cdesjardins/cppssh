@@ -35,7 +35,6 @@ public:
     bool read(CppsshMessage* data);
     bool write(const uint8_t* data, uint32_t bytes);
     bool isConnected();
-    bool getLogMessage(CppsshMessage* message);
 private:
     bool checkRemoteVersion();
     bool sendLocalVersion();

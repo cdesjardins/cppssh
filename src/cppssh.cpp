@@ -81,11 +81,6 @@ bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, c
     return CppsshImpl::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
-bool Cppssh::getLogMessage(const int channelId, CppsshMessage* message)
-{
-    return s_cppsshInst->getLogMessage(channelId, message);
-}
-
 CppsshMessage::CppsshMessage()
     : _len(0)
 {

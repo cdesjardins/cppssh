@@ -32,6 +32,8 @@
 #include "botan/transform_filter.h"
 #include <string>
 
+#define LOG_TAG "crypto"
+
 SMART_ENUM_DEFINE(macMethods);
 SMART_ENUM_DEFINE(kexMethods);
 SMART_ENUM_DEFINE(hostkeyMethods);
@@ -151,7 +153,7 @@ bool CppsshCrypto::negotiatedKex(const std::string& kexAlgo)
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "KEX algorithm: '" << kexAlgo << "' not defined.");
+        cdLog(LogLevel::Error) << "KEX algorithm: '" << kexAlgo << "' not defined.";
     }
     return ret;
 }
@@ -166,7 +168,7 @@ bool CppsshCrypto::negotiatedMac(const std::string& macAlgo, macMethods* macMeth
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Mac algorithm: '" << macAlgo << "' not defined.");
+        cdLog(LogLevel::Error) << "Mac algorithm: '" << macAlgo << "' not defined.";
     }
     return ret;
 }
@@ -181,7 +183,7 @@ bool CppsshCrypto::negotiatedHostkey(const std::string& hostkeyAlgo)
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Host key algorithm: '" << hostkeyAlgo << "' not defined.");
+        cdLog(LogLevel::Error) << "Host key algorithm: '" << hostkeyAlgo << "' not defined.";
     }
     return ret;
 }
@@ -196,7 +198,7 @@ bool CppsshCrypto::negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* c
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Compression algorithm: '" << cmprsAlgo << "' not defined.");
+        cdLog(LogLevel::Error) << "Compression algorithm: '" << cmprsAlgo << "' not defined.";
     }
     return ret;
 }
@@ -211,7 +213,7 @@ bool CppsshCrypto::negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.");
+        cdLog(LogLevel::Error) << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.";
     }
     return ret;
 }
@@ -261,7 +263,7 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
             break;
 
         default:
-            _session->_logger->pushMessage(std::stringstream() << "Undefined DH Group: '" << _kexMethod << "'.");
+            cdLog(LogLevel::Error) << "Undefined DH Group: '" << _kexMethod << "'.";
             ret = false;
             break;
     }
@@ -335,18 +337,18 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
 
     if (_H.empty() == true)
     {
-        _session->_logger->pushMessage("H was not initialzed.");
+        cdLog(LogLevel::Error) << "H was not initialzed.";
         return false;
     }
 
     if (signaturePacket.getString(&sigType) == false)
     {
-        _session->_logger->pushMessage("Signature without type.");
+        cdLog(LogLevel::Error) << "Signature without type.";
         return false;
     }
     if (signaturePacket.getString(&sigData) == false)
     {
-        _session->_logger->pushMessage("Signature without data.");
+        cdLog(LogLevel::Error) << "Signature without data.";
         return false;
     }
 
@@ -356,7 +358,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
             dsaKey = getDSAKey(hostKey);
             if (dsaKey == NULL)
             {
-                _session->_logger->pushMessage("DSA key not generated.");
+                cdLog(LogLevel::Error) << "DSA key not generated.";
                 return false;
             }
             break;
@@ -365,13 +367,13 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
             rsaKey = getRSAKey(hostKey);
             if (rsaKey == NULL)
             {
-                _session->_logger->pushMessage("RSA key not generated.");
+                cdLog(LogLevel::Error) << "RSA key not generated.";
                 return false;
             }
             break;
 
         default:
-            _session->_logger->pushMessage(std::stringstream() << "Hostkey algorithm: " << _hostkeyMethod << " not supported.");
+            cdLog(LogLevel::Error) << "Hostkey algorithm: " << _hostkeyMethod << " not supported.";
             return false;
     }
 
@@ -394,7 +396,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
     }
     if (verifier == NULL)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Key Exchange algorithm: " << _kexMethod << " not supported.");
+        cdLog(LogLevel::Error) << "Key Exchange algorithm: " << _kexMethod << " not supported.";
     }
     else
     {
@@ -406,7 +408,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
 
     if (result == false)
     {
-        _session->_logger->pushMessage("Failure to verify host signature.");
+        cdLog(LogLevel::Error) << "Failure to verify host signature.";
     }
     return result;
 }
@@ -504,7 +506,7 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
             return "Twofish";
 
         default:
-            _session->_logger->pushMessage(std::stringstream() << "Cryptographic algorithm: " << crypto << " was not defined.");
+            cdLog(LogLevel::Error) << "Cryptographic algorithm: " << crypto << " was not defined.";
             return NULL;
     }
 }
@@ -542,7 +544,7 @@ const char* CppsshCrypto::getHmacAlgo(macMethods method)
             return NULL;
 
         default:
-            _session->_logger->pushMessage(std::stringstream() << "HMAC algorithm: " << method << " was not defined.");
+            cdLog(LogLevel::Error) << "HMAC algorithm: " << method << " was not defined.";
             return NULL;
     }
 }
@@ -556,7 +558,7 @@ const char* CppsshCrypto::getHashAlgo()
             return "SHA-1";
 
         default:
-            _session->_logger->pushMessage(std::stringstream() << "DH Group: " << _kexMethod << " was not defined.");
+            cdLog(LogLevel::Error) << "DH Group: " << _kexMethod << " was not defined.";
             return NULL;
     }
 }
@@ -579,7 +581,7 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byt
 
     if (hashIt == NULL)
     {
-        _session->_logger->pushMessage("Undefined HASH algorithm encountered while computing the key.");
+        cdLog(LogLevel::Error) << "Undefined HASH algorithm encountered while computing the key.";
         return false;
     }
 

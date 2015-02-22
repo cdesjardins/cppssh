@@ -30,8 +30,6 @@ std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
 
 std::unique_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
-std::shared_ptr<CppsshLogger> CppsshImpl::GLOBAL_LOGGER(new CppsshLogger());
-
 std::shared_ptr<CppsshImpl> CppsshImpl::create()
 {
     std::shared_ptr<CppsshImpl> ret(new CppsshImpl());
@@ -159,20 +157,6 @@ bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
 bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
     return CppsshKeys::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
-}
-
-bool CppsshImpl::getLogMessage(const int connectionId, CppsshMessage* message)
-{
-    bool ret = GLOBAL_LOGGER->popMessage(message);
-    if (ret == false)
-    {
-        std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
-        if (con != NULL)
-        {
-            ret = con->getLogMessage(message);
-        }
-    }
-    return ret;
 }
 
 void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string* outstr)

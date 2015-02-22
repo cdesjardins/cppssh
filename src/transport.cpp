@@ -24,6 +24,8 @@
 #include "messages.h"
 #include "x11channel.h"
 
+#define LOG_TAG "transport"
+
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
 #   define close closesocket
@@ -70,7 +72,7 @@ bool CppsshTransport::establish(const std::string& host, short port)
     remoteHost = gethostbyname(host.c_str());
     if (!remoteHost || remoteHost->h_length == 0)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Host" << host << "not found.");
+        cdLog(LogLevel::Error) << "Host" << host << "not found.";
     }
     else
     {
@@ -81,13 +83,13 @@ bool CppsshTransport::establish(const std::string& host, short port)
         _sock = socket(AF_INET, SOCK_STREAM, 0);
         if (_sock < 0)
         {
-            _session->_logger->pushMessage("Failure to bind to socket.");
+            cdLog(LogLevel::Error) << "Failure to bind to socket.";
         }
         else
         {
             if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
             {
-                _session->_logger->pushMessage(std::stringstream() << "Unable to connect to remote server: '" << host << "'.");
+                cdLog(LogLevel::Error) << "Unable to connect to remote server: '" << host << "'.";
             }
             else
             {
@@ -153,7 +155,7 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
     _sock = socket(AF_INET, SOCK_STREAM, 0);
     if (_sock < 0)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Unable to open to X11 socket");
+        cdLog(LogLevel::Error) << "Unable to open to X11 socket";
     }
     else
     {
@@ -180,13 +182,13 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
             }
             else
             {
-                _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << WSAGetLastError());
+                cdLog(LogLevel::Error) << "Unable to connect to X11 socket " << WSAGetLastError();
                 disconnect();
             }
         }
         else
         {
-            _session->_logger->pushMessage(std::stringstream() << "Unable to bind to X11 socket " << strerror(errno));
+            cdLog(LogLevel::Error) << "Unable to bind to X11 socket " << strerror(errno);
             disconnect();
         }
     }
@@ -202,7 +204,7 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
     _sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (_sock < 0)
     {
-        _session->_logger->pushMessage(std::stringstream() << "Unable to open to X11 socket");
+        cdLog(LogLevel::Error) << "Unable to open to X11 socket";
     }
     else
     {
@@ -224,7 +226,7 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
         }
         else
         {
-            _session->_logger->pushMessage(std::stringstream() << "Unable to connect to X11 socket " << path.str() << " " << strerror(errno));
+            cdLog(LogLevel::Error) << "Unable to connect to X11 socket " << path.str() << " " << strerror(errno);
             disconnect();
         }
     }
@@ -244,7 +246,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     int options;
     if ((options = fcntl(_sock, F_GETFL)) < 0)
     {
-        _session->_logger->pushMessage("Cannot read options of the socket.");
+        cdLog(LogLevel::Error)"Cannot read options of the socket.";
         return false;
     }
 
@@ -261,7 +263,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     unsigned long options = on;
     if (ioctlsocket(_sock, FIONBIO, &options))
     {
-        _session->_logger->pushMessage("Cannot set asynch I/O on the socket.");
+        cdLog(LogLevel::Error) << "Cannot set asynch I/O on the socket.";
         return false;
     }
 #endif
@@ -333,7 +335,7 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
 
     if ((_running == true) && (len < 0))
     {
-        _session->_logger->pushMessage("Connection dropped.");
+        cdLog(LogLevel::Error) << "Connection dropped.";
         _session->_channel->disconnect();
         ret = false;
     }
@@ -359,7 +361,7 @@ bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffe
         }
         if ((_running == true) && (len < 0))
         {
-            _session->_logger->pushMessage("Connection dropped.");
+            cdLog(LogLevel::Error) << "Connection dropped.";
             _session->_channel->disconnect();
             break;
         }

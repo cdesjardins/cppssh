@@ -19,7 +19,7 @@
 #ifndef _SESSION_Hxx
 #define _SESSION_Hxx
 
-#include "logger.h"
+#include "Logger.h"
 #include "botan/botan.h"
 #include <string>
 #include <memory>
@@ -32,8 +32,7 @@ class CppsshSession
 {
 public:
     CppsshSession(unsigned int timeout)
-        : _logger(new CppsshLogger()),
-        _timeout(timeout)
+        : _timeout(timeout)
     {
     }
 
@@ -79,7 +78,6 @@ public:
     std::shared_ptr<CppsshTransport> _transport;
     std::shared_ptr<CppsshCrypto> _crypto;
     std::shared_ptr<CppsshChannel> _channel;
-    std::shared_ptr<CppsshLogger> _logger;
 private:
     std::string _remoteVer;
     std::string _localVer;

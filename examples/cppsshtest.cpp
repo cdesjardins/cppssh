@@ -1,4 +1,5 @@
 #include "cppssh.h"
+#include "Logger.h"
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -7,15 +8,6 @@
 #include <sstream>
 
 #define NUM_THREADS 1
-
-void reportErrors(const std::string& tag, const int channel)
-{
-    CppsshMessage logMessage;
-    while (Cppssh::getLogMessage(channel, &logMessage))
-    {
-        std::cout << tag << " " << channel << " " << logMessage.message() << std::endl;
-    }
-}
 
 void getOutFile(int channel, std::ofstream& outfile)
 {
@@ -67,7 +59,6 @@ void runConnectionTest(char* hostname, char* username, char* password)
     {
         std::cout << "Did not connect " << channel << std::endl;
     }
-    reportErrors("Connect", channel);
     Cppssh::close(channel);
 }
 
@@ -81,6 +72,8 @@ int main(int argc, char** argv)
 
     try
     {
+        Logger::getLogger().addStream(&std::cout);
+        Logger::getLogger().setMinLogLevel(LogLevel::Debug);
         Cppssh::create();
         Cppssh::setOptions("aes256-cbc", "hmac-md5");
 

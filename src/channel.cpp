@@ -21,11 +21,12 @@
 #include "messages.h"
 #include "transport.h"
 #include "packet.h"
-#include "logger.h"
+#include "Logger.h"
 #include "x11channel.h"
 #include <sstream>
 #include <iomanip>
 
+#define LOG_TAG "channel"
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
@@ -102,13 +103,13 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
     packet.skipHeader();
     packet.getInt();
     packet.getString(&err);
-    _session->_logger->pushMessage(err);
+    cdLog(LogLevel::Error) << err;
     disconnect();
 }
 
 void CppsshChannel::disconnect()
 {
-    std::cerr << "disconnect" << std::endl;
+    cdLog(LogLevel::Debug) << "disconnect" << std::endl;
     _channels.clear();
 }
 
@@ -329,7 +330,7 @@ bool CppsshSubChannel::handleChannelConfirm()
     Botan::secure_vector<Botan::byte> buf;
     if (_incomingControlData.dequeue(&buf, _session->getTimeout()) == false)
     {
-        _session->_logger->pushMessage(std::stringstream() << "New channel: " << /* channelId << FIXME: rx channel id */ " could not be open. ");
+        cdLog(LogLevel::Error) << "New channel: " << /* channelId << FIXME: rx channel id */ " could not be open. ";
     }
     else
     {
@@ -369,7 +370,7 @@ bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::sec
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Unable to send channel request: " << req);
+        cdLog(LogLevel::Error) << "Unable to send channel request: " << req;
     }
     return ret;
 }
@@ -547,7 +548,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
 
             case SSH2_MSG_CHANNEL_EXTENDED_DATA:
                 //handleExtendedData(newPacket.value());
-                _session->_logger->pushMessage(std::stringstream() << "Unhandled SSH2_MSG_CHANNEL_EXTENDED_DATA: " << cmd);
+                cdLog(LogLevel::Error) << "Unhandled SSH2_MSG_CHANNEL_EXTENDED_DATA: " << cmd;
                 break;
 
             case SSH2_MSG_CHANNEL_EOF:
@@ -574,7 +575,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
                 break;
 
             default:
-                _session->_logger->pushMessage(std::stringstream() << "Unhandled command encountered: " << cmd);
+                cdLog(LogLevel::Error) << "Unhandled command encountered: " << cmd;
                 break;
         }
     }
@@ -607,7 +608,7 @@ CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session
 
 void CppsshSubChannel::handleEof()
 {
-    std::cout << "handleeof " << _channelName << _txChannel << std::endl;
+    cdLog(LogLevel::Debug) << "handleeof " << _channelName << _txChannel;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_EOF);
@@ -617,7 +618,7 @@ void CppsshSubChannel::handleEof()
 
 void CppsshSubChannel::handleClose()
 {
-    std::cout << "handleclose " << _channelName << _txChannel << std::endl;
+    cdLog(LogLevel::Debug) << "handleclose " << _channelName << _txChannel;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_CLOSE);
@@ -644,11 +645,11 @@ void CppsshSubChannel::handleChannelRequest(const Botan::secure_vector<Botan::by
              (request == "window-change") || (request == "xon-xoff") || (request == "signal") ||
              (request == "exit-status") || (request == "exit-signal"))
     {
-        _session->_logger->pushMessage(std::stringstream() << "Unhandled channel request: " << request);
+        cdLog(LogLevel::Error) << "Unhandled channel request: " << request;
     }
     else
     {
-        _session->_logger->pushMessage(std::stringstream() << "Unknown channel request: " << request);
+        cdLog(LogLevel::Error) << "Unknown channel request: " << request;
     }
     if (wantReply != 0)
     {

@@ -26,6 +26,8 @@
 #include "transportcrypto.h"
 #include "cppssh.h"
 
+#define LOG_TAG "connection"
+
 CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
     : _connectionId(connectionId),
     _session(new CppsshSession(timeout)),
@@ -38,11 +40,11 @@ CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
 
 CppsshConnection::~CppsshConnection()
 {
-    std::cerr << "~CppsshConnection " <<
+    cdLog(LogLevel::Debug) << "~CppsshConnection " <<
         _session->_channel.use_count() << " " <<
         _session->_transport.use_count() << " " <<
         _session->_crypto.use_count() << " " <<
-        _session->_channel.use_count() << " " << std::endl;
+        _session->_channel.use_count() << " ";
     _session->_channel->disconnect();
     _session->_transport.reset();
     _session->_crypto.reset();
@@ -127,11 +129,6 @@ bool CppsshConnection::isConnected()
     return _session->_channel->isConnected();
 }
 
-bool CppsshConnection::getLogMessage(CppsshMessage* message)
-{
-    return _session->_logger->popMessage(message);
-}
-
 bool CppsshConnection::checkRemoteVersion()
 {
     bool ret = false;
@@ -177,7 +174,7 @@ bool CppsshConnection::requestService(const std::string& service)
         }
         else
         {
-            _session->_logger->pushMessage("Service request failed.");
+            cdLog(LogLevel::Error) << "Service request failed.";
         }
     }
     return ret;
@@ -204,11 +201,11 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
             std::string methods;
             packet.skipHeader();
             packet.getString(&methods);
-            _session->_logger->pushMessage(std::stringstream() << "Authentication failed. Supported authentication methods: " << methods.data());
+            cdLog(LogLevel::Error) << "Authentication failed. Supported authentication methods: " << methods.data();
         }
         else
         {
-            _session->_logger->pushMessage(std::stringstream() << "Unknown user auth response: " << packet.getCommand());
+            cdLog(LogLevel::Error) << "Unknown user auth response: " << packet.getCommand();
         }
     }
     return ret;
@@ -254,7 +251,7 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
         packetEnd.addVectorField(keyPair.getPublicKeyBlob());
         if (packetSize == endBuf.size())
         {
-            _session->_logger->pushMessage("Invallid public key.");
+            cdLog(LogLevel::Error) << "Invallid public key.";
         }
         else
         {
@@ -270,7 +267,7 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
                 Botan::secure_vector<Botan::byte> sigBlob = keyPair.generateSignature(_session->getSessionID(), buf);
                 if (sigBlob.size() == 0)
                 {
-                    _session->_logger->pushMessage("Failure while generating the signature.");
+                    cdLog(LogLevel::Error) << "Failure while generating the signature.";
                 }
                 else
                 {

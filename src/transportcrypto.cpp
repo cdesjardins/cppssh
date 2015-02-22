@@ -20,6 +20,8 @@
 #include "crypto.h"
 #include "channel.h"
 
+#define LOG_TAG "transportcrypto"
+
 CppsshTransportCrypto::CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock)
     : CppsshTransportThreaded(session),
     _txSeq(3),
@@ -37,7 +39,7 @@ bool CppsshTransportCrypto::sendMessage(const Botan::secure_vector<Botan::byte>&
     setupMessage(buffer, &buf);
     if (_session->_crypto->encryptPacket(&crypted, &hmac, buf, _txSeq) == false)
     {
-        _session->_logger->pushMessage("Failure to encrypt the payload.");
+        cdLog(LogLevel::Error) << "Failure to encrypt the payload.";
         return false;
     }
     crypted += hmac;
@@ -54,7 +56,7 @@ bool CppsshTransportCrypto::sendMessage(const Botan::secure_vector<Botan::byte>&
 
 void CppsshTransportCrypto::rxThread()
 {
-    std::cout << "starting crypto rx thread" << std::endl;
+    cdLog(LogLevel::Debug) << "starting crypto rx thread";
     try
     {
         Botan::secure_vector<Botan::byte> decrypted;
@@ -103,7 +105,7 @@ void CppsshTransportCrypto::rxThread()
                     hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + cryptoLen + _session->_crypto->getMacInLen());
                     if (hMac != ourMac)
                     {
-                        _session->_logger->pushMessage("Mismatched HMACs.");
+                        cdLog(LogLevel::Error) << "Mismatched HMACs.";
                         return;
                     }
                     cryptoLen += _session->_crypto->getMacInLen();
@@ -126,8 +128,8 @@ void CppsshTransportCrypto::rxThread()
     }
     catch (const std::exception& ex)
     {
-        _session->_logger->pushMessage(std::stringstream() << "rxThread exception: " << ex.what());
+        cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
     }
-    std::cout << "crypto rx thread done" << std::endl;
+    cdLog(LogLevel::Debug) << "crypto rx thread done";
 }
 

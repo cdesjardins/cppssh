@@ -18,7 +18,10 @@
 */
 
 #include "x11channel.h"
+#include "cppssh.h"
 #include <iterator>
+
+#define LOG_TAG "x11channel"
 
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
     : CppsshSubChannel(session, channelName)
@@ -57,7 +60,7 @@ bool CppsshX11Channel::startChannel()
 void CppsshX11Channel::x11RxThread()
 {
     bool first = true;
-    std::cout << "starting x11 rx thread" << std::endl;
+    cdLog(LogLevel::Debug) << "starting x11 rx thread";
     while (_x11transport->isRunning() == true)
     {
         CppsshMessage message;
@@ -73,12 +76,12 @@ void CppsshX11Channel::x11RxThread()
             _x11transport->sendMessage(buf);
         }
     }
-    std::cout << "x11 rx thread done" << std::endl;
+    cdLog(LogLevel::Debug) << "x11 rx thread done";
 }
 
 void CppsshX11Channel::x11TxThread()
 {
-    std::cout << "starting x11 tx thread" << std::endl;
+    cdLog(LogLevel::Debug) << "starting x11 tx thread";
     while (_x11transport->isRunning() == true)
     {
         Botan::secure_vector<Botan::byte> buf;
@@ -87,7 +90,7 @@ void CppsshX11Channel::x11TxThread()
             writeChannel(buf.data(), buf.size());
         }
     }
-    std::cout << "x11 tx thread done" << std::endl;
+    cdLog(LogLevel::Debug) << "x11 tx thread done";
 }
 
 void CppsshX11Channel::getDisplay(std::string* display)
