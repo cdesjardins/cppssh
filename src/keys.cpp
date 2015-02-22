@@ -20,11 +20,13 @@
 #include "impl.h"
 #include "keys.h"
 #include "packet.h"
-#include <botan/rsa.h>
-#include <botan/pem.h>
-#include <botan/ber_dec.h>
-#include <botan/der_enc.h>
-#include <botan/pubkey.h>
+#include "botan/rsa.h"
+#include "botan/pem.h"
+#include "botan/ber_dec.h"
+#include "botan/der_enc.h"
+#include "botan/pubkey.h"
+#include "botan/b64_filt.h"
+#include "botan/numthry.h"
 #include <fstream>
 #ifndef WIN32
 #include <sys/stat.h>
@@ -385,7 +387,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
 
     dmp1 = d % (p - 1);
     dmq1 = d % (q - 1);
-    iqmp = inverse_mod(q, p);
+    iqmp = Botan::inverse_mod(q, p);
 
     pubKeyBlob.addString("ssh-rsa");
     pubKeyBlob.addBigInt(e);

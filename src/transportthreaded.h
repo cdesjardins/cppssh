@@ -20,6 +20,8 @@
 #define _TRANSPORT_THREADED_Hxx
 
 #include "transport.h"
+#include <thread>
+
 class CppsshTransportThreaded : public CppsshTransport
 {
 public:

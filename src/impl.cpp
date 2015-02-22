@@ -69,13 +69,11 @@ void CppsshImpl::destroy()
 
 CppsshImpl::CppsshImpl()
 {
-    _init.reset(new Botan::LibraryInitializer());
 }
 
 CppsshImpl::~CppsshImpl()
 {
     RNG.reset();
-    _init.reset();
 }
 
 bool CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)

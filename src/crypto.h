@@ -26,6 +26,7 @@
 #include "botan/dh.h"
 #include "botan/dsa.h"
 #include "botan/rsa.h"
+#include "botan/key_filt.h"
 #include "smrtenum.h"
 #include <memory>
 

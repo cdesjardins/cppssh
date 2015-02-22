@@ -20,6 +20,7 @@
 #define _PACKET_Hxx
 
 #include "botan/botan.h"
+#include "botan/bigint.h"
 #include <cstdint>
 #include <cstddef>
 

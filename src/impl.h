@@ -54,7 +54,6 @@ private:
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
     static void setPref(const char* pref, std::vector<std::string>* list);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
-    std::unique_ptr<Botan::LibraryInitializer> _init;
     std::mutex _connectionsMutex;
 };
 
