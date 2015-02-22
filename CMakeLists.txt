@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(cppssh CXX)
 
+set(BOTAN_DIR "${CMAKE_SOURCE_DIR}/../botan/install")
 find_file(HAVE_BOTAN "botan/botan.h" PATHS "${BOTAN_DIR}/include" "${BOTAN_DIR}/include/botan-1.11/")
 if (NOT HAVE_BOTAN)
     MESSAGE(FATAL_ERROR "Could not find Botan includes ${BOTAN_DIR}")
