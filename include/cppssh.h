@@ -40,15 +40,17 @@ public:
     CPPSSH_EXPORT static void create();
     CPPSSH_EXPORT static void destroy();
     // Timeout is in milliseconds
-    CPPSSH_EXPORT static bool connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout = 1000, bool shell = true);
-    CPPSSH_EXPORT static bool isConnected(const int channelId);
-    CPPSSH_EXPORT static bool writeString(const int channelId, const char* data);
-    CPPSSH_EXPORT static bool write(const int channelId, const uint8_t* data, size_t bytes);
-    CPPSSH_EXPORT static bool read(const int channelId, CppsshMessage* data);
-    CPPSSH_EXPORT static bool close(const int channelId);
+    CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout = 1000, bool shell = true);
+    CPPSSH_EXPORT static bool isConnected(const int connectionId);
+    CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
+    CPPSSH_EXPORT static bool write(const int connectionId, const uint8_t* data, size_t bytes);
+    CPPSSH_EXPORT static bool read(const int connectionId, CppsshMessage* data);
+    CPPSSH_EXPORT static bool windowSize(const int connectionId, const uint32_t cols, const uint32_t rows);
+    CPPSSH_EXPORT static bool close(const int connectionId);
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+
 
 private:
     static std::shared_ptr<CppsshImpl> s_cppsshInst;

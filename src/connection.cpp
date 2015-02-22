@@ -111,14 +111,19 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     return true;
 }
 
+bool CppsshConnection::write(const uint8_t* data, uint32_t bytes)
+{
+    return _session->_channel->writeMainChannel(data, bytes);
+}
+
 bool CppsshConnection::read(CppsshMessage* data)
 {
     return _session->_channel->readMainChannel(data);
 }
 
-bool CppsshConnection::write(const uint8_t* data, uint32_t bytes)
+bool CppsshConnection::windowSize(const uint32_t cols, const uint32_t rows)
 {
-    return _session->_channel->writeMainChannel(data, bytes);
+    return _session->_channel->windowSize(cols, rows);
 }
 
 bool CppsshConnection::isConnected()

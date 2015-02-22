@@ -124,6 +124,17 @@ bool CppsshImpl::read(const int connectionId, CppsshMessage* data)
     return ret;
 }
 
+bool CppsshImpl::windowSize(const int connectionId, const uint32_t cols, const uint32_t rows)
+{
+    bool ret = false;
+    std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
+    if (con != NULL)
+    {
+        ret = con->windowSize(cols, rows);
+    }
+    return ret;
+}
+
 bool CppsshImpl::close(int connectionId)
 {
     std::unique_lock<std::mutex> lock(_connectionsMutex);

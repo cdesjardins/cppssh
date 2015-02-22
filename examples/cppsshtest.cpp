@@ -30,6 +30,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
         bool sentGvim = false;
 
         Cppssh::writeString(channel, "env\n");
+        Cppssh::windowSize(channel, 80, 40);
 
         while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
         {

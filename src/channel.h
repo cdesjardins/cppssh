@@ -33,8 +33,9 @@ public:
     CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     bool establish(const std::string& host, short port);
     bool openChannel();
-    bool readMainChannel(CppsshMessage* data);
     bool writeMainChannel(const uint8_t* data, uint32_t bytes);
+    bool readMainChannel(CppsshMessage* data);
+    bool windowSize(const uint32_t rows, const uint32_t cols);
     bool isConnected();
     bool getShell();
     bool getX11();
@@ -113,7 +114,7 @@ public:
         return _txChannel;
     }
 
-    virtual bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request);
+    virtual bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request, bool wantReply = true);
     virtual void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     virtual void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     virtual bool handleChannelConfirm();
@@ -122,8 +123,9 @@ public:
     virtual void handleClose();
     void sendAdjustWindow();
     bool flushOutgoingChannelData();
-    bool readChannel(CppsshMessage* data);
     bool writeChannel(const uint8_t* data, uint32_t bytes);
+    bool readChannel(CppsshMessage* data);
+    bool windowSize(const uint32_t cols, const uint32_t rows);
     void setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket);
 
 protected:

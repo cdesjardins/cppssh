@@ -36,34 +36,39 @@ void Cppssh::destroy()
     s_cppsshInst.reset();
 }
 
-bool Cppssh::connect(int* channelId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
+bool Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, bool shell)
 {
-    return s_cppsshInst->connect(channelId, host, port, username, privKeyFileNameOrPassword, timeout, shell);
+    return s_cppsshInst->connect(connectionId, host, port, username, privKeyFileNameOrPassword, timeout, shell);
 }
 
-bool Cppssh::isConnected(const int channelId)
+bool Cppssh::isConnected(const int connectionId)
 {
-    return s_cppsshInst->isConnected(channelId);
+    return s_cppsshInst->isConnected(connectionId);
 }
 
-bool Cppssh::writeString(const int channelId, const char* data)
+bool Cppssh::writeString(const int connectionId, const char* data)
 {
-    return write(channelId, (const uint8_t*)data, strlen(data));
+    return write(connectionId, (const uint8_t*)data, strlen(data));
 }
 
-bool Cppssh::write(const int channelId, const uint8_t* data, size_t bytes)
+bool Cppssh::write(const int connectionId, const uint8_t* data, size_t bytes)
 {
-    return s_cppsshInst->write(channelId, data, bytes);
+    return s_cppsshInst->write(connectionId, data, bytes);
 }
 
-bool Cppssh::read(const int channelId, CppsshMessage* data)
+bool Cppssh::read(const int connectionId, CppsshMessage* data)
 {
-    return s_cppsshInst->read(channelId, data);
+    return s_cppsshInst->read(connectionId, data);
 }
 
-bool Cppssh::close(const int channelId)
+bool Cppssh::windowSize(const int connectionId, const uint32_t cols, const uint32_t rows)
 {
-    return s_cppsshInst->close(channelId);
+    return s_cppsshInst->windowSize(connectionId, cols, rows);
+}
+
+bool Cppssh::close(const int connectionId)
+{
+    return s_cppsshInst->close(connectionId);
 }
 
 void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)

@@ -65,21 +65,9 @@ bool CppsshChannel::openChannel()
             ret = _channels.at(_mainChannel)->handleChannelConfirm();
         }
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range& ex)
     {
-    }
-    return ret;
-}
-
-bool CppsshChannel::readMainChannel(CppsshMessage* data)
-{
-    bool ret = false;
-    try
-    {
-        ret = _channels.at(_mainChannel)->readChannel(data);
-    }
-    catch (const std::out_of_range&)
-    {
+        cdLog(LogLevel::Error) << "openChannel " << ex.what();
     }
     return ret;
 }
@@ -91,8 +79,37 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
     {
         ret = _channels.at(_mainChannel)->writeChannel(data, bytes);
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range& ex)
     {
+        cdLog(LogLevel::Error) << "writeMainChannel " << ex.what();
+    }
+    return ret;
+}
+
+bool CppsshChannel::readMainChannel(CppsshMessage* data)
+{
+    bool ret = false;
+    try
+    {
+        ret = _channels.at(_mainChannel)->readChannel(data);
+    }
+    catch (const std::out_of_range& ex)
+    {
+        cdLog(LogLevel::Error) << "readMainChannel " << ex.what();
+    }
+    return ret;
+}
+
+bool CppsshChannel::windowSize(const uint32_t rows, const uint32_t cols)
+{
+    bool ret = false;
+    try
+    {
+        ret = _channels.at(_mainChannel)->windowSize(rows, cols);
+    }
+    catch (const std::out_of_range& ex)
+    {
+        cdLog(LogLevel::Error) << "windowSize " << ex.what();
     }
     return ret;
 }
@@ -296,17 +313,6 @@ bool CppsshSubChannel::flushOutgoingChannelData()
     return ret;
 }
 
-bool CppsshSubChannel::readChannel(CppsshMessage* data)
-{
-    std::shared_ptr<CppsshMessage> m;
-    bool ret = _incomingChannelData.dequeue(&m);
-    if (ret == true)
-    {
-        *data = *m;
-    }
-    return ret;
-}
-
 bool CppsshSubChannel::writeChannel(const uint8_t* data, uint32_t bytes)
 {
     uint32_t totalBytesSent = 0;
@@ -322,6 +328,33 @@ bool CppsshSubChannel::writeChannel(const uint8_t* data, uint32_t bytes)
         _outgoingChannelData.enqueue(message);
     }
     return (totalBytesSent == bytes);
+}
+
+bool CppsshSubChannel::readChannel(CppsshMessage* data)
+{
+    std::shared_ptr<CppsshMessage> m;
+    bool ret = _incomingChannelData.dequeue(&m);
+    if (ret == true)
+    {
+        *data = *m;
+    }
+    return ret;
+}
+
+bool CppsshSubChannel::windowSize(const uint32_t cols, const uint32_t rows)
+{
+    bool ret = false;
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket packet(&buf);
+
+    cdLog(LogLevel::Debug) << "windowSize: (" << cols << ", " << rows << ")";
+
+    packet.addInt(cols);
+    packet.addInt(rows);
+    packet.addInt(0);
+    packet.addInt(0);
+    ret = doChannelRequest("window-change", buf, false);
+    return ret;
 }
 
 bool CppsshSubChannel::handleChannelConfirm()
@@ -351,7 +384,7 @@ bool CppsshSubChannel::handleChannelConfirm()
     return ret;
 }
 
-bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata)
+bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata, bool wantReply)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
@@ -359,18 +392,27 @@ bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::sec
     packet.addByte(SSH2_MSG_CHANNEL_REQUEST);
     packet.addInt(_txChannel);
     packet.addString(req);
-    packet.addByte(1);// want reply == true
+    packet.addByte(wantReply);// want reply == true
     packet.addVector(reqdata);
 
-    if ((_session->_transport->sendMessage(buf) == true) &&
-        (_incomingControlData.dequeue(&buf, _session->getTimeout()) == true) &&
-        (packet.getCommand() == SSH2_MSG_CHANNEL_SUCCESS))
+    if (_session->_transport->sendMessage(buf) == true)
     {
-        ret = true;
-    }
-    else
-    {
-        cdLog(LogLevel::Error) << "Unable to send channel request: " << req;
+        if (wantReply == true)
+        {
+            if ((_incomingControlData.dequeue(&buf, _session->getTimeout()) == true) &&
+                (packet.getCommand() == SSH2_MSG_CHANNEL_SUCCESS))
+            {
+                ret = true;
+            }
+            else
+            {
+                cdLog(LogLevel::Error) << "Unable to send channel request: " << req;
+            }
+        }
+        else
+        {
+            ret = true;
+        }
     }
     return ret;
 }
@@ -399,8 +441,9 @@ bool CppsshChannel::getShell()
             }
         }
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range& ex)
     {
+        cdLog(LogLevel::Error) << "getShell " << ex.what();
     }
     return ret;
 }
@@ -449,8 +492,9 @@ bool CppsshChannel::getX11()
         {
             ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
         }
-        catch (const std::out_of_range&)
+        catch (const std::out_of_range& ex)
         {
+            cdLog(LogLevel::Error) << "getX11 " << ex.what();
         }
     }
     return ret;
@@ -478,7 +522,7 @@ void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& 
     packet.skipHeader();
     uint32_t rxChannel = packet.getInt();
     uint32_t size = packet.getInt();
-    cdLog(LogLevel::Error) << "handleWindowAdjust " << rxChannel << " " << size;
+    cdLog(LogLevel::Debug) << "handleWindowAdjust " << rxChannel << " " << size;
     _channels.at(rxChannel)->increaseWindowSend(size);
 }
 
@@ -579,8 +623,9 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
                 break;
         }
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range& ex)
     {
+        cdLog(LogLevel::Error) << "handleReceived " << ex.what();
     }
 }
 
