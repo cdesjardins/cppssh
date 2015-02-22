@@ -113,7 +113,7 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     }
     else
     {
-        display.substr(mid + 1);
+        sn = display.substr(mid + 1);
     }
     dn = display.substr(start, mid - start);
     if ((dn.length() > 0) && (sn.length() > 0))
