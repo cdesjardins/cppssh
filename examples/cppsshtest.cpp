@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 
+#define LOG_TAG "cppsshtest"
 #define NUM_THREADS 1
 
 void getOutFile(int channel, std::ofstream& outfile)
@@ -23,7 +24,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
     {
         std::ofstream output;
         getOutFile(channel, output);
-        std::cout << "Connected " << channel << std::endl;
+        cdLog(LogLevel::Info) << "Connected " << channel;
         std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
         int txCount = 0;
         bool sentGvim = false;
@@ -57,7 +58,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
     }
     else
     {
-        std::cout << "Did not connect " << channel << std::endl;
+        cdLog(LogLevel::Error) << "Did not connect " << channel;
     }
     Cppssh::close(channel);
 }
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& ex)
     {
-        std::cout << "Exception: " << ex.what() << std::endl;
+        cdLog(LogLevel::Error) << "Exception: " << ex.what() << std::endl;
     }
     return 0;
 }

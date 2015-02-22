@@ -109,7 +109,7 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 
 void CppsshChannel::disconnect()
 {
-    cdLog(LogLevel::Debug) << "disconnect" << std::endl;
+    cdLog(LogLevel::Debug) << "disconnect";
     _channels.clear();
 }
 
@@ -478,7 +478,7 @@ void CppsshChannel::handleWindowAdjust(const Botan::secure_vector<Botan::byte>& 
     packet.skipHeader();
     uint32_t rxChannel = packet.getInt();
     uint32_t size = packet.getInt();
-    //std::cout << "handleWindowAdjust " << rxChannel << " " << size << std::endl;
+    cdLog(LogLevel::Error) << "handleWindowAdjust " << rxChannel << " " << size;
     _channels.at(rxChannel)->increaseWindowSend(size);
 }
 

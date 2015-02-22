@@ -106,17 +106,12 @@ void CppsshX11Channel::getDisplay(std::string* display)
     }
 }
 
-void mytmpnam(std::string* tmpname)
-{
-}
-
 bool CppsshX11Channel::runXauth(const std::string& display, std::string* method, Botan::secure_vector<Botan::byte>* cookie)
 {
     bool ret = false;
     std::stringstream xauth;
     std::string tmpname;
     CppsshChannel::getRandomString(16, &tmpname);
-    cdLog(LogLevel::Error) << tmpname;
     xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
     if (system(xauth.str().c_str()) == 0)
     {
