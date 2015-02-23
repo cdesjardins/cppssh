@@ -20,11 +20,11 @@
 #include "connection.h"
 #include "kex.h"
 #include "keys.h"
-#include "cryptstr.h"
 #include "packet.h"
 #include "messages.h"
 #include "transportcrypto.h"
 #include "cppssh.h"
+#include "strtrim.h"
 
 #define LOG_TAG "connection"
 
@@ -141,7 +141,7 @@ bool CppsshConnection::checkRemoteVersion()
         {
             ret = true;
             std::string rv(remoteVer.begin(), remoteVer.end());
-            CppsshCryptstr::trim(rv);
+            StrTrim::trim(rv);
             _session->setRemoteVersion(rv);
         }
     }

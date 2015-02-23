@@ -5,7 +5,7 @@ file(GLOB cppssh_LIB_SRCS
     "../include/*.h"
 )
 
-include_directories (${HAVE_BOTAN} ../include ${CMAKE_CURRENT_SOURCE_DIR}/../../CDLogger/include)
+include_directories (${HAVE_BOTAN} ../include ${CMAKE_CURRENT_SOURCE_DIR}/../../CDLogger/include ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
 find_file(HAVE_GIT git)
 if (HAVE_GIT)

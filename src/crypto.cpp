@@ -25,7 +25,7 @@
 #include "crypto.h"
 #include "packet.h"
 #include "impl.h"
-#include "cryptstr.h"
+#include "strtrim.h"
 #include "botan/pubkey.h"
 #include "botan/pk_ops.h"
 #include "botan/cbc.h"
@@ -127,7 +127,7 @@ bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& lo
     std::vector<std::string> remoteVec;
     std::string remoteStr((char*)remote.data(), 0, remote.size());
 
-    CppsshCryptstr::split(remoteStr, ',', remoteVec);
+    StrTrim::split(remoteStr, ',', remoteVec);
 
     for (std::string it : local)
     {
