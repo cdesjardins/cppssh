@@ -69,7 +69,7 @@ bool CppsshChannel::openChannel()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "openChannel " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -84,7 +84,7 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "writeMainChannel " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -99,7 +99,7 @@ bool CppsshChannel::readMainChannel(CppsshMessage* data)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "readMainChannel " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -114,7 +114,7 @@ bool CppsshChannel::windowSize(const uint32_t rows, const uint32_t cols)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "windowSize " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -131,7 +131,7 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 
 void CppsshChannel::disconnect()
 {
-    cdLog(LogLevel::Debug) << "disconnect";
+    cdLog(LogLevel::Debug) << "disconnect[" << _session->getConnectionId() << "]";
     _channels.clear();
 }
 
@@ -352,7 +352,7 @@ bool CppsshSubChannel::windowSize(const uint32_t cols, const uint32_t rows)
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    cdLog(LogLevel::Debug) << "windowSize: (" << cols << ", " << rows << ")";
+    cdLog(LogLevel::Debug) << "windowSize[" << _session->getConnectionId() << "]: (" << cols << ", " << rows << ")";
 
     packet.addInt(cols);
     packet.addInt(rows);
@@ -449,7 +449,7 @@ bool CppsshChannel::getShell()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "getShell " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -501,7 +501,7 @@ bool CppsshChannel::getX11()
         catch (const std::exception& ex)
         {
             cdLog(LogLevel::Error) << "getX11 " << ex.what();
-            CppsshDebug::dumpStack();
+            CppsshDebug::dumpStack(_session->getConnectionId());
         }
     }
     return ret;
@@ -633,7 +633,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "handleReceived " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
 }
 

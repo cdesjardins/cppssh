@@ -116,6 +116,10 @@ void CppsshTransportCrypto::rxThread()
             {
                 _rxSeq++;
                 _session->_channel->handleReceived(decrypted);
+                if (_in.size() < cryptoLen)
+                {
+                    cdLog(LogLevel::Error) << "impossible";
+                }
                 if (_in.size() <= cryptoLen)
                 {
                     _in.clear();
@@ -130,7 +134,7 @@ void CppsshTransportCrypto::rxThread()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     cdLog(LogLevel::Debug) << "crypto rx thread done";
 }

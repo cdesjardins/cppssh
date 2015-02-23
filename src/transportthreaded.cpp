@@ -130,7 +130,7 @@ void CppsshTransportThreaded::rxThread()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     cdLog(LogLevel::Debug) << "rx thread done";
 }
@@ -152,7 +152,7 @@ void CppsshTransportThreaded::txThread()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "txThread exception: " << ex.what();
-        CppsshDebug::dumpStack();
+        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     cdLog(LogLevel::Debug) << "tx thread done";
 }

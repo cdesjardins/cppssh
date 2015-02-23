@@ -43,7 +43,6 @@ private:
     bool authWithKey(const std::string& username, const std::string& privKeyFileName);
     bool authenticate(const Botan::secure_vector<Botan::byte>& userAuthRequest);
 
-    int _connectionId;
     std::shared_ptr<CppsshSession> _session;
     bool _connected;
 };

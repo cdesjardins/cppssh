@@ -31,8 +31,9 @@ class CppsshChannel;
 class CppsshSession
 {
 public:
-    CppsshSession(unsigned int timeout)
-        : _timeout(timeout)
+    CppsshSession(int connectionId, unsigned int timeout)
+        : _timeout(timeout),
+        _connectionId(connectionId)
     {
     }
 
@@ -45,7 +46,7 @@ public:
         _remoteVer = remoteVer;
     }
 
-    const std::string& getRemoteVersion()
+    const std::string& getRemoteVersion() const
     {
         return _remoteVer;
     }
@@ -55,7 +56,7 @@ public:
         _localVer = localVer;
     }
 
-    const std::string& getLocalVersion()
+    const std::string& getLocalVersion() const
     {
         return _localVer;
     }
@@ -65,14 +66,19 @@ public:
         _sessionID = session;
     }
 
-    Botan::secure_vector<Botan::byte>& getSessionID()
+    const Botan::secure_vector<Botan::byte>& getSessionID() const
     {
         return _sessionID;
     }
 
-    unsigned int getTimeout()
+    unsigned int getTimeout() const
     {
         return _timeout;
+    }
+
+    int getConnectionId() const
+    {
+        return _connectionId;
     }
 
     std::shared_ptr<CppsshTransport> _transport;
@@ -83,6 +89,7 @@ private:
     std::string _localVer;
     Botan::secure_vector<Botan::byte> _sessionID;
     unsigned int _timeout;
+    const int _connectionId;
 };
 
 #endif

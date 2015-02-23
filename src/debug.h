@@ -26,10 +26,10 @@
 class CppsshDebug
 {
 public:
-    static void dumpStack()
+    static void dumpStack(int connectionId)
     {
+        cdLog(LogLevel::Debug) << "dumpStack[" << connectionId << "]";
 #ifdef WIN32
-        cdLog(LogLevel::Debug) << "dumpStack";
 #else
         void *buffer[100];
         int size;

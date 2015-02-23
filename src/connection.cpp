@@ -29,8 +29,7 @@
 #define LOG_TAG "connection"
 
 CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
-    : _connectionId(connectionId),
-    _session(new CppsshSession(timeout)),
+    : _session(new CppsshSession(connectionId, timeout)),
     _connected(false)
 {
     cdLog(LogLevel::Debug) << "CppsshConnection ";
