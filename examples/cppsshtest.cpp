@@ -8,7 +8,7 @@
 #include <sstream>
 
 #define LOG_TAG "cppsshtest"
-#define NUM_THREADS 1
+#define NUM_THREADS 10
 
 void getOutFile(int channel, std::ofstream& outfile)
 {

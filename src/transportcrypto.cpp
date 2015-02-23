@@ -116,7 +116,7 @@ void CppsshTransportCrypto::rxThread()
             {
                 _rxSeq++;
                 _session->_channel->handleReceived(decrypted);
-                if (_in.size() == cryptoLen)
+                if (_in.size() <= cryptoLen)
                 {
                     _in.clear();
                 }

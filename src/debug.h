@@ -19,7 +19,9 @@
 #ifndef _DEBUG_Hxx
 #define _DEBUG_Hxx
 
+#ifndef WIN32
 #include <execinfo.h>
+#endif
 
 class CppsshDebug
 {
