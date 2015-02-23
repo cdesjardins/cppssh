@@ -87,9 +87,9 @@ int main(int argc, char** argv)
         {
             threads.push_back(std::thread(&runConnectionTest, argv[1], argv[2], argv[3]));
         }
-        for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); it++)
+        for (std::thread& t : threads)
         {
-            (*it).join();
+            t.join();
         }
         Cppssh::destroy();
     }

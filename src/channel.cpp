@@ -348,7 +348,7 @@ bool CppsshSubChannel::readChannel(CppsshMessage* data)
 
 bool CppsshSubChannel::windowSize(const uint32_t cols, const uint32_t rows)
 {
-    bool ret = false;
+    bool ret;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 

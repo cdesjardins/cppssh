@@ -31,10 +31,10 @@ public:
         cdLog(LogLevel::Debug) << "dumpStack[" << connectionId << "]";
 #ifdef WIN32
 #else
-        void *buffer[100];
+        void* buffer[100];
         int size;
         size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
-        char **stack = backtrace_symbols(buffer, size);
+        char** stack = backtrace_symbols(buffer, size);
         for (int i = 0; i < size; i++)
         {
             cdLog(LogLevel::Debug) << stack[i];

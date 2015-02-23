@@ -156,3 +156,4 @@ void CppsshTransportThreaded::txThread()
     }
     cdLog(LogLevel::Debug) << "tx thread done";
 }
+

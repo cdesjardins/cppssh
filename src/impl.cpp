@@ -172,18 +172,13 @@ bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
 
 void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string* outstr)
 {
-    std::vector<std::string>::const_iterator prefIt = vec.end();
-    for (std::vector<std::string>::const_iterator it = vec.cbegin(); it != vec.cend(); it++)
+    for (const std::string& kex : vec)
     {
-        std::string kex = *it;
-        if (it != prefIt)
+        if (outstr->length() > 0)
         {
-            if (outstr->length() > 0)
-            {
-                outstr->push_back(',');
-            }
-            std::copy(kex.begin(), kex.end(), std::back_inserter(*outstr));
+            outstr->push_back(',');
         }
+        std::copy(kex.begin(), kex.end(), std::back_inserter(*outstr));
     }
 }
 
