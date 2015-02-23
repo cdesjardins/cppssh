@@ -22,6 +22,7 @@
 #include "channel.h"
 
 #define LOG_TAG "transportthreaded"
+#include "debug.h"
 
 CppsshTransportThreaded::CppsshTransportThreaded(const std::shared_ptr<CppsshSession>& session)
     : CppsshTransport(session)
@@ -129,6 +130,7 @@ void CppsshTransportThreaded::rxThread()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
+        CppsshDebug::dumpStack();
     }
     cdLog(LogLevel::Debug) << "rx thread done";
 }
@@ -150,6 +152,7 @@ void CppsshTransportThreaded::txThread()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "txThread exception: " << ex.what();
+        CppsshDebug::dumpStack();
     }
     cdLog(LogLevel::Debug) << "tx thread done";
 }

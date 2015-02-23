@@ -21,6 +21,7 @@
 #include "channel.h"
 
 #define LOG_TAG "transportcrypto"
+#include "debug.h"
 
 CppsshTransportCrypto::CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock)
     : CppsshTransportThreaded(session),
@@ -129,6 +130,7 @@ void CppsshTransportCrypto::rxThread()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
+        CppsshDebug::dumpStack();
     }
     cdLog(LogLevel::Debug) << "crypto rx thread done";
 }

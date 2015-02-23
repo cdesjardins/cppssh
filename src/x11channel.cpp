@@ -30,6 +30,7 @@ CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session
 
 CppsshX11Channel::~CppsshX11Channel()
 {
+    cdLog(LogLevel::Debug) << "~CppsshX11Channel";
     disconnect();
 }
 

@@ -44,8 +44,8 @@ CppsshConnection::~CppsshConnection()
     cdLog(LogLevel::Debug) << "~CppsshConnection ";
     _session->_channel->disconnect();
     _session->_transport.reset();
-    _session->_crypto.reset();
     _session->_channel.reset();
+    _session->_crypto.reset();
     _session.reset();
 }
 

@@ -27,6 +27,7 @@
 #include <iomanip>
 
 #define LOG_TAG "channel"
+#include "debug.h"
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
@@ -65,9 +66,10 @@ bool CppsshChannel::openChannel()
             ret = _channels.at(_mainChannel)->handleChannelConfirm();
         }
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "openChannel " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -79,9 +81,10 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
     {
         ret = _channels.at(_mainChannel)->writeChannel(data, bytes);
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "writeMainChannel " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -93,9 +96,10 @@ bool CppsshChannel::readMainChannel(CppsshMessage* data)
     {
         ret = _channels.at(_mainChannel)->readChannel(data);
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "readMainChannel " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -107,9 +111,10 @@ bool CppsshChannel::windowSize(const uint32_t rows, const uint32_t cols)
     {
         ret = _channels.at(_mainChannel)->windowSize(rows, cols);
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "windowSize " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -441,9 +446,10 @@ bool CppsshChannel::getShell()
             }
         }
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "getShell " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -492,9 +498,10 @@ bool CppsshChannel::getX11()
         {
             ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
         }
-        catch (const std::out_of_range& ex)
+        catch (const std::exception& ex)
         {
             cdLog(LogLevel::Error) << "getX11 " << ex.what();
+            CppsshDebug::dumpStack();
         }
     }
     return ret;
@@ -623,9 +630,10 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
                 break;
         }
     }
-    catch (const std::out_of_range& ex)
+    catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "handleReceived " << ex.what();
+        CppsshDebug::dumpStack();
     }
 }
 

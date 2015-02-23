@@ -33,6 +33,7 @@
 #endif
 
 #define LOG_TAG "keys"
+#include "debug.h"
 
 const std::string CppsshKeys::HEADER_DSA = "-----BEGIN DSA PRIVATE KEY-----\n";
 const std::string CppsshKeys::FOOTER_DSA = "-----END DSA PRIVATE KEY-----\n";
@@ -110,6 +111,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << ex.what();
+        CppsshDebug::dumpStack();
     }
 
     return ret;
@@ -207,6 +209,7 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     catch (const Botan::BER_Decoding_Error& ex)
     {
         cdLog(LogLevel::Error) << "Error decoding private key: " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -267,6 +270,7 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     catch (const Botan::BER_Decoding_Error& ex)
     {
         cdLog(LogLevel::Error) << "Error decoding private key: " << ex.what();
+        CppsshDebug::dumpStack();
     }
     return ret;
 }
@@ -420,6 +424,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
         catch (const std::ofstream::failure&)
         {
             cdLog(LogLevel::Error) << "I/O error while writting to file: " << pubKeyFileName;
+            CppsshDebug::dumpStack();
         }
         if (pubKeyFile.fail() == false)
         {
@@ -511,6 +516,7 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
         catch (const std::ofstream::failure&)
         {
             cdLog(LogLevel::Error) << "I/O error while writting to file: " << pubKeyFileName;
+            CppsshDebug::dumpStack();
         }
         if (pubKeyFile.fail() == false)
         {
