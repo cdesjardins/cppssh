@@ -4,6 +4,8 @@ project(cppssh CXX)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../include")
 include(compilerflags)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../install")
+# undo warning level 4 because it makes too much noise from botan :(
+string(REGEX REPLACE "/W4" "/W3" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 set(BOTAN_DIR "${CMAKE_INSTALL_PREFIX}")
 find_file(HAVE_BOTAN "botan/botan.h" PATHS "${BOTAN_DIR}/include" "${BOTAN_DIR}/include/botan-1.11/")
