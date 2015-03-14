@@ -31,7 +31,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(cppssh rt)
 endif()
 
-target_link_libraries(cppssh CDLogger)
+target_link_libraries(cppssh CDLogger ${HAVE_BOTAN_LIB})
 
 set_property(TARGET cppssh PROPERTY CXX_STANDARD 11)
 install(TARGETS cppssh DESTINATION lib)
