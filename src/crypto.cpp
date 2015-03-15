@@ -61,28 +61,37 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
 
 bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
 {
-    bool ret = true;
+    bool ret = false;
     Botan::secure_vector<Botan::byte> macStr;
 
-    _encrypt->process_msg(packet);
-    *crypted = _encrypt->read_all(_encrypt->message_count() - 1);
-
-    if (_hmacOut != NULL)
+    try
     {
-        CppsshPacket mac(&macStr);
-        mac.addInt(seq);
-        macStr += packet;
-        *hmac = _hmacOut->process(macStr);
+        _encrypt->process_msg(packet);
+        *crypted = _encrypt->read_all(_encrypt->message_count() - 1);
+
+        if (_hmacOut != NULL)
+        {
+            CppsshPacket mac(&macStr);
+            mac.addInt(seq);
+            macStr += packet;
+            *hmac = _hmacOut->process(macStr);
+        }
+
+        // reset the IV (nonce)
+        _encryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
+        ret = true;
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
 
-    // reset the IV (nonce)
-    _encryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
     return ret;
 }
 
 bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len)
 {
-    bool ret = true;
+    bool ret = false;
     uint32_t pLen = packet.size();
 
     if (len % _decryptBlock)
@@ -94,29 +103,43 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, c
     {
         len = pLen;
     }
+    try
+    {
+        _decrypt->process_msg(packet.data(), len);
+        *decrypted = _decrypt->read_all(_decrypt->message_count() - 1);
 
-    _decrypt->process_msg(packet.data(), len);
-    *decrypted = _decrypt->read_all(_decrypt->message_count() - 1);
+        // reset the IV (nonce)
+        _decryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
+        ret = true;
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
 
-    // reset the IV (nonce)
-    _decryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
     return ret;
 }
 
 void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
 {
     Botan::secure_vector<Botan::byte> macStr;
-
-    if (_hmacIn)
+    try
     {
-        CppsshPacket mac(&macStr);
-        mac.addInt(seq);
-        macStr += packet;
-        *hmac = _hmacIn->process(macStr);
+        if (_hmacIn)
+        {
+            CppsshPacket mac(&macStr);
+            mac.addInt(seq);
+            macStr += packet;
+            *hmac = _hmacIn->process(macStr);
+        }
+        else
+        {
+            hmac->clear();
+        }
     }
-    else
+    catch (const std::exception& ex)
     {
-        hmac->clear();
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
 }
 
@@ -250,34 +273,40 @@ bool CppsshCrypto::negotiatedCmprsS2c(const std::string& cmprsAlgo)
 
 bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
 {
-    bool ret = true;
+    bool ret = false;
     std::string dlGroup;
     switch (_kexMethod)
     {
         case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
             dlGroup = "modp/ietf/1024";
+            ret = true;
             break;
 
         case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
             dlGroup = "modp/ietf/2048";
+            ret = true;
             break;
 
         default:
             cdLog(LogLevel::Error) << "Undefined DH Group: '" << _kexMethod << "'.";
-            ret = false;
             break;
     }
-    if (ret == true)
+    try
     {
-        _privKexKey.reset(new Botan::DH_PrivateKey(*CppsshImpl::RNG, Botan::DL_Group(dlGroup)));
-        Botan::DH_PublicKey pubKexKey = *_privKexKey;
-
-        publicKey = pubKexKey.get_y();
-        if (publicKey.is_zero())
+        if (ret == true)
         {
-            ret = false;
+            _privKexKey.reset(new Botan::DH_PrivateKey(*CppsshImpl::RNG, Botan::DL_Group(dlGroup)));
+            Botan::DH_PublicKey pubKexKey = *_privKexKey;
+
+            publicKey = pubKexKey.get_y();
+            ret = !publicKey.is_zero();
         }
     }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
+
     return ret;
 }
 
@@ -303,7 +332,7 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Bota
     }
     catch (const std::exception& ex)
     {
-        cdLog(LogLevel::Error) << "Exception " << ex.what();
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
     return ret;
 }
@@ -311,19 +340,26 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Bota
 bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val)
 {
     bool ret = false;
-    Botan::HashFunction* hashIt = NULL;
-    std::string hashAlgo = getHashAlgo();
-    if (hashAlgo.length() > 0)
+    try
     {
-        hashIt = Botan::get_hash_function(hashAlgo);
-    }
+        Botan::HashFunction* hashIt = NULL;
+        std::string hashAlgo = getHashAlgo();
+        if (hashAlgo.length() > 0)
+        {
+            hashIt = Botan::get_hash_function(hashAlgo);
+        }
 
-    if (hashIt != NULL)
+        if (hashIt != NULL)
+        {
+            _H = hashIt->process(val);
+            *result = _H;
+            delete (hashIt);
+            ret = true;
+        }
+    }
+    catch (const std::exception& ex)
     {
-        _H = hashIt->process(val);
-        *result = _H;
-        delete (hashIt);
-        ret = true;
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
 
     return ret;
@@ -331,32 +367,34 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Bot
 
 bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig)
 {
-    std::shared_ptr<Botan::DSA_PublicKey> dsaKey;
-    std::shared_ptr<Botan::RSA_PublicKey> rsaKey;
-    std::unique_ptr<Botan::PK_Verifier> verifier;
-    Botan::secure_vector<Botan::byte> sigType, sigData;
-    const CppsshConstPacket signaturePacket(&sig);
     bool result = false;
+    try
+    {
+        std::shared_ptr<Botan::DSA_PublicKey> dsaKey;
+        std::shared_ptr<Botan::RSA_PublicKey> rsaKey;
+        std::unique_ptr<Botan::PK_Verifier> verifier;
+        Botan::secure_vector<Botan::byte> sigType, sigData;
+        const CppsshConstPacket signaturePacket(&sig);
 
-    if (_H.empty() == true)
-    {
-        cdLog(LogLevel::Error) << "H was not initialzed.";
-        return false;
-    }
+        if (_H.empty() == true)
+        {
+            cdLog(LogLevel::Error) << "H was not initialzed.";
+            return false;
+        }
 
-    if (signaturePacket.getString(&sigType) == false)
-    {
-        cdLog(LogLevel::Error) << "Signature without type.";
-        return false;
-    }
-    if (signaturePacket.getString(&sigData) == false)
-    {
-        cdLog(LogLevel::Error) << "Signature without data.";
-        return false;
-    }
+        if (signaturePacket.getString(&sigType) == false)
+        {
+            cdLog(LogLevel::Error) << "Signature without type.";
+            return false;
+        }
+        if (signaturePacket.getString(&sigData) == false)
+        {
+            cdLog(LogLevel::Error) << "Signature without data.";
+            return false;
+        }
 
-    switch (_hostkeyMethod)
-    {
+        switch (_hostkeyMethod)
+        {
         case hostkeyMethods::SSH_DSS:
             dsaKey = getDSAKey(hostKey);
             if (dsaKey == NULL)
@@ -378,10 +416,10 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
         default:
             cdLog(LogLevel::Error) << "Hostkey algorithm: " << _hostkeyMethod << " not supported.";
             return false;
-    }
+        }
 
-    switch (_kexMethod)
-    {
+        switch (_kexMethod)
+        {
         case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
         case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
             if (dsaKey)
@@ -396,22 +434,27 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
 
         default:
             break;
-    }
-    if (verifier == NULL)
-    {
-        cdLog(LogLevel::Error) << "Key Exchange algorithm: " << _kexMethod << " not supported.";
-    }
-    else
-    {
-        result = verifier->verify_message(_H, sigData);
-        verifier.reset();
-    }
-    dsaKey.reset();
-    rsaKey.reset();
+        }
+        if (verifier == NULL)
+        {
+            cdLog(LogLevel::Error) << "Key Exchange algorithm: " << _kexMethod << " not supported.";
+        }
+        else
+        {
+            result = verifier->verify_message(_H, sigData);
+            verifier.reset();
+        }
+        dsaKey.reset();
+        rsaKey.reset();
 
-    if (result == false)
+        if (result == false)
+        {
+            cdLog(LogLevel::Error) << "Failure to verify host signature.";
+        }
+    }
+    catch (const std::exception& ex)
     {
-        cdLog(LogLevel::Error) << "Failure to verify host signature.";
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
     return result;
 }
@@ -449,9 +492,17 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secur
         return 0;
     }
 
-    Botan::DL_Group keyDL(p, q, g);
-    std::shared_ptr<Botan::DSA_PublicKey> pubKey(new Botan::DSA_PublicKey(keyDL, y));
-    return pubKey;
+    try
+    {
+        Botan::DL_Group keyDL(p, q, g);
+        std::shared_ptr<Botan::DSA_PublicKey> pubKey(new Botan::DSA_PublicKey(keyDL, y));
+        return pubKey;
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
+    return 0;
 }
 
 std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
@@ -478,8 +529,16 @@ std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secur
     {
         return 0;
     }
-    std::shared_ptr<Botan::RSA_PublicKey> pubKey(new Botan::RSA_PublicKey(n, e));
-    return pubKey;
+    try
+    {
+        std::shared_ptr<Botan::RSA_PublicKey> pubKey(new Botan::RSA_PublicKey(n, e));
+        return pubKey;
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
+    return 0;
 }
 
 std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
@@ -517,19 +576,26 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
 size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods method)
 {
     size_t keyLen = 0;
-
-    if (const Botan::BlockCipher* bc = Botan::get_block_cipher(name))
+    try
     {
-        keyLen = bc->key_spec().maximum_keylength();
-        if (method == cryptoMethods::BLOWFISH_CBC)
+        if (const Botan::BlockCipher* bc = Botan::get_block_cipher(name))
         {
-            keyLen = 16;
-        }
-        else if ((method == cryptoMethods::TWOFISH_CBC) || (method == cryptoMethods::TWOFISH256_CBC))
-        {
-            keyLen = 32;
+            keyLen = bc->key_spec().maximum_keylength();
+            if (method == cryptoMethods::BLOWFISH_CBC)
+            {
+                keyLen = 16;
+            }
+            else if ((method == cryptoMethods::TWOFISH_CBC) || (method == cryptoMethods::TWOFISH256_CBC))
+            {
+                keyLen = 32;
+            }
         }
     }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
+
     return keyLen;
 }
 
@@ -568,159 +634,175 @@ const char* CppsshCrypto::getHashAlgo()
 
 bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes)
 {
-    Botan::secure_vector<Botan::byte> hashBytes;
-    CppsshPacket hashBytesPacket(&hashBytes);
-    Botan::HashFunction* hashIt;
-    const char* algo = getHashAlgo();
-    uint32_t len;
-
-    if (algo == NULL)
+    bool ret = false;
+    try
     {
-        return false;
+        Botan::secure_vector<Botan::byte> hashBytes;
+        CppsshPacket hashBytesPacket(&hashBytes);
+        Botan::HashFunction* hashIt;
+        const char* algo = getHashAlgo();
+        uint32_t len;
+
+        if (algo != NULL)
+        {
+            hashIt = Botan::get_hash_function(algo);
+
+            if (hashIt == NULL)
+            {
+                cdLog(LogLevel::Error) << "Undefined HASH algorithm encountered while computing the key.";
+            }
+            else
+            {
+                hashBytesPacket.addVectorField(_K);
+                hashBytesPacket.addVector(_H);
+                hashBytesPacket.addByte(ID);
+                hashBytesPacket.addVector(_session->getSessionID());
+
+                *key = hashIt->process(hashBytes);
+                len = key->size();
+
+                while (len < nBytes)
+                {
+                    hashBytes.clear();
+                    hashBytesPacket.addVectorField(_K);
+                    hashBytesPacket.addVector(_H);
+                    hashBytesPacket.addVector(*key);
+                    *key += hashIt->process(hashBytes);
+                    len = key->size();
+                }
+                key->resize(nBytes);
+                delete (hashIt);
+                ret = true;
+            }
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
 
-    //hashIt = Botan::global_state().algorithm_factory().make_hash_function(algo);
-    hashIt = Botan::get_hash_function(algo);
-
-    if (hashIt == NULL)
-    {
-        cdLog(LogLevel::Error) << "Undefined HASH algorithm encountered while computing the key.";
-        return false;
-    }
-
-    hashBytesPacket.addVectorField(_K);
-    hashBytesPacket.addVector(_H);
-    hashBytesPacket.addByte(ID);
-    hashBytesPacket.addVector(_session->getSessionID());
-
-    *key = hashIt->process(hashBytes);
-    len = key->size();
-
-    while (len < nBytes)
-    {
-        hashBytes.clear();
-        hashBytesPacket.addVectorField(_K);
-        hashBytesPacket.addVector(_H);
-        hashBytesPacket.addVector(*key);
-        *key += hashIt->process(hashBytes);
-        len = key->size();
-    }
-    key->resize(nBytes);
-    delete (hashIt);
-    return true;
+    return ret;
 }
 
 bool CppsshCrypto::makeNewKeys()
 {
+    bool ret = false;
     std::string algo;
     uint32_t keyLen;
     Botan::secure_vector<Botan::byte> key;
     const Botan::HashFunction* hashAlgo;
 
-    //hashAlgo = af.prototype_hash_function(getHmacAlgo(_c2sMacMethod));
-    hashAlgo = Botan::get_hash_function(getHmacAlgo(_c2sMacMethod));
-    if (hashAlgo != NULL)
+    try
     {
-        _c2sMacDigestLen = hashAlgo->output_length();
+        hashAlgo = Botan::get_hash_function(getHmacAlgo(_c2sMacMethod));
+        if (hashAlgo != NULL)
+        {
+            _c2sMacDigestLen = hashAlgo->output_length();
+        }
+        algo = getCryptAlgo(_c2sCryptoMethod);
+        keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
+        if (keyLen == 0)
+        {
+            return false;
+        }
+        //_encryptBlock = Botan::block_size_of(algo);
+        _encryptBlock = Botan::get_block_cipher(algo)->block_size();
+        if (algo.length() == 0)
+        {
+            return false;
+        }
+
+        if (computeKey(&key, 'A', _encryptBlock) == false)
+        {
+            return false;
+        }
+        Botan::InitializationVector c2siv(key);
+
+        if (computeKey(&key, 'C', keyLen) == false)
+        {
+            return false;
+        }
+        Botan::SymmetricKey c2sKey(key);
+
+        if (computeKey(&key, 'E', _c2sMacDigestLen) == false)
+        {
+            return false;
+        }
+        Botan::SymmetricKey c2sMac(key);
+
+        const Botan::BlockCipher* blockCipher = Botan::get_block_cipher(algo);
+        _encryptFilter = new Botan::Transformation_Filter(
+            new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
+
+        _encryptFilter->set_key(c2sKey);
+        _encryptFilter->set_iv(c2siv);
+        _encrypt.reset(new Botan::Pipe(_encryptFilter));
+
+        if (hashAlgo != NULL)
+        {
+            _hmacOut.reset(new Botan::HMAC(hashAlgo->clone()));
+            _hmacOut->set_key(c2sMac);
+        }
+        //  if (c2sCmprsMethod == ZLIB) compress = new Pipe (new Zlib_Compression(9));
+
+        //hashAlgo = af.prototype_hash_function(getHmacAlgo(_s2cMacMethod));
+        hashAlgo = Botan::get_hash_function(getHmacAlgo(_s2cMacMethod));
+        if (hashAlgo != NULL)
+        {
+            _s2cMacDigestLen = hashAlgo->output_length();
+        }
+        algo = getCryptAlgo(_s2cCryptoMethod);
+        keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
+        if (keyLen == 0)
+        {
+            return false;
+        }
+        _decryptBlock = Botan::get_block_cipher(algo)->block_size();
+        if (algo.length() == 0)
+        {
+            return false;
+        }
+
+        if (computeKey(&key, 'B', _decryptBlock) == false)
+        {
+            return false;
+        }
+        Botan::InitializationVector s2civ(key);
+
+        if (computeKey(&key, 'D', keyLen) == false)
+        {
+            return false;
+        }
+        Botan::SymmetricKey s2cKey(key);
+
+        if (computeKey(&key, 'F', _s2cMacDigestLen) == false)
+        {
+            return false;
+        }
+        Botan::SymmetricKey s2cMac(key);
+
+        //blockCipher = af.prototype_block_cipher(algo);
+        blockCipher = Botan::get_block_cipher(algo);
+        _decryptFilter = new Botan::Transformation_Filter(
+            new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
+
+        _decryptFilter->set_key(s2cKey);
+        _decryptFilter->set_iv(s2civ);
+        _decrypt.reset(new Botan::Pipe(_decryptFilter));
+
+        if (hashAlgo != NULL)
+        {
+            _hmacIn.reset(new Botan::HMAC(hashAlgo->clone()));
+            _hmacIn->set_key(s2cMac);
+        }
+        //  if (s2cCmprsMethod == ZLIB) decompress = new Pipe (new Zlib_Decompression);
+        ret = true;
     }
-    algo = getCryptAlgo(_c2sCryptoMethod);
-    keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
-    if (keyLen == 0)
+    catch (const std::exception& ex)
     {
-        return false;
-    }
-    //_encryptBlock = Botan::block_size_of(algo);
-    _encryptBlock = Botan::get_block_cipher(algo)->block_size();
-    if (algo.length() == 0)
-    {
-        return false;
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
 
-    if (computeKey(&key, 'A', _encryptBlock) == false)
-    {
-        return false;
-    }
-    Botan::InitializationVector c2siv(key);
-
-    if (computeKey(&key, 'C', keyLen) == false)
-    {
-        return false;
-    }
-    Botan::SymmetricKey c2sKey(key);
-
-    if (computeKey(&key, 'E', _c2sMacDigestLen) == false)
-    {
-        return false;
-    }
-    Botan::SymmetricKey c2sMac(key);
-
-    const Botan::BlockCipher* blockCipher = Botan::get_block_cipher(algo);
-    _encryptFilter = new Botan::Transformation_Filter(
-        new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
-
-    _encryptFilter->set_key(c2sKey);
-    _encryptFilter->set_iv(c2siv);
-    _encrypt.reset(new Botan::Pipe(_encryptFilter));
-
-    if (hashAlgo != NULL)
-    {
-        _hmacOut.reset(new Botan::HMAC(hashAlgo->clone()));
-        _hmacOut->set_key(c2sMac);
-    }
-    //  if (c2sCmprsMethod == ZLIB) compress = new Pipe (new Zlib_Compression(9));
-
-    //hashAlgo = af.prototype_hash_function(getHmacAlgo(_s2cMacMethod));
-    hashAlgo = Botan::get_hash_function(getHmacAlgo(_s2cMacMethod));
-    if (hashAlgo != NULL)
-    {
-        _s2cMacDigestLen = hashAlgo->output_length();
-    }
-    algo = getCryptAlgo(_s2cCryptoMethod);
-    keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
-    if (keyLen == 0)
-    {
-        return false;
-    }
-    _decryptBlock = Botan::get_block_cipher(algo)->block_size();
-    if (algo.length() == 0)
-    {
-        return false;
-    }
-
-    if (computeKey(&key, 'B', _decryptBlock) == false)
-    {
-        return false;
-    }
-    Botan::InitializationVector s2civ(key);
-
-    if (computeKey(&key, 'D', keyLen) == false)
-    {
-        return false;
-    }
-    Botan::SymmetricKey s2cKey(key);
-
-    if (computeKey(&key, 'F', _s2cMacDigestLen) == false)
-    {
-        return false;
-    }
-    Botan::SymmetricKey s2cMac(key);
-
-    //blockCipher = af.prototype_block_cipher(algo);
-    blockCipher = Botan::get_block_cipher(algo);
-    _decryptFilter = new Botan::Transformation_Filter(
-        new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
-
-    _decryptFilter->set_key(s2cKey);
-    _decryptFilter->set_iv(s2civ);
-    _decrypt.reset(new Botan::Pipe(_decryptFilter));
-
-    if (hashAlgo != NULL)
-    {
-        _hmacIn.reset(new Botan::HMAC(hashAlgo->clone()));
-        _hmacIn->set_key(s2cMac);
-    }
-    //  if (s2cCmprsMethod == ZLIB) decompress = new Pipe (new Zlib_Decompression);
-
-    return true;
+    return ret;
 }
 

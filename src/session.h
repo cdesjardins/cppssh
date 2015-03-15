@@ -28,6 +28,8 @@ class CppsshTransport;
 class CppsshCrypto;
 class CppsshChannel;
 
+#define CPPSSH_EXCEPTION "Exception: " << __FILENAME__ << "(" << __LINE__ << "): " << ex.what()
+
 class CppsshSession
 {
 public:
