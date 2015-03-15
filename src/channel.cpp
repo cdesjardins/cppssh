@@ -37,6 +37,11 @@ CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
 {
 }
 
+CppsshChannel::~CppsshChannel()
+{
+    _channels.clear();
+}
+
 bool CppsshChannel::establish(const std::string& host, short port)
 {
     bool ret = false;
@@ -133,7 +138,6 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 void CppsshChannel::disconnect()
 {
     cdLog(LogLevel::Debug) << "disconnect[" << _session->getConnectionId() << "]";
-    _channels.clear();
 }
 
 void CppsshChannel::handleEof(const Botan::secure_vector<Botan::byte>& buf)
@@ -644,7 +648,7 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
     }
     catch (const std::exception& ex)
     {
-        cdLog(LogLevel::Error) << "handleReceived " << ex.what();
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
         CppsshDebug::dumpStack(_session->getConnectionId());
     }
 }
