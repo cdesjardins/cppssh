@@ -32,7 +32,8 @@
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
-    _mainChannel(0)
+    _mainChannel(0),
+    _x11ReqSuccess(false)
 {
 }
 
@@ -261,14 +262,21 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
     //uint32_t originatorPort = openPacket.getInt();
     if (channelName == "x11")
     {
-        uint32_t rxChannel;
-        if (createNewSubChannel(channelName, windowSend, txChannel, maxPacket, &rxChannel) == true)
+        if (_x11ReqSuccess == false)
         {
-            sendOpenConfirmation(rxChannel);
+            sendOpenFailure(txChannel, SSH2_OPEN_CONNECT_FAILED)
         }
         else
         {
-            sendOpenFailure(txChannel, SSH2_OPEN_RESOURCE_SHORTAGE);
+            uint32_t rxChannel;
+            if (createNewSubChannel(channelName, windowSend, txChannel, maxPacket, &rxChannel) == true)
+            {
+                sendOpenConfirmation(rxChannel);
+            }
+            else
+            {
+                sendOpenFailure(txChannel, SSH2_OPEN_RESOURCE_SHORTAGE);
+            }
         }
     }
     else
@@ -497,6 +505,10 @@ bool CppsshChannel::getX11()
         try
         {
             ret = _channels.at(_mainChannel)->doChannelRequest("x11-req", x11req);
+            if (ret == true)
+            {
+                _x11ReqSuccess = true;
+            }
         }
         catch (const std::exception& ex)
         {

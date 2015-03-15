@@ -70,6 +70,7 @@ private:
     CppsshTsQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;
     CppsshTsMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
     uint32_t _mainChannel;
+    bool _x11ReqSuccess;
     friend class CppsshX11Channel;
 };
 
