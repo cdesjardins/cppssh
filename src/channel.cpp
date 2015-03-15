@@ -264,7 +264,7 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
     {
         if (_x11ReqSuccess == false)
         {
-            sendOpenFailure(txChannel, SSH2_OPEN_CONNECT_FAILED)
+            sendOpenFailure(txChannel, SSH2_OPEN_CONNECT_FAILED);
         }
         else
         {
