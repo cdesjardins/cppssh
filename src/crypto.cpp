@@ -283,25 +283,29 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
 
 bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Botan::BigInt& f)
 {
-    //Botan::DH_KA_Operation dhop(*_privKexKey, *CppsshImpl::RNG);
-    //Botan::PK_Ops::Key_Agreement *dhop = Botan::get_pbkdf("DH");
-    //Botan::SymmetricKey negotiated = dhop->agree(buf.get(), f.bytes());
-    Botan::PK_Key_Agreement pkka(*_privKexKey, "Raw");
-    std::vector<Botan::byte> buf;
-    buf.resize(f.bytes());
-    Botan::BigInt::encode(buf.data(), f);
-    Botan::SymmetricKey negotiated = pkka.derive_key(f.bytes(), buf);
-
-    if (!negotiated.length())
+    bool ret = false;
+    try
     {
-        return false;
-    }
+        Botan::PK_Key_Agreement pkka(*_privKexKey, "Raw");
+        std::vector<Botan::byte> buf;
+        buf.resize(f.bytes());
+        Botan::BigInt::encode(buf.data(), f);
+        Botan::SymmetricKey negotiated = pkka.derive_key(f.bytes(), buf);
 
-    Botan::BigInt Kint(negotiated.begin(), negotiated.length());
-    CppsshConstPacket::bn2vector(result, Kint);
-    _K = *result;
-    _privKexKey.reset();
-    return true;
+        if (negotiated.length() > 0)
+        {
+            Botan::BigInt Kint(negotiated.begin(), negotiated.length());
+            CppsshConstPacket::bn2vector(result, Kint);
+            _K = *result;
+            _privKexKey.reset();
+            ret = true;
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << "Exception " << ex.what();
+    }
+    return ret;
 }
 
 bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val)
@@ -311,7 +315,6 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Bot
     std::string hashAlgo = getHashAlgo();
     if (hashAlgo.length() > 0)
     {
-        //hashIt = Botan::global_state().algorithm_factory().make_hash_function(hashAlgo);
         hashIt = Botan::get_hash_function(hashAlgo);
     }
 
