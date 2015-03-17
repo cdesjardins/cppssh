@@ -39,6 +39,7 @@ CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
 
 CppsshChannel::~CppsshChannel()
 {
+    cdLog(LogLevel::Debug) << "~CppsshChannel[" << _session->getConnectionId() << "]";
     _channels.clear();
 }
 
