@@ -91,7 +91,7 @@ void CppsshTransportCrypto::rxThread()
                         }
                     }
                 }
-                if (cryptoLen > _session->_crypto->getDecryptBlock())
+                if ((cryptoLen > _session->_crypto->getDecryptBlock()) && (_in.size() >= cryptoLen))
                 {
                     Botan::secure_vector<Botan::byte> tmpVar;
                     tmpVar = Botan::secure_vector<Botan::byte>(_in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
