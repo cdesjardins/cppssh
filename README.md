@@ -2,7 +2,7 @@ To build botan:
 
 Windows:
 ```
-configure.py --disable-shared --disable-modules=selftest,tls --prefix=C:\Users\chrisd\software_devel\repo\install --enable-debug --cpu=i386 --via-amalgamation --maintainer-mode
+configure.py --disable-shared --disable-modules=selftest,tls --prefix=$HOME\software_devel\repo\install --build-mode=debug --cpu=i386 --via-amalgamation --maintainer-mode
 ```
 
 Then update the makefile with:
