@@ -66,6 +66,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
 
 int main(int argc, char** argv)
 {
+    std::cout << "Test program for cppssh API level: " << Cppssh::getAPILevel() << std::endl;
     if (argc != 4)
     {
         std::cerr << "Error: Three arguments required: " << argv[0] << " <hostname> <username> <password>" << std::endl;
