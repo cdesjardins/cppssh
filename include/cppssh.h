@@ -30,10 +30,9 @@ class CppsshLogger;
 class CppsshConstPacket;
 class CppsshChannel;
 
-enum CppsshApiLevel
-{
-    CPPSSH_API_LEVEL_0,
-};
+#define CPPSSH_API_LEVEL_0          0
+
+#define CPPSSH_API_LEVEL_CURRENT    CPPSSH_API_LEVEL_0
 
 class Cppssh
 {
@@ -55,8 +54,6 @@ public:
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-
-    CPPSSH_EXPORT static CppsshApiLevel getAPILevel();
 
 private:
     static std::shared_ptr<CppsshImpl> s_cppsshInst;

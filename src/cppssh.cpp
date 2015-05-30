@@ -22,11 +22,6 @@
 
 std::shared_ptr<CppsshImpl> Cppssh::s_cppsshInst;
 
-CppsshApiLevel Cppssh::getAPILevel()
-{
-    return CPPSSH_API_LEVEL_0;
-}
-
 void Cppssh::create()
 {
     if (s_cppsshInst == NULL)
