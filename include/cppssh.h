@@ -65,7 +65,7 @@ public:
     CppsshMessage& operator=(const CppsshMessage&);
     CPPSSH_EXPORT CppsshMessage();
     CPPSSH_EXPORT virtual ~CppsshMessage();
-    CPPSSH_EXPORT const uint8_t* const message() const;
+    CPPSSH_EXPORT const uint8_t* message() const;
     CPPSSH_EXPORT size_t length() const;
     friend class CppsshLogger;
     friend class CppsshConstPacket;

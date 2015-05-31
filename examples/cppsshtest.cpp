@@ -1,5 +1,5 @@
 #include "cppssh.h"
-#include "Logger.h"
+#include "CDLogger/Logger.h"
 #include <iostream>
 #include <vector>
 #include <thread>

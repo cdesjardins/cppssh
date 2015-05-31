@@ -440,7 +440,7 @@ bool CppsshChannel::getShell()
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addString("dumb");
+    packet.addString("xterm-color");
     packet.addInt(80);
     packet.addInt(24);
     packet.addInt(0);

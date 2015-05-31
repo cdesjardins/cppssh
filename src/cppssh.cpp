@@ -95,7 +95,7 @@ CppsshMessage::~CppsshMessage()
 {
 }
 
-const uint8_t* const CppsshMessage::message() const
+const uint8_t* CppsshMessage::message() const
 {
     return _message.get();
 }

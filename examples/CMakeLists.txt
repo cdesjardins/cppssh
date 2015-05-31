@@ -1,4 +1,4 @@
-include_directories ( ../include ${CMAKE_CURRENT_SOURCE_DIR}/../../CDLogger/include)
+include_directories ( ../include ${CMAKE_CURRENT_SOURCE_DIR}/../../install/include)
 add_definitions(-DCPPSSH_STATIC)
 add_executable(cppsshtest cppsshtest.cpp)
 target_link_libraries(cppsshtest cppssh)
