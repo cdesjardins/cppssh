@@ -21,8 +21,6 @@
 #include "cppssh.h"
 #include <iterator>
 
-#define LOG_TAG "x11channel"
-
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
     : CppsshSubChannel(session, channelName)
 {

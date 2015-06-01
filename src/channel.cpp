@@ -25,9 +25,8 @@
 #include "x11channel.h"
 #include <sstream>
 #include <iomanip>
-
-#define LOG_TAG "channel"
 #include "debug.h"
+
 #define CPPSSH_RX_WINDOW_SIZE (CPPSSH_MAX_PACKET_LEN * 150)
 
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)

@@ -20,8 +20,6 @@
 #include "transportthreaded.h"
 #include "crypto.h"
 #include "channel.h"
-
-#define LOG_TAG "transportthreaded"
 #include "debug.h"
 
 CppsshTransportThreaded::CppsshTransportThreaded(const std::shared_ptr<CppsshSession>& session)

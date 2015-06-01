@@ -32,8 +32,6 @@
 #include "botan/transform_filter.h"
 #include <string>
 
-#define LOG_TAG "crypto"
-
 SMART_ENUM_DEFINE(macMethods);
 SMART_ENUM_DEFINE(kexMethods);
 SMART_ENUM_DEFINE(hostkeyMethods);

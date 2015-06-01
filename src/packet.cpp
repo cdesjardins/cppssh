@@ -29,7 +29,7 @@
 #else
 #   include <Winsock2.h>
 #endif
-#define LOG_TAG "packet"
+
 #define CPPSSH_PACKET_LENGTH_OFFS   0
 #define CPPSSH_PACKET_LENGTH_SIZE   4
 

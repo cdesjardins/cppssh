@@ -31,8 +31,6 @@
 #ifndef WIN32
 #include <sys/stat.h>
 #endif
-
-#define LOG_TAG "keys"
 #include "debug.h"
 
 const std::string CppsshKeys::HEADER_DSA = "-----BEGIN DSA PRIVATE KEY-----\n";

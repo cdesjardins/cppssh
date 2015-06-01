@@ -23,8 +23,6 @@
 #include "packet.h"
 #include "crypto.h"
 
-#define LOG_TAG "kex"
-
 CppsshKex::CppsshKex(const std::shared_ptr<CppsshSession>& session)
     : _session(session)
 {

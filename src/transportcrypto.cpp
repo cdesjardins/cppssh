@@ -19,8 +19,6 @@
 #include "transportcrypto.h"
 #include "crypto.h"
 #include "channel.h"
-
-#define LOG_TAG "transportcrypto"
 #include "debug.h"
 
 CppsshTransportCrypto::CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock)

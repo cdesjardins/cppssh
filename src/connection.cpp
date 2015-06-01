@@ -26,8 +26,6 @@
 #include "cppssh.h"
 #include "strtrim.h"
 
-#define LOG_TAG "connection"
-
 CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
     : _session(new CppsshSession(connectionId, timeout)),
     _connected(false)

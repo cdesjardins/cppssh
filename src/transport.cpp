@@ -24,8 +24,6 @@
 #include "messages.h"
 #include "x11channel.h"
 
-#define LOG_TAG "transport"
-
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
 #   define close closesocket
