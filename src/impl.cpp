@@ -28,7 +28,7 @@ std::vector<std::string> CppsshImpl::KEX_ALGORITHMS;
 std::vector<std::string> CppsshImpl::HOSTKEY_ALGORITHMS;
 std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
 
-std::unique_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
+Botan::RandomNumberGenerator* CppsshImpl::RNG;
 
 std::shared_ptr<CppsshImpl> CppsshImpl::create()
 {
@@ -56,13 +56,18 @@ std::shared_ptr<CppsshImpl> CppsshImpl::create()
 
     if (RNG == NULL)
     {
-        RNG.reset(new Botan::Serialized_RNG());
+        RNG = new Botan::Serialized_RNG();
     }
     return ret;
 }
 
 void CppsshImpl::destroy()
 {
+    if (RNG != NULL)
+    {
+        // FIXME: This causes SEGFAULT in qt apps
+        //delete RNG;
+    }
 }
 
 CppsshImpl::CppsshImpl()
@@ -71,7 +76,6 @@ CppsshImpl::CppsshImpl()
 
 CppsshImpl::~CppsshImpl()
 {
-    RNG.reset();
 }
 
 bool CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, const char* term)
@@ -192,3 +196,12 @@ std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connection
     return con;
 }
 
+bool CppsshImpl::checkConnectionId(const int connectionId)
+{
+    bool ret = false;
+    if ((connectionId >= 0) && (connectionId < (int)_connections.size()))
+    {
+        ret = true;
+    }
+    return ret;
+}

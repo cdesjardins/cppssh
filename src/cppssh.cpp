@@ -38,12 +38,27 @@ void Cppssh::destroy()
 
 bool Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, const char* term)
 {
-    return s_cppsshInst->connect(connectionId, host, port, username, privKeyFileNameOrPassword, timeout, term);
+    bool ret = false;
+    if (s_cppsshInst != NULL)
+    {
+        ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFileNameOrPassword, timeout, term);
+    }
+    return ret;
+}
+
+bool Cppssh::checkConnectionId(const int connectionId)
+{
+    bool ret = false;
+    if (s_cppsshInst != NULL)
+    {
+        ret = s_cppsshInst->checkConnectionId(connectionId);
+    }
+    return ret;
 }
 
 bool Cppssh::isConnected(const int connectionId)
 {
-    return s_cppsshInst->isConnected(connectionId);
+    return checkConnectionId(connectionId) && s_cppsshInst->isConnected(connectionId);
 }
 
 bool Cppssh::writeString(const int connectionId, const char* data)
@@ -53,22 +68,22 @@ bool Cppssh::writeString(const int connectionId, const char* data)
 
 bool Cppssh::write(const int connectionId, const uint8_t* data, size_t bytes)
 {
-    return s_cppsshInst->write(connectionId, data, bytes);
+    return checkConnectionId(connectionId) && s_cppsshInst->write(connectionId, data, bytes);
 }
 
 bool Cppssh::read(const int connectionId, CppsshMessage* data)
 {
-    return s_cppsshInst->read(connectionId, data);
+    return checkConnectionId(connectionId) && s_cppsshInst->read(connectionId, data);
 }
 
 bool Cppssh::windowSize(const int connectionId, const uint32_t cols, const uint32_t rows)
 {
-    return s_cppsshInst->windowSize(connectionId, cols, rows);
+    return checkConnectionId(connectionId) && s_cppsshInst->windowSize(connectionId, cols, rows);
 }
 
 bool Cppssh::close(const int connectionId)
 {
-    return s_cppsshInst->close(connectionId);
+    return checkConnectionId(connectionId) && s_cppsshInst->close(connectionId);
 }
 
 void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)

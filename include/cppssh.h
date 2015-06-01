@@ -60,6 +60,7 @@ public:
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
 private:
+    static bool checkConnectionId(const int connectionId);
     static std::shared_ptr<CppsshImpl> s_cppsshInst;
 };
 
