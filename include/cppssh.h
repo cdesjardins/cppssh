@@ -44,7 +44,11 @@ public:
     CPPSSH_EXPORT static void create();
     CPPSSH_EXPORT static void destroy();
     // Timeout is in milliseconds
-    CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout = 1000, bool shell = true);
+    // term is the TERM environment variable value (NULL for no shell)
+    CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port,
+        const char* username, const char* privKeyFileNameOrPassword,
+        unsigned int timeout = 1000, const char* term = "xterm-color");
+
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
     CPPSSH_EXPORT static bool write(const int connectionId, const uint8_t* data, size_t bytes);

@@ -48,7 +48,7 @@ CppsshConnection::~CppsshConnection()
     _session.reset();
 }
 
-bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, bool shell)
+bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, const char* term)
 {
     if (_session->_channel->establish(host, port) == false)
     {
@@ -98,10 +98,10 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if (shell == true)
+    if (term != NULL)
     {
         _session->_channel->getX11();
-        if (_session->_channel->getShell() == false)
+        if (_session->_channel->getShell(term) == false)
         {
             return false;
         }

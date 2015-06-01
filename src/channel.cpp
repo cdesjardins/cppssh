@@ -434,13 +434,13 @@ bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::sec
     return ret;
 }
 
-bool CppsshChannel::getShell()
+bool CppsshChannel::getShell(const char* term)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    packet.addString("xterm-color");
+    packet.addString(term);
     packet.addInt(80);
     packet.addInt(24);
     packet.addInt(0);

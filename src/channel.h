@@ -38,7 +38,7 @@ public:
     bool readMainChannel(CppsshMessage* data);
     bool windowSize(const uint32_t rows, const uint32_t cols);
     bool isConnected();
-    bool getShell();
+    bool getShell(const char* term);
     bool getX11();
     void handleReceived(const Botan::secure_vector<Botan::byte>& buf);
     bool flushOutgoingChannelData();
