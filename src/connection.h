@@ -33,7 +33,7 @@ public:
 
     bool write(const uint8_t* data, uint32_t bytes);
     bool read(CppsshMessage* data);
-    bool windowSize(const uint32_t cols, const uint32_t rows);
+    bool windowChange(const uint32_t cols, const uint32_t rows);
     bool isConnected();
 private:
     bool checkRemoteVersion();

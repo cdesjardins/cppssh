@@ -36,8 +36,7 @@ public:
     bool openChannel();
     bool writeMainChannel(const uint8_t* data, uint32_t bytes);
     bool readMainChannel(CppsshMessage* data);
-    bool windowSize(const uint32_t rows, const uint32_t cols);
-    bool isConnected();
+    bool windowChange(const uint32_t rows, const uint32_t cols);
     bool getShell(const char* term);
     bool getX11();
     void handleReceived(const Botan::secure_vector<Botan::byte>& buf);
@@ -127,7 +126,7 @@ public:
     bool flushOutgoingChannelData();
     bool writeChannel(const uint8_t* data, uint32_t bytes);
     bool readChannel(CppsshMessage* data);
-    bool windowSize(const uint32_t cols, const uint32_t rows);
+    bool windowChange(const uint32_t cols, const uint32_t rows);
     void setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket);
 
 protected:

@@ -38,7 +38,7 @@ public:
     bool isConnected(const int connectionId);
     bool write(const int connectionId, const uint8_t* data, size_t bytes);
     bool read(const int connectionId, CppsshMessage* data);
-    bool windowSize(const int connectionId, const uint32_t cols, const uint32_t rows);
+    bool windowChange(const int connectionId, const uint32_t cols, const uint32_t rows);
     bool close(const int connectionId);
 
     static void vecToCommaString(const std::vector<std::string>& vec, std::string* outstr);

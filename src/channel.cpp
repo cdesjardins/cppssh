@@ -110,16 +110,16 @@ bool CppsshChannel::readMainChannel(CppsshMessage* data)
     return ret;
 }
 
-bool CppsshChannel::windowSize(const uint32_t rows, const uint32_t cols)
+bool CppsshChannel::windowChange(const uint32_t rows, const uint32_t cols)
 {
     bool ret = false;
     try
     {
-        ret = _channels.at(_mainChannel)->windowSize(rows, cols);
+        ret = _channels.at(_mainChannel)->windowChange(rows, cols);
     }
     catch (const std::exception& ex)
     {
-        cdLog(LogLevel::Error) << "windowSize " << ex.what();
+        cdLog(LogLevel::Error) << "windowChange " << ex.what();
         CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
@@ -155,11 +155,6 @@ void CppsshChannel::handleClose(const Botan::secure_vector<Botan::byte>& buf)
     uint32_t rxChannel = packet.getInt();
     _channels.at(rxChannel)->handleClose();
     _channels.erase(rxChannel);
-}
-
-bool CppsshChannel::isConnected()
-{
-    return (_channels.size() > 0);
 }
 
 void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf)
@@ -358,13 +353,13 @@ bool CppsshSubChannel::readChannel(CppsshMessage* data)
     return ret;
 }
 
-bool CppsshSubChannel::windowSize(const uint32_t cols, const uint32_t rows)
+bool CppsshSubChannel::windowChange(const uint32_t cols, const uint32_t rows)
 {
     bool ret;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    cdLog(LogLevel::Debug) << "windowSize[" << _session->getConnectionId() << "]: (" << cols << ", " << rows << ")";
+    cdLog(LogLevel::Debug) << "windowChange[" << _session->getConnectionId() << "]: (" << cols << ", " << rows << ")";
 
     packet.addInt(cols);
     packet.addInt(rows);

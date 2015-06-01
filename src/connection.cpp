@@ -120,14 +120,14 @@ bool CppsshConnection::read(CppsshMessage* data)
     return _session->_channel->readMainChannel(data);
 }
 
-bool CppsshConnection::windowSize(const uint32_t cols, const uint32_t rows)
+bool CppsshConnection::windowChange(const uint32_t cols, const uint32_t rows)
 {
-    return _session->_channel->windowSize(cols, rows);
+    return _session->_channel->windowChange(cols, rows);
 }
 
 bool CppsshConnection::isConnected()
 {
-    return _session->_channel->isConnected();
+    return _connected;
 }
 
 bool CppsshConnection::checkRemoteVersion()

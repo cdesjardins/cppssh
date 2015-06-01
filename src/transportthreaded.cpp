@@ -111,7 +111,7 @@ void CppsshTransportThreaded::rxThread()
                     size = packet.getCryptoLength();
                 }
             }
-            if (incoming.empty() == false)
+            if ((_running == true) && (incoming.empty() == false))
             {
                 _session->_channel->handleReceived(incoming);
                 if (incoming.size() == size)

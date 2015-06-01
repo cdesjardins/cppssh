@@ -76,9 +76,9 @@ bool Cppssh::read(const int connectionId, CppsshMessage* data)
     return checkConnectionId(connectionId) && s_cppsshInst->read(connectionId, data);
 }
 
-bool Cppssh::windowSize(const int connectionId, const uint32_t cols, const uint32_t rows)
+bool Cppssh::windowChange(const int connectionId, const uint32_t cols, const uint32_t rows)
 {
-    return checkConnectionId(connectionId) && s_cppsshInst->windowSize(connectionId, cols, rows);
+    return checkConnectionId(connectionId) && s_cppsshInst->windowChange(connectionId, cols, rows);
 }
 
 bool Cppssh::close(const int connectionId)

@@ -53,7 +53,7 @@ public:
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
     CPPSSH_EXPORT static bool write(const int connectionId, const uint8_t* data, size_t bytes);
     CPPSSH_EXPORT static bool read(const int connectionId, CppsshMessage* data);
-    CPPSSH_EXPORT static bool windowSize(const int connectionId, const uint32_t cols, const uint32_t rows);
+    CPPSSH_EXPORT static bool windowChange(const int connectionId, const uint32_t cols, const uint32_t rows);
     CPPSSH_EXPORT static bool close(const int connectionId);
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
