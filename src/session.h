@@ -19,7 +19,7 @@
 #ifndef _SESSION_Hxx
 #define _SESSION_Hxx
 
-#include "Logger.h"
+#include "CDLogger/Logger.h"
 #include "botan/botan.h"
 #include <string>
 #include <memory>

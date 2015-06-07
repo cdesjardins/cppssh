@@ -21,7 +21,7 @@
 #include "messages.h"
 #include "transport.h"
 #include "packet.h"
-#include "Logger.h"
+#include "CDLogger/Logger.h"
 #include "x11channel.h"
 #include <sstream>
 #include <iomanip>

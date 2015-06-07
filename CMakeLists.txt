@@ -14,8 +14,10 @@ if (NOT HAVE_BOTAN)
 endif()
 string(FIND ${HAVE_BOTAN} "botan/botan.h" BOTAN_STR)
 string(SUBSTRING ${HAVE_BOTAN} 0 ${BOTAN_STR} HAVE_BOTAN)
-find_library(HAVE_BOTAN_LIB NAMES botan-1.11 PATHS "${BOTAN_DIR}/lib" "${BOTAN_DIR}" "${CMAKE_SOURCE_DIR}/botan/lib" "${CMAKE_SOURCE_DIR}/botan/")
-if (NOT HAVE_BOTAN_LIB)
+
+find_library(HAVE_BOTAN_DBG_LIB NAMES botan-1.11 PATHS "${BOTAN_DIR}/lib/Debug")
+find_library(HAVE_BOTAN_LIB NAMES botan-1.11 PATHS "${BOTAN_DIR}/lib")
+if ((NOT HAVE_BOTAN_LIB) OR (NOT HAVE_BOTAN_DBG_LIB))
     MESSAGE(FATAL_ERROR "Could not find Botan library")
 endif()
 
