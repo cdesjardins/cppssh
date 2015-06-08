@@ -30,7 +30,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(cppssh rt)
 endif()
-target_link_libraries(cppssh CDLogger optimized ${HAVE_BOTAN_LIB} debug ${HAVE_BOTAN_DBG_LIB})
+target_link_libraries(cppssh optimized ${HAVE_BOTAN_LIB} ${HAVE_CDLOGGER_LIB} debug ${HAVE_BOTAN_DBG_LIB} ${HAVE_CDLOGGER_DBG_LIB})
 
 include(deffilename)
 define_file_basename_for_sources(cppssh)
