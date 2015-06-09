@@ -39,6 +39,7 @@ CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
 CppsshConnection::~CppsshConnection()
 {
     cdLog(LogLevel::Debug) << "~CppsshConnection ";
+    _connected = false;
     _session->_channel->disconnect();
     _session->_transport.reset();
     _session->_channel.reset();
