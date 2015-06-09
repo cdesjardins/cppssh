@@ -23,7 +23,9 @@
 #include <fstream>
 #include <iterator>
 #include <iomanip>
-
+#ifdef NDEBUG
+#include "unparam.h"
+#endif
 #if !defined(WIN32) && !defined(__MINGW32__)
 #   include <arpa/inet.h>
 #else
@@ -318,8 +320,11 @@ bool CppsshPacket::addFile(const std::string& fileName)
 
 void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream* ss) const
 {
-#ifndef NDEBUG
-
+#ifdef NDEBUG
+    UNREF_PARAM(it);
+    UNREF_PARAM(len);
+    UNREF_PARAM(ss);
+#else
     if (len > 0)
     {
         size_t i;
@@ -338,7 +343,9 @@ void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_itera
 
 void CppsshConstPacket::dumpPacket(const std::string& tag) const
 {
-#ifndef NDEBUG
+#ifdef NDEBUG
+    UNREF_PARAM(tag);
+#else
     size_t cnt = 0;
     size_t offs = 0;
     std::stringstream ss;

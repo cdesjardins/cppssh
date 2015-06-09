@@ -240,6 +240,7 @@ void CppsshChannel::sendOpenFailure(uint32_t rxChannel, CppsshOpenFailureReason 
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket openFaulure(&buf);
     openFaulure.addByte(SSH2_MSG_CHANNEL_OPEN_FAILURE);
+    openFaulure.addInt(rxChannel);
     openFaulure.addInt(reason);
     openFaulure.addString("Bad request");
     openFaulure.addString("EN");

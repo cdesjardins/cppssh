@@ -24,10 +24,15 @@
 #include "messages.h"
 #include "x11channel.h"
 
+#ifdef WIN32
+#include "unparam.h"
+#endif
+
 #if defined(WIN32) || defined(__MINGW32__)
 #   define SOCKET_BUFFER_TYPE char
 #   define close closesocket
 #   define SOCK_CAST (char*)
+
 class WSockInitializer
 {
 public:
@@ -143,7 +148,7 @@ bool CppsshTransport::establishX11()
 bool CppsshTransport::establishLocalX11(const std::string& display)
 {
     bool ret = false;
-
+    UNREF_PARAM(display);
     _sock = socket(AF_INET, SOCK_STREAM, 0);
     if (_sock < 0)
     {
