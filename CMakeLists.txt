@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../include")
 include(compilerflags)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../install")
 # undo warning level 4 because it makes too much noise from botan :(
-string(REGEX REPLACE "/W4" "/W3" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+#string(REGEX REPLACE "/W4" "/W3" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 find_file(HAVE_BOTAN "botan/botan.h" PATHS "${CMAKE_INSTALL_PREFIX}/include" "${CMAKE_INSTALL_PREFIX}/include/botan-1.11/")
 if (NOT HAVE_BOTAN)
