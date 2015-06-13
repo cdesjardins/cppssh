@@ -43,7 +43,7 @@ public:
 
     CPPSSH_EXPORT static char* getCppsshVersion(bool detailed);
     CPPSSH_EXPORT static int getApiLevel();
-    CPPSSH_EXPORT static void create()
+    static void create()
     {
         create(CPPSSH_API_LEVEL_CURRENT);
     }
@@ -64,7 +64,7 @@ public:
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
 private:
-    static void create(int apiLevel);
+    CPPSSH_EXPORT static void create(int apiLevel);
     static bool checkConnectionId(const int connectionId);
     static std::shared_ptr<CppsshImpl> s_cppsshInst;
 };
