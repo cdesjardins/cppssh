@@ -41,7 +41,7 @@ public:
     Cppssh(const Cppssh&) = delete;
     Cppssh& operator=(const Cppssh&) = delete;
 
-    CPPSSH_EXPORT static char* getCppsshVersion(bool detailed);
+    CPPSSH_EXPORT static const char* getCppsshVersion(bool detailed);
     CPPSSH_EXPORT static int getApiLevel();
     static void create()
     {
