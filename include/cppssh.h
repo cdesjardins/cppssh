@@ -41,7 +41,12 @@ public:
     Cppssh(const Cppssh&) = delete;
     Cppssh& operator=(const Cppssh&) = delete;
 
-    CPPSSH_EXPORT static void create();
+    CPPSSH_EXPORT static char* getCppsshVersion(bool detailed);
+    CPPSSH_EXPORT static int getApiLevel();
+    CPPSSH_EXPORT static void create()
+    {
+        create(CPPSSH_API_LEVEL_CURRENT);
+    }
     CPPSSH_EXPORT static void destroy();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (NULL for no shell)
@@ -59,7 +64,9 @@ public:
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
+
 private:
+    static void create(int apiLevel);
     static bool checkConnectionId(const int connectionId);
     static std::shared_ptr<CppsshImpl> s_cppsshInst;
 };
