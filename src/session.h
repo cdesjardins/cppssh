@@ -92,7 +92,7 @@ private:
     Botan::secure_vector<Botan::byte> _sessionID;
     unsigned int _timeout;
     const int _connectionId;
-    CppsshSession & operator=(const CppsshSession &) = delete;
+    CppsshSession& operator=(const CppsshSession&) = delete;
 };
 
 #endif

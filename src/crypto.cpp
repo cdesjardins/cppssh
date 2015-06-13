@@ -393,45 +393,45 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
 
         switch (_hostkeyMethod)
         {
-        case hostkeyMethods::SSH_DSS:
-            dsaKey = getDSAKey(hostKey);
-            if (dsaKey == NULL)
-            {
-                cdLog(LogLevel::Error) << "DSA key not generated.";
-                return false;
-            }
-            break;
+            case hostkeyMethods::SSH_DSS:
+                dsaKey = getDSAKey(hostKey);
+                if (dsaKey == NULL)
+                {
+                    cdLog(LogLevel::Error) << "DSA key not generated.";
+                    return false;
+                }
+                break;
 
-        case hostkeyMethods::SSH_RSA:
-            rsaKey = getRSAKey(hostKey);
-            if (rsaKey == NULL)
-            {
-                cdLog(LogLevel::Error) << "RSA key not generated.";
-                return false;
-            }
-            break;
+            case hostkeyMethods::SSH_RSA:
+                rsaKey = getRSAKey(hostKey);
+                if (rsaKey == NULL)
+                {
+                    cdLog(LogLevel::Error) << "RSA key not generated.";
+                    return false;
+                }
+                break;
 
-        default:
-            cdLog(LogLevel::Error) << "Hostkey algorithm: " << _hostkeyMethod << " not supported.";
-            return false;
+            default:
+                cdLog(LogLevel::Error) << "Hostkey algorithm: " << _hostkeyMethod << " not supported.";
+                return false;
         }
 
         switch (_kexMethod)
         {
-        case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
-        case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
-            if (dsaKey)
-            {
-                verifier.reset(new Botan::PK_Verifier(*dsaKey, "EMSA1(SHA-1)"));
-            }
-            else if (rsaKey)
-            {
-                verifier.reset(new Botan::PK_Verifier(*rsaKey, "EMSA3(SHA-1)"));
-            }
-            break;
+            case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
+            case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
+                if (dsaKey)
+                {
+                    verifier.reset(new Botan::PK_Verifier(*dsaKey, "EMSA1(SHA-1)"));
+                }
+                else if (rsaKey)
+                {
+                    verifier.reset(new Botan::PK_Verifier(*rsaKey, "EMSA3(SHA-1)"));
+                }
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
         if (verifier == NULL)
         {

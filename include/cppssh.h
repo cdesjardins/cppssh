@@ -47,12 +47,11 @@ public:
     {
         create(CPPSSH_API_LEVEL_CURRENT);
     }
+
     CPPSSH_EXPORT static void destroy();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (NULL for no shell)
-    CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port,
-        const char* username, const char* privKeyFileNameOrPassword,
-        unsigned int timeout = 1000, const char* term = "xterm-color");
+    CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout = 1000, const char* term = "xterm-color");
 
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
@@ -63,7 +62,6 @@ public:
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-
 
 private:
     static void create(int apiLevel);

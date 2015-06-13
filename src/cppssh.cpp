@@ -24,7 +24,7 @@ std::shared_ptr<CppsshImpl> Cppssh::s_cppsshInst;
 
 char* Cppssh::getCppsshVersion(bool detailed)
 {
-    char *ret = CPPSSH_SHORT_VERSION;
+    char* ret = CPPSSH_SHORT_VERSION;
     if (detailed == true)
     {
         ret = CPPSSH_FULL_VERSION;
