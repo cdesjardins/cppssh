@@ -47,7 +47,7 @@ CppsshConnection::~CppsshConnection()
     _session.reset();
 }
 
-bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, const char* term)
+bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFile, const char* password, const char* term)
 {
     if (_session->_channel->establish(host, port) == false)
     {
@@ -89,7 +89,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if ((authWithKey(username, privKeyFileNameOrPassword) == false) && (authWithPassword(username, privKeyFileNameOrPassword) == false))
+    if ((authWithKey(username, privKeyFile) == false) && (authWithPassword(username, password) == false))
     {
         return false;
     }

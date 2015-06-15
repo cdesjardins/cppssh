@@ -78,7 +78,7 @@ CppsshImpl::~CppsshImpl()
 {
 }
 
-bool CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, const char* term)
+bool CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)
 {
     bool ret = false;
     std::shared_ptr<CppsshConnection> con;
@@ -90,7 +90,7 @@ bool CppsshImpl::connect(int* connectionId, const char* host, const short port, 
     }
     if (con != NULL)
     {
-        ret = con->connect(host, port, username, privKeyFileNameOrPassword, term);
+        ret = con->connect(host, port, username, privKeyFile, password, term);
     }
     return ret;
 }

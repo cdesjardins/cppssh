@@ -19,7 +19,7 @@ void getOutFile(int channel, std::ofstream& outfile)
 void runConnectionTest(char* hostname, char* username, char* password)
 {
     int channel;
-    if (Cppssh::connect(&channel, hostname, 22, username, password, NUM_THREADS * 10000) == true)
+    if (Cppssh::connect(&channel, hostname, 22, username, password, password, NUM_THREADS * 10000) == true)
     {
         std::ofstream output;
         getOutFile(channel, output);

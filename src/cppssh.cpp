@@ -59,12 +59,12 @@ void Cppssh::destroy()
     s_cppsshInst.reset();
 }
 
-bool Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFileNameOrPassword, unsigned int timeout, const char* term)
+bool Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)
 {
     bool ret = false;
     if (s_cppsshInst != NULL)
     {
-        ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFileNameOrPassword, timeout, term);
+        ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, term);
     }
     return ret;
 }
