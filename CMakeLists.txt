@@ -7,15 +7,15 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../install")
 # undo warning level 4 because it makes too much noise from botan :(
 #string(REGEX REPLACE "/W4" "/W3" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-find_file(HAVE_BOTAN "botan/botan.h" PATHS "${CMAKE_INSTALL_PREFIX}/include" "${CMAKE_INSTALL_PREFIX}/include/botan-1.11/")
+find_file(HAVE_BOTAN "botan/botan.h" PATHS "${CMAKE_INSTALL_PREFIX}/include/botan-1.11/")
 if (NOT HAVE_BOTAN)
     MESSAGE(FATAL_ERROR "Could not find Botan includes ${CMAKE_INSTALL_PREFIX}")
 endif()
 string(FIND ${HAVE_BOTAN} "botan/botan.h" BOTAN_STR)
 string(SUBSTRING ${HAVE_BOTAN} 0 ${BOTAN_STR} HAVE_BOTAN)
 
-find_library(HAVE_BOTAN_DBG_LIB NAMES botan-1.11 PATHS "${CMAKE_INSTALL_PREFIX}/lib/botan/Debug")
-find_library(HAVE_BOTAN_LIB NAMES botan-1.11 PATHS "${CMAKE_INSTALL_PREFIX}/lib/botan/Release")
+find_library(HAVE_BOTAN_DBG_LIB NAMES botan botan-1.11 PATHS "${CMAKE_INSTALL_PREFIX}/lib/botan/Debug")
+find_library(HAVE_BOTAN_LIB NAMES botan botan-1.11 PATHS "${CMAKE_INSTALL_PREFIX}/lib/botan/Release")
 if ((NOT HAVE_BOTAN_LIB) OR (NOT HAVE_BOTAN_DBG_LIB))
     MESSAGE(FATAL_ERROR "Could not find Botan library")
 endif()
