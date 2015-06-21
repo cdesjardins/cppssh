@@ -24,6 +24,7 @@
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
     : CppsshSubChannel(session, channelName)
 {
+    cdLog(LogLevel::Debug) << "CppsshX11Channel";
 }
 
 CppsshX11Channel::~CppsshX11Channel()
@@ -46,6 +47,7 @@ void CppsshX11Channel::disconnect()
 bool CppsshX11Channel::startChannel()
 {
     bool ret = false;
+    cdLog(LogLevel::Debug) << "startChannel";
     _x11transport.reset(new CppsshTransport(_session));
     if (_x11transport->establishX11() == true)
     {

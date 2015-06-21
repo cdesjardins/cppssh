@@ -42,6 +42,7 @@ public:
     void handleReceived(const Botan::secure_vector<Botan::byte>& buf);
     bool flushOutgoingChannelData();
     void disconnect();
+    bool isConnected();
     bool waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf);
     static bool getRandomString(const int size, std::string* randomString);
 private:

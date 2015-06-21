@@ -74,9 +74,13 @@ bool CppsshChannel::openChannel()
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "openChannel " << ex.what();
-        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
+}
+
+bool CppsshChannel::isConnected()
+{
+    return _channels.find(_mainChannel) != _channels.cend();
 }
 
 bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
@@ -89,7 +93,6 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "writeMainChannel " << ex.what();
-        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -104,7 +107,6 @@ bool CppsshChannel::readMainChannel(CppsshMessage* data)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "readMainChannel " << ex.what();
-        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -119,7 +121,6 @@ bool CppsshChannel::windowChange(const uint32_t rows, const uint32_t cols)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "windowChange " << ex.what();
-        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -208,6 +209,7 @@ bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t
         {
             _channels.insert(std::pair<int, std::shared_ptr<CppsshSubChannel> >(chan, channel));
             *rxChannel = chan;
+            cdLog(LogLevel::Debug) << "createNewSubChannel " << channelName << " rxChannel: " << chan;
             ret = channel->startChannel();
             break;
         }
@@ -456,7 +458,6 @@ bool CppsshChannel::getShell(const char* term)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << "getShell " << ex.what();
-        CppsshDebug::dumpStack(_session->getConnectionId());
     }
     return ret;
 }
@@ -512,7 +513,6 @@ bool CppsshChannel::getX11()
         catch (const std::exception& ex)
         {
             cdLog(LogLevel::Error) << "getX11 " << ex.what();
-            CppsshDebug::dumpStack(_session->getConnectionId());
         }
     }
     return ret;
@@ -644,7 +644,6 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
     catch (const std::exception& ex)
     {
         cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
-        CppsshDebug::dumpStack(_session->getConnectionId());
     }
 }
 
@@ -672,7 +671,7 @@ CppsshSubChannel::CppsshSubChannel(const std::shared_ptr<CppsshSession>& session
 
 void CppsshSubChannel::handleEof()
 {
-    cdLog(LogLevel::Debug) << "handleeof " << _channelName << _txChannel;
+    cdLog(LogLevel::Debug) << "handleeof " << _channelName << " txChannel: " << _txChannel;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_EOF);
@@ -682,7 +681,7 @@ void CppsshSubChannel::handleEof()
 
 void CppsshSubChannel::handleClose()
 {
-    cdLog(LogLevel::Debug) << "handleclose " << _channelName << _txChannel;
+    cdLog(LogLevel::Debug) << "handleclose " << _channelName << " txChannel: " << _txChannel;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
     packet.addByte(SSH2_MSG_CHANNEL_CLOSE);

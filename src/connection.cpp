@@ -126,7 +126,7 @@ bool CppsshConnection::windowChange(const uint32_t cols, const uint32_t rows)
 
 bool CppsshConnection::isConnected()
 {
-    return _connected;
+    return _connected && _session->_channel->isConnected();
 }
 
 bool CppsshConnection::checkRemoteVersion()
