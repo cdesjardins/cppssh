@@ -46,10 +46,8 @@ public:
     {
         bool ret = false;
         std::unique_lock<std::mutex> lock(_queueMutex);
-        if (_queue.empty() == true)
-        {
-            _queueCondVar.wait_for(lock, std::chrono::milliseconds(timeout));
-        }
+
+        waitForData(lock, timeout* 6);
         if (_queue.empty() == false)
         {
             ret = true;
@@ -66,6 +64,32 @@ public:
     }
 
 private:
+
+    void waitForData(std::unique_lock<std::mutex>& lock, const int msTimeout)
+    {
+        if (msTimeout != 0)
+        {
+            // This function assumes that _queueMutex is locked already!
+            std::chrono::system_clock::time_point timeLimit = std::chrono::system_clock::now() + std::chrono::milliseconds(msTimeout);
+            while (_queue.empty() == true)
+            {
+                // if timeout is specified, then wait until the time is up
+                // otherwise wait forever (forever is msTimeout = -1)
+                if (msTimeout > 0)
+                {
+                    _queueCondVar.wait_until(lock, timeLimit);
+                    if (std::chrono::system_clock::now() >= timeLimit)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    _queueCondVar.wait(lock);
+                }
+            }
+        }
+    }
     std::mutex _queueMutex;
     std::condition_variable _queueCondVar;
     std::queue<T> _queue;

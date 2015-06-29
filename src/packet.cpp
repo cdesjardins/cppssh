@@ -243,12 +243,15 @@ void CppsshPacket::clear()
 void CppsshPacket::addVectorField(const Botan::secure_vector<Botan::byte>& vec)
 {
     addInt(vec.size());
-    (*_data) += vec;
+    addVector(vec);
 }
 
 void CppsshPacket::addVector(const Botan::secure_vector<Botan::byte>& vec)
 {
-    (*_data) += vec;
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        _data->push_back(vec[i]);
+    }
 }
 
 void CppsshPacket::addRawData(const uint8_t* data, uint32_t bytes)
@@ -262,7 +265,10 @@ void CppsshPacket::addRawData(const uint8_t* data, uint32_t bytes)
 void CppsshPacket::addString(const std::string& str)
 {
     addInt(str.length());
-    (*_data) += Botan::secure_vector<Botan::byte>(str.begin(), str.end());
+    for (size_t i = 0; i < str.length(); i++)
+    {
+        _data->push_back(str[i]);
+    }
 }
 
 void CppsshPacket::addInt(const uint32_t var)
