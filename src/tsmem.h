@@ -47,7 +47,7 @@ public:
         bool ret = false;
         std::unique_lock<std::mutex> lock(_queueMutex);
 
-        waitForData(lock, timeout* 6);
+        waitForData(lock, timeout * 6);
         if (_queue.empty() == false)
         {
             ret = true;
@@ -90,6 +90,7 @@ private:
             }
         }
     }
+
     std::mutex _queueMutex;
     std::condition_variable _queueCondVar;
     std::queue<T> _queue;
