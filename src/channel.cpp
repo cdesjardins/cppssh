@@ -304,7 +304,7 @@ bool CppsshSubChannel::flushOutgoingChannelData()
     while (_outgoingChannelData.size() > 0)
     {
         std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
-        if ((_outgoingChannelData.dequeue(&message) == true) && (message->size() > 0))
+        if ((_outgoingChannelData.dequeue(message) == true) && (message->size() > 0))
         {
             _windowSend -= message->size();
             Botan::secure_vector<Botan::byte> buf;
@@ -347,7 +347,7 @@ bool CppsshSubChannel::writeChannel(const uint8_t* data, uint32_t bytes)
 bool CppsshSubChannel::readChannel(CppsshMessage* data)
 {
     std::shared_ptr<CppsshMessage> m;
-    bool ret = _incomingChannelData.dequeue(&m, 1);
+    bool ret = _incomingChannelData.dequeue(m, 1);
     if (ret == true)
     {
         *data = *m;
@@ -375,7 +375,7 @@ bool CppsshSubChannel::handleChannelConfirm()
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
-    if (_incomingControlData.dequeue(&buf, _session->getTimeout()) == false)
+    if (_incomingControlData.dequeue(buf, _session->getTimeout()) == false)
     {
         cdLog(LogLevel::Error) << "New channel: " << /* channelId << FIXME: rx channel id */ " could not be open. ";
     }
@@ -413,7 +413,7 @@ bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::sec
     {
         if (wantReply == true)
         {
-            if ((_incomingControlData.dequeue(&buf, _session->getTimeout()) == true) &&
+            if ((_incomingControlData.dequeue(buf, _session->getTimeout()) == true) &&
                 (packet.getCommand() == SSH2_MSG_CHANNEL_SUCCESS))
             {
                 ret = true;
@@ -549,7 +549,7 @@ void CppsshChannel::handleIncomingGlobalData(const Botan::secure_vector<Botan::b
     _incomingGlobalData.enqueue(buf);
 }
 
-bool CppsshChannel::waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf)
+bool CppsshChannel::waitForGlobalMessage(Botan::secure_vector<Botan::byte>& buf)
 {
     return _incomingGlobalData.dequeue(buf, _session->getTimeout());
 }

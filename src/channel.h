@@ -24,6 +24,7 @@
 #include "messages.h"
 #include "tsmem.h"
 #include "transport.h"
+#include "QueuePtr/ThreadSafeQueue.h"
 
 class CppsshSubChannel;
 
@@ -43,7 +44,7 @@ public:
     bool flushOutgoingChannelData();
     void disconnect();
     bool isConnected();
-    bool waitForGlobalMessage(Botan::secure_vector<Botan::byte>* buf);
+    bool waitForGlobalMessage(Botan::secure_vector<Botan::byte>& buf);
     static bool getRandomString(const int size, std::string* randomString);
 private:
     void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
@@ -68,7 +69,7 @@ private:
     Botan::secure_vector<Botan::byte> _realX11Cookie;
     std::string _fakeX11Cookie;
 
-    CppsshTsQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;
+    ThreadSafeQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;
     CppsshTsMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
     uint32_t _mainChannel;
     bool _x11ReqSuccess;
@@ -131,9 +132,9 @@ public:
     void setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket);
 
 protected:
-    CppsshTsQueue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingChannelData;
-    CppsshTsQueue<std::shared_ptr<CppsshMessage> > _incomingChannelData;
-    CppsshTsQueue<Botan::secure_vector<Botan::byte> > _incomingControlData;
+    ThreadSafeQueue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingChannelData;
+    ThreadSafeQueue<std::shared_ptr<CppsshMessage> > _incomingChannelData;
+    ThreadSafeQueue<Botan::secure_vector<Botan::byte> > _incomingControlData;
 
     std::shared_ptr<CppsshSession> _session;
     uint32_t _windowRecv;

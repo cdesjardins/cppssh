@@ -71,10 +71,10 @@ void CppsshKex::constructLocalKex()
     localKex.addInt(0);
 }
 
-bool CppsshKex::sendInit(Botan::secure_vector<Botan::byte>* buf)
+bool CppsshKex::sendInit(Botan::secure_vector<Botan::byte>& buf)
 {
     bool ret = false;
-    CppsshPacket packet(buf);
+    CppsshPacket packet(&buf);
 
     constructLocalKex();
 
@@ -97,7 +97,7 @@ bool CppsshKex::handleInit()
 {
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
-    if (sendInit(&buf) == false)
+    if (sendInit(buf) == false)
     {
         return false;
     }
@@ -218,21 +218,21 @@ bool CppsshKex::handleInit()
     return true;
 }
 
-bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>* buf)
+bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>& buf)
 {
     bool ret = false;
     Botan::BigInt publicKey;
 
     if (_session->_crypto->getKexPublic(publicKey) == true)
     {
-        CppsshPacket dhInit(buf);
+        CppsshPacket dhInit(&buf);
         dhInit.addByte(SSH2_MSG_KEXDH_INIT);
         dhInit.addBigInt(publicKey);
 
         _e.clear();
         CppsshConstPacket::bn2vector(&_e, publicKey);
 
-        if (_session->_transport->sendMessage(*buf) == true)
+        if (_session->_transport->sendMessage(buf) == true)
         {
             if ((_session->_channel->waitForGlobalMessage(buf) == true) && (dhInit.getCommand() == SSH2_MSG_KEXDH_REPLY))
             {
@@ -253,7 +253,7 @@ bool CppsshKex::handleKexDHReply()
     Botan::secure_vector<Botan::byte> hSig, kVector, hVector;
     CppsshPacket packet(&buffer);
 
-    if (sendKexDHInit(&buffer) == false)
+    if (sendKexDHInit(buffer) == false)
     {
         return false;
     }
@@ -327,7 +327,7 @@ bool CppsshKex::sendKexNewKeys()
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_session->_channel->waitForGlobalMessage(&buf) == true) && (packet.getCommand() == SSH2_MSG_NEWKEYS))
+    if ((_session->_channel->waitForGlobalMessage(buf) == true) && (packet.getCommand() == SSH2_MSG_NEWKEYS))
     {
         Botan::secure_vector<Botan::byte> newKeys;
         CppsshPacket newKeysPacket(&newKeys);
