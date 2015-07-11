@@ -347,7 +347,7 @@ bool CppsshSubChannel::writeChannel(const uint8_t* data, uint32_t bytes)
 bool CppsshSubChannel::readChannel(CppsshMessage* data)
 {
     std::shared_ptr<CppsshMessage> m;
-    bool ret = _incomingChannelData.dequeue(&m);
+    bool ret = _incomingChannelData.dequeue(&m, 1);
     if (ret == true)
     {
         *data = *m;
