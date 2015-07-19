@@ -233,6 +233,7 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
 #endif
 void CppsshTransport::disconnect()
 {
+    cdLog(LogLevel::Info) << "CppsshTransport::disconnect";
     _running = false;
     close(_sock);
 }
@@ -327,13 +328,19 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
         {
             bufferLen += len;
         }
+        if (len == 0)
+        {
+            cdLog(LogLevel::Error) << "Connection dropped. Rx 0 bytes";
+            disconnect();
+            ret = false;
+        }
     }
     buffer->resize(bufferLen);
 
     if ((_running == true) && (len < 0))
     {
-        cdLog(LogLevel::Error) << "Connection dropped.";
-        _session->_channel->disconnect();
+        cdLog(LogLevel::Error) << "Connection dropped, Rx failed";
+        disconnect();
         ret = false;
     }
 
@@ -357,8 +364,8 @@ bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffe
         }
         if ((_running == true) && (len < 0))
         {
-            cdLog(LogLevel::Error) << "Connection dropped.";
-            _session->_channel->disconnect();
+            cdLog(LogLevel::Error) << "Connection dropped, Tx failed";
+            disconnect();
             break;
         }
         sent += len;

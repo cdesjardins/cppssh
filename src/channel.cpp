@@ -38,7 +38,7 @@ CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
 
 CppsshChannel::~CppsshChannel()
 {
-    _channels.clear();
+    disconnect();
 }
 
 bool CppsshChannel::establish(const std::string& host, short port)
@@ -80,7 +80,8 @@ bool CppsshChannel::openChannel()
 
 bool CppsshChannel::isConnected()
 {
-    return _channels.find(_mainChannel) != _channels.cend();
+    return ((_channels.find(_mainChannel) != _channels.cend()) &&
+            (_session->_transport->isRunning() == true));
 }
 
 bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
@@ -138,6 +139,7 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 void CppsshChannel::disconnect()
 {
     cdLog(LogLevel::Debug) << "disconnect[" << _session->getConnectionId() << "]";
+    _channels.clear();
 }
 
 void CppsshChannel::handleEof(const Botan::secure_vector<Botan::byte>& buf)
