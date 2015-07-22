@@ -76,7 +76,6 @@ int main(int argc, char** argv)
     {
         Logger::getLogger().addStream(&std::cout);
         Logger::getLogger().setMinLogLevel(LogLevel::Debug);
-        Cppssh::create();
         Cppssh::setOptions("aes256-cbc", "hmac-md5");
 
         //Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
@@ -91,7 +90,6 @@ int main(int argc, char** argv)
         {
             t.join();
         }
-        Cppssh::destroy();
     }
     catch (const std::exception& ex)
     {

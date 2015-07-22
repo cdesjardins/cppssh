@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <mutex>
 
 class CppsshImpl;
 class CppsshMessage;
@@ -43,16 +44,9 @@ public:
 
     CPPSSH_EXPORT static const char* getCppsshVersion(bool detailed);
     CPPSSH_EXPORT static int getApiLevel();
-    static void create()
-    {
-        create(CPPSSH_API_LEVEL_CURRENT);
-    }
-
-    CPPSSH_EXPORT static void destroy();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (NULL for no shell)
     CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const char* term = "xterm-color");
-
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
     CPPSSH_EXPORT static bool write(const int connectionId, const uint8_t* data, size_t bytes);
@@ -64,9 +58,15 @@ public:
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
 private:
-    CPPSSH_EXPORT static void create(int apiLevel);
+    static void create()
+    {
+        create(CPPSSH_API_LEVEL_CURRENT);
+    }
+
+    static void create(int apiLevel);
     static bool checkConnectionId(const int connectionId);
-    static std::shared_ptr<CppsshImpl> s_cppsshInst;
+    static std::unique_ptr<CppsshImpl> s_cppsshInst;
+    static std::mutex s_cppsshInstMutex;
 };
 
 class CppsshMessage

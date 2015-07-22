@@ -20,7 +20,28 @@
 #include "cppssh.h"
 #include "impl.h"
 
-std::shared_ptr<CppsshImpl> Cppssh::s_cppsshInst;
+std::unique_ptr<CppsshImpl> Cppssh::s_cppsshInst;
+std::mutex Cppssh::s_cppsshInstMutex;
+
+void Cppssh::create(int apiLevel)
+{
+    if (s_cppsshInst == NULL)
+    {
+        std::unique_lock<std::mutex> lock(s_cppsshInstMutex);
+        if (s_cppsshInst == NULL)
+        {
+            // A quick check to make sure that the header files in an end program are the
+            // same API level as the library was built with.
+            if (apiLevel != getApiLevel())
+            {
+                cdLog(LogLevel::Error) << "API level defined in cppssh.h differs from API level in the cppssh library." << std::endl;
+                cdLog(LogLevel::Error) << "Current API level: " << apiLevel << " API level in cppssh library: " << CPPSSH_API_LEVEL_CURRENT  << std::endl;
+                abort();
+            }
+            s_cppsshInst.reset(new CppsshImpl());
+        }
+    }
+}
 
 const char* Cppssh::getCppsshVersion(bool detailed)
 {
@@ -37,31 +58,10 @@ int Cppssh::getApiLevel()
     return CPPSSH_API_LEVEL_CURRENT;
 }
 
-void Cppssh::create(int apiLevel)
-{
-    // A quick check to make sure that the header files in an end program are the
-    // same API level as the library was built with.
-    if (apiLevel != getApiLevel())
-    {
-        cdLog(LogLevel::Error) << "API level defined in cppssh.h differs from API level in the cppssh library." << std::endl;
-        cdLog(LogLevel::Error) << "Current API level: " << apiLevel << " API level in cppssh library: " << CPPSSH_API_LEVEL_CURRENT  << std::endl;
-        abort();
-    }
-    if (s_cppsshInst == NULL)
-    {
-        s_cppsshInst = CppsshImpl::create();
-    }
-}
-
-void Cppssh::destroy()
-{
-    s_cppsshInst->destroy();
-    s_cppsshInst.reset();
-}
-
 bool Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)
 {
     bool ret = false;
+    create();
     if (s_cppsshInst != NULL)
     {
         ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, term);
@@ -72,6 +72,7 @@ bool Cppssh::connect(int* connectionId, const char* host, const short port, cons
 bool Cppssh::checkConnectionId(const int connectionId)
 {
     bool ret = false;
+    create();
     if (s_cppsshInst != NULL)
     {
         ret = s_cppsshInst->checkConnectionId(connectionId);
@@ -111,16 +112,19 @@ bool Cppssh::close(const int connectionId)
 
 void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
 {
+    create();
     CppsshImpl::setOptions(prefCipher, prefHmac);
 }
 
 bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
+    create();
     return CppsshImpl::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
 bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
+    create();
     return CppsshImpl::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 

@@ -30,9 +30,8 @@ std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
 
 Botan::RandomNumberGenerator* CppsshImpl::RNG;
 
-std::shared_ptr<CppsshImpl> CppsshImpl::create()
+CppsshImpl::CppsshImpl()
 {
-    std::shared_ptr<CppsshImpl> ret(new CppsshImpl());
     CppsshImpl::CIPHER_ALGORITHMS.push_back("aes256-cbc");
     CppsshImpl::CIPHER_ALGORITHMS.push_back("aes192-cbc");
     CppsshImpl::CIPHER_ALGORITHMS.push_back("twofish-cbc");
@@ -58,20 +57,6 @@ std::shared_ptr<CppsshImpl> CppsshImpl::create()
     {
         RNG = new Botan::Serialized_RNG();
     }
-    return ret;
-}
-
-void CppsshImpl::destroy()
-{
-    if (RNG != NULL)
-    {
-        // FIXME: This causes SEGFAULT in qt apps
-        //delete RNG;
-    }
-}
-
-CppsshImpl::CppsshImpl()
-{
 }
 
 CppsshImpl::~CppsshImpl()

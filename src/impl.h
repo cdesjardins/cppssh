@@ -27,8 +27,6 @@
 class CppsshImpl
 {
 public:
-    static std::shared_ptr<CppsshImpl> create();
-    static void destroy();
     static void setOptions(const char* prefCipher, const char* prefHmac);
     static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
