@@ -157,6 +157,7 @@ bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& lo
         {
             result->clear();
             result->append((*agreedAlgo).data(), (*agreedAlgo).size());
+            cdLog(LogLevel::Debug) << "agreed on: " << *result;
             ret = true;
             break;
         }

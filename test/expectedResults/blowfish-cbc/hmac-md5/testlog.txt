@@ -1,0 +1,25 @@
+2015-08-29 13:54:29.003 (Debug/connection.cpp) CppsshConnection 
+2015-08-29 13:54:29.003 (Debug/channel.cpp) createNewSubChannel session rxChannel: 100
+2015-08-29 13:54:29.144 (Debug/transportthreaded.cpp) starting rx thread
+2015-08-29 13:54:29.145 (Debug/transportthreaded.cpp) starting tx thread
+2015-08-29 13:54:29.158 (Debug/crypto.cpp) agreed on: diffie-hellman-group1-sha1
+2015-08-29 13:54:29.158 (Debug/crypto.cpp) agreed on: ssh-dss
+2015-08-29 13:54:29.158 (Debug/crypto.cpp) agreed on: blowfish-cbc
+2015-08-29 13:54:29.158 (Debug/crypto.cpp) agreed on: blowfish-cbc
+2015-08-29 13:54:29.158 (Debug/crypto.cpp) agreed on: hmac-md5
+2015-08-29 13:54:29.158 (Debug/crypto.cpp) agreed on: hmac-md5
+2015-08-29 13:54:29.159 (Debug/crypto.cpp) agreed on: none
+2015-08-29 13:54:29.159 (Debug/crypto.cpp) agreed on: none
+2015-08-29 13:54:29.291 (Debug/transportthreaded.cpp) ~CppsshTransportThreaded
+2015-08-29 13:54:29.291 (Debug/transportthreaded.cpp) tx thread done
+2015-08-29 13:54:29.291 (Debug/transportthreaded.cpp) rx thread done
+2015-08-29 13:54:29.291 (Debug/transportcrypto.cpp) starting crypto rx thread
+2015-08-29 13:54:29.291 (Debug/transportthreaded.cpp) starting tx thread
+2015-08-29 13:54:29.690 (Debug/channel.cpp) handleWindowAdjust 100 2097152
+2015-08-29 13:54:32.701 (Debug/connection.cpp) ~CppsshConnection 
+2015-08-29 13:54:32.701 (Debug/channel.cpp) disconnect[0]
+2015-08-29 13:54:32.701 (Debug/transportcrypto.cpp) ~CppsshTransportCrypto
+2015-08-29 13:54:32.702 (Debug/transportthreaded.cpp) ~CppsshTransportThreaded
+2015-08-29 13:54:32.702 (Debug/transportthreaded.cpp) tx thread done
+2015-08-29 13:54:32.703 (Debug/transportcrypto.cpp) crypto rx thread done
+2015-08-29 13:54:32.703 (Debug/channel.cpp) disconnect[0]

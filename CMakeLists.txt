@@ -31,5 +31,6 @@ install(FILES ${cppssh_INCLUDES} DESTINATION include/cppssh/)
 
 add_subdirectory (src)
 add_subdirectory (examples)
+add_subdirectory (test)
 ########### install files ###############
 

@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
     try
     {
-        Logger::getLogger().addStream(&std::cout);
+        Logger::getLogger().addStream(std::shared_ptr<std::ostream>(&std::cout, [](void*) {}));
         Logger::getLogger().setMinLogLevel(LogLevel::Debug);
         Cppssh::setOptions("aes256-cbc", "hmac-md5");
 
