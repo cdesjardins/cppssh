@@ -89,6 +89,7 @@ bool CppsshChannel::writeMainChannel(const uint8_t* data, uint32_t bytes)
     bool ret = false;
     try
     {
+        std::shared_ptr<std::unique_lock<std::recursive_mutex> > lock = _channels.getLock();
         ret = _channels.at(_mainChannel)->writeChannel(data, bytes);
     }
     catch (const std::exception& ex)
@@ -103,6 +104,7 @@ bool CppsshChannel::readMainChannel(CppsshMessage* data)
     bool ret = false;
     try
     {
+        std::shared_ptr<std::unique_lock<std::recursive_mutex> > lock = _channels.getLock();
         ret = _channels.at(_mainChannel)->readChannel(data);
     }
     catch (const std::exception& ex)
@@ -117,6 +119,7 @@ bool CppsshChannel::windowChange(const uint32_t rows, const uint32_t cols)
     bool ret = false;
     try
     {
+        std::shared_ptr<std::unique_lock<std::recursive_mutex> > lock = _channels.getLock();
         ret = _channels.at(_mainChannel)->windowChange(rows, cols);
     }
     catch (const std::exception& ex)
@@ -291,7 +294,7 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
 bool CppsshChannel::flushOutgoingChannelData()
 {
     bool ret = true;
-    std::shared_ptr<std::unique_lock<std::mutex> > lock = _channels.getLock();
+    std::shared_ptr<std::unique_lock<std::recursive_mutex> > lock = _channels.getLock();
     std::map<int, std::shared_ptr<CppsshSubChannel> >::const_iterator it;
     for (it = _channels.cbegin(); (it != _channels.cend() && (ret == true)); it++)
     {

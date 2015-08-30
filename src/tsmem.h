@@ -29,43 +29,43 @@ template <class keyType, class valType> class CppsshTsMap
 public:
     valType& at(const keyType& k)
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         return _map.at(k);
     }
 
     template <class P> std::pair<typename std::map<keyType, valType>::iterator, bool> insert(P&& val)
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         return _map.insert(val);
     }
 
     typename std::map<keyType, valType>::const_iterator find(const keyType& k) const
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         return _map.find(k);
     }
 
     typename std::map<keyType, valType>::iterator find(const keyType& k)
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         return _map.find(k);
     }
 
     size_t erase(const keyType& k)
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         return _map.erase(k);
     }
 
     size_t size() const
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         return _map.size();
     }
 
-    std::shared_ptr<std::unique_lock<std::mutex> > getLock() const
+    std::shared_ptr<std::unique_lock<std::recursive_mutex> > getLock() const
     {
-        std::shared_ptr<std::unique_lock<std::mutex> > ret(new std::unique_lock<std::mutex>(_mapMutex));
+        std::shared_ptr<std::unique_lock<std::recursive_mutex> > ret(new std::unique_lock<std::recursive_mutex>(_mapMutex));
         return ret;
     }
 
@@ -93,12 +93,12 @@ public:
 
     void clear()
     {
-        std::unique_lock<std::mutex> lock(_mapMutex);
+        std::unique_lock<std::recursive_mutex> lock(_mapMutex);
         _map.clear();
     }
 
 private:
-    mutable std::mutex _mapMutex;
+    mutable std::recursive_mutex _mapMutex;
     std::map<keyType, valType> _map;
 };
 #endif
