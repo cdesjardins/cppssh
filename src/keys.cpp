@@ -81,32 +81,39 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
 
     try
     {
-        if (isKey(buf, HEADER_DSA, FOOTER_DSA))
+        if (isKey(buf, PROC_TYPE, DEK_INFO) == true)
         {
-            _keyAlgo = hostkeyMethods::SSH_DSS;
-            ret = getUnencryptedDSAKeys(buf);
-        }
-        else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
-        {
-            _keyAlgo = hostkeyMethods::SSH_RSA;
-            ret = getUnencryptedRSAKeys(buf);
+            cdLog(LogLevel::Error) << "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
         }
         else
         {
-            Botan::Private_Key* privKey = Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword));
-            if (privKey != NULL)
+            if (isKey(buf, HEADER_DSA, FOOTER_DSA))
             {
-                ret = getRSAKeys(privKey);
-                if (ret == true)
+                _keyAlgo = hostkeyMethods::SSH_DSS;
+                ret = getUnencryptedDSAKeys(buf);
+            }
+            else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
+            {
+                _keyAlgo = hostkeyMethods::SSH_RSA;
+                ret = getUnencryptedRSAKeys(buf);
+            }
+            else
+            {
+                Botan::Private_Key* privKey = Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword));
+                if (privKey != NULL)
                 {
-                    _keyAlgo = hostkeyMethods::SSH_RSA;
-                }
-                else
-                {
-                    ret = getDSAKeys(privKey);
+                    ret = getRSAKeys(privKey);
                     if (ret == true)
                     {
-                        _keyAlgo = hostkeyMethods::SSH_DSS;
+                        _keyAlgo = hostkeyMethods::SSH_RSA;
+                    }
+                    else
+                    {
+                        ret = getDSAKeys(privKey);
+                        if (ret == true)
+                        {
+                            _keyAlgo = hostkeyMethods::SSH_DSS;
+                        }
                     }
                 }
             }
@@ -133,22 +140,7 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findEndOfLine(cons
 Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header)
 {
     Botan::secure_vector<Botan::byte>::const_iterator ret;
-    Botan::secure_vector<Botan::byte>::const_iterator procIt;
-    Botan::secure_vector<Botan::byte>::const_iterator dekIt;
     ret = findEndOfLine(privateKey, header);
-    procIt = findEndOfLine(privateKey, PROC_TYPE);
-    dekIt = findEndOfLine(privateKey, DEK_INFO);
-    if ((procIt != privateKey.end()) && (dekIt != privateKey.end()))
-    {
-        if (dekIt > procIt)
-        {
-            ret = dekIt;
-        }
-        else
-        {
-            ret = procIt;
-        }
-    }
     while (*ret == '\n')
     {
         ret++;
