@@ -51,8 +51,8 @@ public:
 
 private:
     bool isKey(const Botan::secure_vector<Botan::byte>& buf, std::string header, std::string footer);
-    bool getRSAKeys(Botan::Private_Key *privKey);
-    bool getDSAKeys(Botan::Private_Key *privKey);
+    bool getRSAKeys(Botan::Private_Key* privKey);
+    bool getDSAKeys(Botan::Private_Key* privKey);
     bool getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey);
     bool getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey);
 
