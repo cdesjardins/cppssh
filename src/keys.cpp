@@ -27,6 +27,7 @@
 #include "botan/pubkey.h"
 #include "botan/b64_filt.h"
 #include "botan/numthry.h"
+#include "botan/pkcs8.h"
 #include <fstream>
 #ifndef WIN32
 #include <sys/stat.h>
@@ -51,7 +52,7 @@ bool CppsshKeys::isKey(const Botan::secure_vector<Botan::byte>& buf, std::string
     return ret;
 }
 
-bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
+bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const char* keyPassword)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
@@ -76,40 +77,44 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName)
     }
     // Find all CR-LF, and remove the CR
     buf.erase(std::remove(buf.begin(), buf.end(), '\r'), buf.end());
-    if (isKey(buf, HEADER_DSA, FOOTER_DSA))
-    {
-        _keyAlgo = hostkeyMethods::SSH_DSS;
-    }
-    else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
-    {
-        _keyAlgo = hostkeyMethods::SSH_RSA;
-    }
-    else
-    {
-        _keyAlgo = hostkeyMethods::MAX_VALS;
-    }
+    _keyAlgo = hostkeyMethods::MAX_VALS;
 
     try
     {
-        switch (_keyAlgo)
+        if (isKey(buf, HEADER_DSA, FOOTER_DSA))
         {
-            case hostkeyMethods::SSH_RSA:
-                ret = getRSAKeys(buf);
-                break;
-
-            case hostkeyMethods::SSH_DSS:
-                ret = getDSAKeys(buf);
-                break;
-
-            default:
-                cdLog(LogLevel::Error) << "Unrecognized private key file format.";
-                break;
+            _keyAlgo = hostkeyMethods::SSH_DSS;
+            ret = getUnencryptedDSAKeys(buf);
+        }
+        else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
+        {
+            _keyAlgo = hostkeyMethods::SSH_RSA;
+            ret = getUnencryptedRSAKeys(buf);
+        }
+        else
+        {
+            Botan::Private_Key *privKey = Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword));
+            if (privKey != NULL)
+            {
+                ret = getRSAKeys(privKey);
+                if (ret == true)
+                {
+                    _keyAlgo = hostkeyMethods::SSH_RSA;
+                }
+                else
+                {
+                    ret = getDSAKeys(privKey);
+                    if (ret == true)
+                    {
+                        _keyAlgo = hostkeyMethods::SSH_DSS;
+                    }
+                }
+            }
         }
     }
     catch (const std::exception& ex)
     {
-        cdLog(LogLevel::Error) << ex.what();
-        CppsshDebug::dumpStack(-1);
+        cdLog(LogLevel::Error) << "Unable to read keys: " << ex.what();
     }
 
     return ret;
@@ -156,7 +161,7 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyEnd(const B
     return privateKey.cend() - footer.length();
 }
 
-bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
+bool CppsshKeys::getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> keyDataRaw;
@@ -212,7 +217,7 @@ bool CppsshKeys::getRSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     return ret;
 }
 
-bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
+bool CppsshKeys::getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> keyDataRaw;
@@ -272,6 +277,69 @@ bool CppsshKeys::getDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
     }
     return ret;
 }
+
+bool CppsshKeys::getRSAKeys(Botan::Private_Key *privKey)
+{
+    bool ret = false;
+    Botan::RSA_PrivateKey *rsaPrivKey = dynamic_cast<Botan::RSA_PrivateKey*>(privKey);
+    if (rsaPrivKey != NULL)
+    {
+        _rsaPrivateKey.reset(rsaPrivKey);
+        Botan::Public_Key *pubKey = Botan::X509::load_key(Botan::X509::BER_encode(*rsaPrivKey));
+        if (pubKey != NULL)
+        {
+            Botan::RSA_PublicKey *rsaPubKey = dynamic_cast<Botan::RSA_PublicKey*>(pubKey);
+            if (rsaPubKey != NULL)
+            {
+                _publicKeyBlob.clear();
+                CppsshPacket publicKeyPacket(&_publicKeyBlob);
+                publicKeyPacket.addString("ssh-rsa");
+                publicKeyPacket.addBigInt(rsaPubKey->get_e());
+                publicKeyPacket.addBigInt(rsaPubKey->get_n());
+                delete rsaPubKey;
+                ret = true;
+            }
+            else
+            {
+                delete pubKey;
+            }
+        }
+    }
+    return ret;
+}
+
+bool CppsshKeys::getDSAKeys(Botan::Private_Key *privKey)
+{
+    bool ret = false;
+    Botan::DSA_PrivateKey *dsaPrivKey = dynamic_cast<Botan::DSA_PrivateKey*>(privKey);
+    if (dsaPrivKey != NULL)
+    {
+        _dsaPrivateKey.reset(dsaPrivKey);
+        Botan::Public_Key *pubKey = Botan::X509::load_key(Botan::X509::BER_encode(*privKey));
+        if (pubKey != NULL)
+        {
+            Botan::DSA_PublicKey *dsaPubKey = dynamic_cast<Botan::DSA_PublicKey*>(pubKey);
+            if (dsaPubKey != NULL)
+            {
+                _publicKeyBlob.clear();
+                CppsshPacket publicKeyPacket(&_publicKeyBlob);
+                publicKeyPacket.addString("ssh-dss");
+                publicKeyPacket.addBigInt(dsaPubKey->group_p());
+                publicKeyPacket.addBigInt(dsaPubKey->group_q());
+                publicKeyPacket.addBigInt(dsaPubKey->group_g());
+                publicKeyPacket.addBigInt(dsaPubKey->get_y());
+                delete dsaPubKey;
+                ret = true;
+            }
+            else
+            {
+                delete pubKey;
+            }
+        }
+    }
+    return ret;
+}
+
 
 const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData)
 {

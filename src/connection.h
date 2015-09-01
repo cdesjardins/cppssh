@@ -40,7 +40,7 @@ private:
     bool sendLocalVersion();
     bool requestService(const std::string& service);
     bool authWithPassword(const std::string& username, const std::string& password);
-    bool authWithKey(const std::string& username, const std::string& privKeyFileName);
+    bool authWithKey(const std::string& username, const std::string& privKeyFileName, const char* keyPassword);
     bool authenticate(const Botan::secure_vector<Botan::byte>& userAuthRequest);
 
     std::shared_ptr<CppsshSession> _session;
