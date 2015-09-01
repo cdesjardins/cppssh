@@ -31,7 +31,7 @@ public:
     {
     }
 
-    bool getKeyPairFromFile(const std::string& privKeyFileName);
+    bool getKeyPairFromFile(const std::string& privKeyFileName, const char* keyPassword);
     const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
@@ -51,8 +51,11 @@ public:
 
 private:
     bool isKey(const Botan::secure_vector<Botan::byte>& buf, std::string header, std::string footer);
-    bool getRSAKeys(Botan::secure_vector<Botan::byte> buf);
-    bool getDSAKeys(Botan::secure_vector<Botan::byte> buf);
+    bool getRSAKeys(Botan::Private_Key *privKey);
+    bool getDSAKeys(Botan::Private_Key *privKey);
+    bool getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey);
+    bool getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey);
+
     static Botan::secure_vector<Botan::byte>::const_iterator findEndOfLine(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);

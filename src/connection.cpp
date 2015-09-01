@@ -89,7 +89,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if ((authWithKey(username, privKeyFile) == false) && (authWithPassword(username, password) == false))
+    if ((authWithKey(username, privKeyFile, password) == false) && (authWithPassword(username, password) == false))
     {
         return false;
     }
@@ -225,12 +225,12 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     return authenticate(buf);
 }
 
-bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName)
+bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName, const char* keyPassword)
 {
     bool ret = false;
     CppsshKeys keyPair;
 
-    if (keyPair.getKeyPairFromFile(privKeyFileName) == true)
+    if (keyPair.getKeyPairFromFile(privKeyFileName, keyPassword) == true)
     {
         Botan::secure_vector<Botan::byte> buf;
         Botan::secure_vector<Botan::byte> beginBuf;
