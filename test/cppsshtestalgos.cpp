@@ -7,10 +7,10 @@
 #include <fstream>
 #include <sstream>
 
-void runConnectionTest(char* hostname, char* username, char* password)
+void runConnectionTest(char* hostname, char* username, char* password, char* keyfile)
 {
     int channel;
-    if (Cppssh::connect(&channel, hostname, 22, username, password, password, 10000) == true)
+    if (Cppssh::connect(&channel, hostname, 22, username, keyfile, password, 10000) == true)
     {
         std::vector<std::string> cmdList {"env\n", "mkdir cppsshTestDir\n", "ls -l cppsshTestDir\n", "rmdir cppsshTestDir\n"};
         std::ofstream remoteOutput;
@@ -45,24 +45,30 @@ void runConnectionTest(char* hostname, char* username, char* password)
 
 int main(int argc, char** argv)
 {
-    if (argc != 6)
+    if ((argc != 6) && (argc != 7))
     {
-        std::cerr << "Error: Three arguments required: " << argv[0] << " <hostname> <username> <password> <cipher> <hmac>" << std::endl;
-        return -1;
+        std::cerr << "Error: Five or Six arguments required: " << argv[0] << " <hostname> <username> <password> <cipher> <hmac> <key>" << std::endl;
     }
-
-    Logger::getLogger().addStream("testlog.txt");
-    try
+    else
     {
-        Logger::getLogger().setMinLogLevel(LogLevel::Debug);
-        Cppssh::setOptions(argv[4], argv[5]);
+        Logger::getLogger().addStream("testlog.txt");
+        try
+        {
+            Logger::getLogger().setMinLogLevel(LogLevel::Debug);
+            Cppssh::setOptions(argv[4], argv[5]);
 
-        std::vector<std::thread> threads;
-        runConnectionTest(argv[1], argv[2], argv[3]);
-    }
-    catch (const std::exception& ex)
-    {
-        cdLog(LogLevel::Error) << "Exception: " << ex.what() << std::endl;
+            std::vector<std::thread> threads;
+            char* keyfile = NULL;
+            if (argc == 7)
+            {
+                keyfile = argv[6];
+            }
+            runConnectionTest(argv[1], argv[2], argv[3], keyfile);
+        }
+        catch (const std::exception& ex)
+        {
+            cdLog(LogLevel::Error) << "Exception: " << ex.what() << std::endl;
+        }
     }
     return 0;
 }

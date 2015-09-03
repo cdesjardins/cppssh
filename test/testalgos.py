@@ -70,8 +70,8 @@ class TestAlgos(unittest.TestCase):
             for d in difflist:
                 print d
 
-    def runAlgoTest(self, cipher, mac):
-        cmd = "../../install/bin/cppsshtestalgos 192.168.1.19 algotester password " + cipher + " " + mac
+    def runAlgoTest(self, password, cipher, mac, keyfile = ""):
+        cmd = "../../install/bin/cppsshtestalgos 192.168.1.19 algotester " + password + " " + cipher + " " + mac + " " + keyfile
         print "Testing: " + cmd
         call(cmd.split(" "))
         actualResultsDir = "actualResults/" + cipher + "/" + mac
@@ -84,7 +84,11 @@ class TestAlgos(unittest.TestCase):
             shutil.rmtree("actualResults")
         for cipher in self.ciphers:
             for mac in self.macs:
-                self.runAlgoTest(cipher, mac)
+                self.runAlgoTest("password", cipher, mac)
+
+    def testKeys(self):
+        pass
+        # todo: add tests that invoke the runAlgoTest with different types of private keys
 
     def tearDown(self):
         if (len(self.verificationErrors) == 0):
