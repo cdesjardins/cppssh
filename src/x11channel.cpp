@@ -39,8 +39,14 @@ void CppsshX11Channel::disconnect()
     {
         _x11transport->disconnect();
     }
-    _x11RxThread.join();
-    _x11TxThread.join();
+    if (_x11RxThread.joinable() == true)
+    {
+        _x11RxThread.join();
+    }
+    if (_x11TxThread.joinable() == true)
+    {
+        _x11TxThread.join();
+    }
     _x11transport.reset();
 }
 
