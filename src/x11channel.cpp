@@ -19,6 +19,7 @@
 
 #include "x11channel.h"
 #include "cppssh.h"
+#include "unparam.h"
 #include <iterator>
 
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
@@ -149,6 +150,10 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
         }
     }
     remove(tmpname.c_str());
+#else
+    UNREF_PARAM(display);
+    UNREF_PARAM(method);
+    UNREF_PARAM(cookie);
 #endif
     return ret;
 }
