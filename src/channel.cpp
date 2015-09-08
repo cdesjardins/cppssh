@@ -133,9 +133,9 @@ void CppsshChannel::handleDebug(const CppsshConstPacket& packet)
 {
     std::string dbg;
     packet.skipHeader();
-    // getInt for always display
-    packet.getInt();
-    if ((packet.getString(&dbg, true) == true) && (dbg.size() > 0))
+    // getByte for always display
+    packet.getByte();
+    if ((packet.getString(&dbg) == true) && (dbg.size() > 0))
     {
         cdLog(LogLevel::Debug) << dbg;
     }
