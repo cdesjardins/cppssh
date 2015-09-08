@@ -56,6 +56,7 @@ private:
     void handleEof(const Botan::secure_vector<Botan::byte>& buf);
     void handleClose(const Botan::secure_vector<Botan::byte>& buf);
 
+    void handleDebug(const CppsshConstPacket& packet);
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
     bool runXauth(const char* display, std::string* method, Botan::secure_vector<Botan::byte>* cookie) const;

@@ -28,6 +28,7 @@
 #define SSH2_MSG_KEXDH_INIT                             30
 #define SSH2_MSG_KEXDH_REPLY                            31
 
+#define SSH2_MSG_DEBUG                                  4
 #define SSH2_MSG_SERVICE_REQUEST                        5
 #define SSH2_MSG_SERVICE_ACCEPT                         6
 

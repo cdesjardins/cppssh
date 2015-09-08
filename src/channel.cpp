@@ -129,6 +129,18 @@ bool CppsshChannel::windowChange(const uint32_t rows, const uint32_t cols)
     return ret;
 }
 
+void CppsshChannel::handleDebug(const CppsshConstPacket& packet)
+{
+    std::string dbg;
+    packet.skipHeader();
+    // getInt for always display
+    packet.getInt();
+    if ((packet.getString(&dbg, true) == true) && (dbg.size() > 0))
+    {
+        cdLog(LogLevel::Debug) << dbg;
+    }
+}
+
 void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
 {
     std::string err;
@@ -637,12 +649,16 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
             case SSH2_MSG_IGNORE:
                 break;
 
+            case SSH2_MSG_DEBUG:
+                handleDebug(packet);
+                break;
+
             case SSH2_MSG_DISCONNECT:
                 handleDisconnect(packet);
                 break;
 
             default:
-                cdLog(LogLevel::Error) << "Unhandled command encountered: " << cmd;
+                cdLog(LogLevel::Error) << "Unhandled command encountered: " << (int)cmd;
                 break;
         }
     }

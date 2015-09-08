@@ -123,10 +123,21 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshConstPacket::getPayloadE
     return getPayloadBegin() + (getPacketLength() - 1);
 }
 
-bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>* result) const
+bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>* result, bool iso10646) const
 {
     bool ret = true;
-    uint32_t len = getPacketLength();
+    uint32_t len;
+    uint32_t lenSize = sizeof(uint32_t);
+    if (iso10646 == true)
+    {
+        len = getByte();
+        // lenSize is 0 here because getByte already updated the _index by 1
+        lenSize = 0;
+    }
+    else
+    {
+        len = getPacketLength();
+    }
 
     if (len > (_cdata->size() + _index))
     {
@@ -134,17 +145,17 @@ bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>* result) con
     }
     else
     {
-        *result = Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index, _cdata->begin() + (sizeof(uint32_t) + len + _index));
-        _index += sizeof(uint32_t) + len;
+        *result = Botan::secure_vector<Botan::byte>(_cdata->begin() + lenSize + _index, _cdata->begin() + (lenSize + len + _index));
+        _index += lenSize + len;
     }
     return ret;
 }
 
-bool CppsshConstPacket::getString(std::string* result) const
+bool CppsshConstPacket::getString(std::string* result, bool iso10646) const
 {
     bool ret;
     Botan::secure_vector<Botan::byte> buf;
-    ret = getString(&buf);
+    ret = getString(&buf, iso10646);
     result->clear();
     result->append((char*)buf.data(), buf.size());
     return ret;

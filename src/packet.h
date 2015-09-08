@@ -44,8 +44,10 @@ public:
     Botan::secure_vector<Botan::byte>::const_iterator getPayloadBegin() const;
     Botan::secure_vector<Botan::byte>::const_iterator getPayloadEnd() const;
 
-    bool getString(Botan::secure_vector<Botan::byte>* result) const;
-    bool getString(std::string* result) const;
+    // When openssh server sends a debug msg, it only sends 1 byte for the length...
+    // I call this iso10646, but I think it is a bug!
+    bool getString(Botan::secure_vector<Botan::byte>* result, bool iso10646 = false) const;
+    bool getString(std::string* result, bool iso10646 = false) const;
     bool getBigInt(Botan::BigInt* result) const;
     void getChannelData(CppsshMessage* result) const;
     void getBannerData(CppsshMessage* result) const;
