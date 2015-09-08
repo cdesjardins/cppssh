@@ -313,6 +313,20 @@ bool CppsshTransport::wait(bool isWrite)
     return ret;
 }
 
+bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer, size_t numBytes)
+{
+    bool ret = true;
+    while ((buffer->size() < numBytes) && (_running == true))
+    {
+        if (receiveMessage(buffer) == false)
+        {
+            ret = false;
+            break;
+        }
+    }
+    return ret;
+}
+
 // Append new receive data to the end of the buffer
 bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
 {

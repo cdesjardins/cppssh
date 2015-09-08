@@ -38,6 +38,7 @@ class CppsshTransport
 public:
     CppsshTransport(const std::shared_ptr<CppsshSession>& session);
     virtual ~CppsshTransport();
+    bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer, size_t numBytes);
     virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
