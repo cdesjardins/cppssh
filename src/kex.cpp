@@ -115,6 +115,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "Kex algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::KEX_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible key exchange algorithms.";
@@ -128,6 +129,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "Hostkey algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::HOSTKEY_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible Hostkey algorithms.";
@@ -141,6 +143,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "C2S Cipher algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
@@ -154,6 +157,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "S2C Cipher algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
@@ -167,6 +171,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "C2S MAC algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
@@ -180,6 +185,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "S2C MAC algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
@@ -193,6 +199,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "C2S Compression algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible compression algorithms.";
@@ -206,6 +213,7 @@ bool CppsshKex::handleInit()
     {
         return false;
     }
+    cdLog(LogLevel::Debug) << "S2C Compression algos: " << algos;
     if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible compression algorithms.";
