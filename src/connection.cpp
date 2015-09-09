@@ -280,3 +280,9 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
     return ret;
 }
 
+bool CppsshConnection::closeConnection()
+{
+    _session->_transport->disconnect();
+    return true;
+}
+

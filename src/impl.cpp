@@ -127,6 +127,7 @@ bool CppsshImpl::windowChange(const int connectionId, const uint32_t cols, const
 bool CppsshImpl::close(int connectionId)
 {
     std::unique_lock<std::mutex> lock(_connectionsMutex);
+    _connections[connectionId]->closeConnection();
     _connections[connectionId].reset();
     return true;
 }

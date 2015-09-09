@@ -35,6 +35,7 @@ public:
     bool read(CppsshMessage* data);
     bool windowChange(const uint32_t cols, const uint32_t rows);
     bool isConnected();
+    bool closeConnection();
 private:
     bool checkRemoteVersion();
     bool sendLocalVersion();

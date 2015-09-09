@@ -32,6 +32,7 @@
 #   define SOCKET_BUFFER_TYPE char
 #   define close closesocket
 #   define SOCK_CAST (char*)
+#   define socklen_t int
 
 class WSockInitializer
 {
@@ -100,43 +101,39 @@ bool CppsshTransport::establish(const std::string& host, short port)
 bool CppsshTransport::makeConnection(void* remoteAddr)
 {
     bool ret = false;
+    // Non blocking connect needs some from select and getsockopt to work
     if (connect(_sock, (struct sockaddr*) remoteAddr, sizeof(sockaddr_in)) == -1)
     {
-        if (errno == EINPROGRESS)
+        if (isConnectInProgress() == true)
         {
-            int res;
-            struct timeval tv;
-            fd_set myset;
             int cnt = 0;
             while ((_running == true) && (cnt++ < 200))
             {
-                cdLog(LogLevel::Debug) << "make connection " << _running;
+                int res;
+                struct timeval tv;
+                fd_set connectSet;
                 tv.tv_sec = 0;
                 tv.tv_usec = 100000;
-                FD_ZERO(&myset);
-                FD_SET(_sock, &myset);
-                res = select(_sock + 1, NULL, &myset, NULL, &tv);
+                setupFd(&connectSet);
+                res = select(_sock + 1, NULL, &connectSet, NULL, &tv);
                 if ((res < 0) && (errno != EINTR))
                 {
-                    // Error
-                    cdLog(LogLevel::Error) << "make connection select: " << res << " " << errno;
+                    cdLog(LogLevel::Error) << "Connection failed due to select error";
                     break;
                 }
                 else if (res > 0)
                 {
                     int valopt;
                     socklen_t lon = sizeof(int);
-                    res = getsockopt(_sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon);
+                    res = getsockopt(_sock, SOL_SOCKET, SO_ERROR, (char*)(&valopt), &lon);
                     if (res < 0)
                     {
-                        // Error
-                        cdLog(LogLevel::Error) << "make connection getsockopt: " << res;
+                        cdLog(LogLevel::Error) << "Connection failed due to socket error";
                         break;
                     }
                     else if (valopt)
                     {
-                        // Error
-                        cdLog(LogLevel::Error) << "make connection valopt: " << valopt;
+                        cdLog(LogLevel::Error) << "Connection failed";
                         break;
                     }
                     else
@@ -146,7 +143,6 @@ bool CppsshTransport::makeConnection(void* remoteAddr)
                     }
                 }
             }
-            cdLog(LogLevel::Debug) << "make connection DONE: " << _running << " " << cnt;
         }
     }
     else
@@ -154,6 +150,24 @@ bool CppsshTransport::makeConnection(void* remoteAddr)
         ret = true;
     }
 
+    return ret;
+}
+
+bool CppsshTransport::isConnectInProgress()
+{
+    bool ret = false;
+#if defined(WIN32) || defined(__MINGW32__)
+    int lastError = WSAGetLastError();
+    if (lastError == WSAEWOULDBLOCK)
+    {
+        ret = true;
+    }
+#else
+    if (errno == EINPROGRESS)
+    {
+        ret = true;
+    }
+#endif
     return ret;
 }
 

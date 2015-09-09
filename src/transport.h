@@ -66,6 +66,7 @@ protected:
     bool setNonBlocking(bool on);
     void setupFd(fd_set* fd);
     bool makeConnection(void* remoteAddr);
+    bool isConnectInProgress();
 
     std::shared_ptr<CppsshSession> _session;
     bool wait(bool isWrite);
