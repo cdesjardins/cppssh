@@ -84,15 +84,74 @@ bool CppsshTransport::establish(const std::string& host, short port)
         }
         else
         {
-            if (connect(_sock, (struct sockaddr*) &remoteAddr, sizeof(remoteAddr)) == -1)
+            if (setNonBlocking(true) == true)
             {
-                cdLog(LogLevel::Error) << "Unable to connect to remote server: '" << host << "'.";
-            }
-            else
-            {
-                ret = setNonBlocking(true);
+                ret = makeConnection(&remoteAddr);
+                if (ret == false)
+                {
+                    cdLog(LogLevel::Error) << "Unable to connect to remote server: '" << host << "'.";
+                }
             }
         }
+    }
+    return ret;
+}
+
+bool CppsshTransport::makeConnection(void* remoteAddr)
+{
+    bool ret = false;
+    if (connect(_sock, (struct sockaddr*) remoteAddr, sizeof(sockaddr_in)) == -1)
+    {
+        if (errno == EINPROGRESS)
+        {
+            int res;
+            struct timeval tv;
+            fd_set myset;
+            int cnt = 0;
+            while ((_running == true) && (cnt++ < 200))
+            {
+                cdLog(LogLevel::Debug) << "make connection " << _running;
+                tv.tv_sec = 0;
+                tv.tv_usec = 100000;
+                FD_ZERO(&myset);
+                FD_SET(_sock, &myset);
+                res = select(_sock + 1, NULL, &myset, NULL, &tv);
+                if ((res < 0) && (errno != EINTR))
+                {
+                    // Error
+                    cdLog(LogLevel::Error) << "make connection select: " << res << " " << errno;
+                    break;
+                }
+                else if (res > 0)
+                {
+                    int valopt;
+                    socklen_t lon = sizeof(int);
+                    res = getsockopt(_sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon);
+                    if (res < 0)
+                    {
+                        // Error
+                        cdLog(LogLevel::Error) << "make connection getsockopt: " << res;
+                        break;
+                    }
+                    else if (valopt)
+                    {
+                        // Error
+                        cdLog(LogLevel::Error) << "make connection valopt: " << valopt;
+                        break;
+                    }
+                    else
+                    {
+                        ret = true;
+                        break;
+                    }
+                }
+            }
+            cdLog(LogLevel::Debug) << "make connection DONE: " << _running << " " << cnt;
+        }
+    }
+    else
+    {
+        ret = true;
     }
 
     return ret;

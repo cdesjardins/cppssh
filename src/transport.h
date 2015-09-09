@@ -65,6 +65,7 @@ protected:
     bool establishLocalX11(const std::string& display);
     bool setNonBlocking(bool on);
     void setupFd(fd_set* fd);
+    bool makeConnection(void* remoteAddr);
 
     std::shared_ptr<CppsshSession> _session;
     bool wait(bool isWrite);
