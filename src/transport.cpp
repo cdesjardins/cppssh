@@ -101,7 +101,7 @@ bool CppsshTransport::establish(const std::string& host, short port)
 bool CppsshTransport::makeConnection(void* remoteAddr)
 {
     bool ret = false;
-    // Non blocking connect needs some from select and getsockopt to work
+    // Non blocking connect needs some help from select and getsockopt to work
     if (connect(_sock, (struct sockaddr*) remoteAddr, sizeof(sockaddr_in)) == -1)
     {
         if (isConnectInProgress() == true)
