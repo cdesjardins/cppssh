@@ -55,11 +55,11 @@ public:
     }
 
 protected:
-    bool establishLocalX11(const std::string& display);
+    virtual bool establishLocalX11(const std::string& display) = 0;
     bool setNonBlocking(bool on);
     void setupFd(fd_set* fd);
     bool makeConnection(void* remoteAddr);
-    bool isConnectInProgress();
+    virtual bool isConnectInProgress() = 0;
 
     std::shared_ptr<CppsshSession> _session;
     bool wait(bool isWrite);

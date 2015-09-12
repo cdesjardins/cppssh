@@ -23,6 +23,17 @@
 
 class CppsshTransportWin : public CppsshTransportImpl
 {
+public:
+    CppsshTransportWin(const std::shared_ptr<CppsshSession>& session)
+        : CppsshTransportImpl(session)
+    {
+    }
+
+    virtual bool isConnectInProgress();
+    virtual bool establishLocalX11(const std::string& display);
+
+protected:
+private:
 };
 
 #endif

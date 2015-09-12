@@ -26,7 +26,7 @@ class CppsshTransportCrypto : public CppsshTransportThreaded
 public:
     CppsshTransportCrypto() = delete;
     CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock);
-    ~CppsshTransportCrypto();
+    virtual ~CppsshTransportCrypto();
 
 protected:
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);

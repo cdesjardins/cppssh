@@ -24,41 +24,13 @@
 #include "messages.h"
 #include "x11channel.h"
 
-#ifdef WIN32
-#include "unparam.h"
-#endif
-
-#if defined(WIN32) || defined(__MINGW32__)
-#   define SOCKET_BUFFER_TYPE char
-#   define close closesocket
-#   define SOCK_CAST (char*)
-#   define socklen_t int
-
-class WSockInitializer
-{
-public:
-    WSockInitializer()
-    {
-        static WSADATA wsaData;
-        WSAStartup(MAKEWORD(2, 2), &wsaData);
-    }
-
-    ~WSockInitializer()
-    {
-        WSACleanup();
-    }
-};
-
-WSockInitializer _wsock32_;
-#else
-#   define SOCKET_BUFFER_TYPE void
-#   define SOCK_CAST (void*)
-#   include <sys/socket.h>
-#   include <netinet/in.h>
-#   include <netdb.h>
-#   include <unistd.h>
-#   include <fcntl.h>
-#   include <sys/un.h>
+#ifndef WIN32
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/un.h>
 #endif
 
 bool CppsshTransportImpl::establish(const std::string& host, short port)
@@ -153,24 +125,6 @@ bool CppsshTransportImpl::makeConnection(void* remoteAddr)
     return ret;
 }
 
-bool CppsshTransportImpl::isConnectInProgress()
-{
-    bool ret = false;
-#if defined(WIN32) || defined(__MINGW32__)
-    int lastError = WSAGetLastError();
-    if (lastError == WSAEWOULDBLOCK)
-    {
-        ret = true;
-    }
-#else
-    if (errno == EINPROGRESS)
-    {
-        ret = true;
-    }
-#endif
-    return ret;
-}
-
 bool CppsshTransportImpl::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
 {
     bool ret = false;
@@ -217,93 +171,6 @@ bool CppsshTransportImpl::establishX11()
     return ret;
 }
 
-#ifdef WIN32
-bool CppsshTransportImpl::establishLocalX11(const std::string& display)
-{
-    bool ret = false;
-    UNREF_PARAM(display);
-    _sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (_sock < 0)
-    {
-        cdLog(LogLevel::Error) << "Unable to open to X11 socket";
-    }
-    else
-    {
-        SOCKADDR_IN addr;
-        memset(&addr, 0, sizeof(addr));
-
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        addr.sin_port = htons((short)0);
-
-        int bindRet = bind(_sock, (struct sockaddr*) &addr, sizeof(addr));
-        if (bindRet == 0)
-        {
-            memset(&addr, 0, sizeof(addr));
-            addr.sin_family = AF_INET;
-            addr.sin_addr.s_addr = htonl(0x7f000001);
-            addr.sin_port = htons((short)6000);
-            int connectRet = connect(_sock, (struct sockaddr*)&addr, sizeof(addr));
-            if (connectRet == 0)
-            {
-                // success
-                ret = true;
-                setNonBlocking(true);
-            }
-            else
-            {
-                cdLog(LogLevel::Error) << "Unable to connect to X11 socket " << WSAGetLastError();
-                disconnect();
-            }
-        }
-        else
-        {
-            cdLog(LogLevel::Error) << "Unable to bind to X11 socket " << strerror(errno);
-            disconnect();
-        }
-    }
-    return ret;
-}
-
-#else
-bool CppsshTransportImpl::establishLocalX11(const std::string& display)
-{
-    bool ret = false;
-    struct sockaddr_un addr;
-
-    _sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (_sock < 0)
-    {
-        cdLog(LogLevel::Error) << "Unable to open to X11 socket";
-    }
-    else
-    {
-        int displayNum;
-        int screenNum;
-        parseDisplay(display, &displayNum, &screenNum);
-        std::stringstream path;
-        path << "/tmp/.X11-unix/X" << displayNum;
-
-        memset(&addr, 0, sizeof(addr));
-        addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, path.str().c_str(), sizeof(addr.sun_path));
-        int connectRet = connect(_sock, (struct sockaddr*)&addr, sizeof(addr));
-        if (connectRet == 0)
-        {
-            // success
-            ret = true;
-            setNonBlocking(true);
-        }
-        else
-        {
-            cdLog(LogLevel::Error) << "Unable to connect to X11 socket " << path.str() << " " << strerror(errno);
-            disconnect();
-        }
-    }
-    return ret;
-}
-
-#endif
 void CppsshTransportImpl::disconnect()
 {
     cdLog(LogLevel::Info) << "CppsshTransport::disconnect";

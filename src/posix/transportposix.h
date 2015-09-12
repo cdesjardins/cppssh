@@ -31,6 +31,13 @@ public:
     {
     }
 
+    virtual ~CppsshTransportPosix()
+    {
+    }
+
+    virtual bool isConnectInProgress();
+    virtual bool establishLocalX11(const std::string& display);
+
 protected:
 private:
 };
