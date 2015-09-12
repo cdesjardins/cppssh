@@ -95,3 +95,4 @@ bool CppsshTransportPosix::setNonBlocking(bool on)
     }
     return ret;
 }
+
