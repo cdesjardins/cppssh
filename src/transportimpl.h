@@ -19,6 +19,9 @@
 #ifndef _TRANSPORT_IMPL_Hxx
 #define _TRANSPORT_IMPL_Hxx
 
+/*
+** Note: Do not include this file directly, include transport.h instead
+*/
 #include "botan/botan.h"
 #include <memory>
 #include <condition_variable>
@@ -29,6 +32,8 @@ class CppsshSession;
 class CppsshTransportImpl
 {
 public:
+    CppsshTransportImpl() = delete;
+    CppsshTransportImpl(const CppsshTransportImpl&) = delete;
     CppsshTransportImpl(const std::shared_ptr<CppsshSession>& session);
     virtual ~CppsshTransportImpl();
     bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer, size_t numBytes);
@@ -56,7 +61,7 @@ public:
 
 protected:
     virtual bool establishLocalX11(const std::string& display) = 0;
-    bool setNonBlocking(bool on);
+    virtual bool setNonBlocking(bool on) = 0;
     void setupFd(fd_set* fd);
     bool makeConnection(void* remoteAddr);
     virtual bool isConnectInProgress() = 0;

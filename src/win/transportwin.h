@@ -21,6 +21,10 @@
 
 #include <winsock.h>
 
+/*
+** Note: Do not include this file directly, include transport.h instead
+*/
+
 class CppsshTransportWin : public CppsshTransportImpl
 {
 public:
@@ -29,10 +33,11 @@ public:
     {
     }
 
+protected:
     virtual bool isConnectInProgress();
     virtual bool establishLocalX11(const std::string& display);
+    virtual bool setNonBlocking(bool on);
 
-protected:
 private:
 };
 

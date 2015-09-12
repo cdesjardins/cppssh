@@ -25,12 +25,8 @@
 #include "x11channel.h"
 
 #ifndef WIN32
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/un.h>
 #endif
 
 bool CppsshTransportImpl::establish(const std::string& host, short port)
@@ -176,36 +172,6 @@ void CppsshTransportImpl::disconnect()
     cdLog(LogLevel::Info) << "CppsshTransport::disconnect";
     _running = false;
     close(_sock);
-}
-
-bool CppsshTransportImpl::setNonBlocking(bool on)
-{
-#if !defined(WIN32) && !defined(__MINGW32__)
-    int options;
-    if ((options = fcntl(_sock, F_GETFL)) < 0)
-    {
-        cdLog(LogLevel::Error) << "Cannot read options of the socket.";
-        return false;
-    }
-
-    if (on == true)
-    {
-        options = (options | O_NONBLOCK);
-    }
-    else
-    {
-        options = (options & ~O_NONBLOCK);
-    }
-    fcntl(_sock, F_SETFL, options);
-#else
-    unsigned long options = on;
-    if (ioctlsocket(_sock, FIONBIO, &options))
-    {
-        cdLog(LogLevel::Error) << "Cannot set asynch I/O on the socket.";
-        return false;
-    }
-#endif
-    return true;
 }
 
 void CppsshTransportImpl::setupFd(fd_set* fd)

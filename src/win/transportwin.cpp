@@ -99,3 +99,14 @@ bool CppsshTransportWin::establishLocalX11(const std::string& display)
     return ret;
 }
 
+bool CppsshTransportWin::setNonBlocking(bool on)
+{
+    unsigned long options = on;
+    bool ret = true;
+    if (ioctlsocket(_sock, FIONBIO, &options))
+    {
+        cdLog(LogLevel::Error) << "Cannot set asynch I/O on the socket.";
+        ret = false;
+    }
+    return ret;
+}

@@ -19,6 +19,10 @@
 #ifndef _TRANSPORT_POSIX_Hxx
 #define _TRANSPORT_POSIX_Hxx
 
+/*
+** Note: Do not include this file directly, include transport.h instead
+*/
+
 #include <memory>
 
 class CppsshSession;
@@ -35,10 +39,11 @@ public:
     {
     }
 
+protected:
     virtual bool isConnectInProgress();
     virtual bool establishLocalX11(const std::string& display);
+    virtual bool setNonBlocking(bool on);
 
-protected:
 private:
 };
 

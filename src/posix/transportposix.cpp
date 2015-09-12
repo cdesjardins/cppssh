@@ -72,3 +72,26 @@ bool CppsshTransportPosix::establishLocalX11(const std::string& display)
     return ret;
 }
 
+bool CppsshTransportPosix::setNonBlocking(bool on)
+{
+    bool ret = true;
+    int options;
+    if ((options = fcntl(_sock, F_GETFL)) < 0)
+    {
+        cdLog(LogLevel::Error) << "Cannot read options of the socket.";
+        ret = false;
+    }
+    else
+    {
+        if (on == true)
+        {
+            options = (options | O_NONBLOCK);
+        }
+        else
+        {
+            options = (options & ~O_NONBLOCK);
+        }
+        fcntl(_sock, F_SETFL, options);
+    }
+    return ret;
+}
