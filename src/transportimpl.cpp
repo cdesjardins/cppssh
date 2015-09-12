@@ -61,7 +61,7 @@ WSockInitializer _wsock32_;
 #   include <sys/un.h>
 #endif
 
-bool CppsshTransport::establish(const std::string& host, short port)
+bool CppsshTransportImpl::establish(const std::string& host, short port)
 {
     bool ret = false;
     sockaddr_in remoteAddr;
@@ -98,7 +98,7 @@ bool CppsshTransport::establish(const std::string& host, short port)
     return ret;
 }
 
-bool CppsshTransport::makeConnection(void* remoteAddr)
+bool CppsshTransportImpl::makeConnection(void* remoteAddr)
 {
     bool ret = false;
     // Non blocking connect needs some help from select and getsockopt to work
@@ -153,7 +153,7 @@ bool CppsshTransport::makeConnection(void* remoteAddr)
     return ret;
 }
 
-bool CppsshTransport::isConnectInProgress()
+bool CppsshTransportImpl::isConnectInProgress()
 {
     bool ret = false;
 #if defined(WIN32) || defined(__MINGW32__)
@@ -171,7 +171,7 @@ bool CppsshTransport::isConnectInProgress()
     return ret;
 }
 
-bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
+bool CppsshTransportImpl::parseDisplay(const std::string& display, int* displayNum, int* screenNum)
 {
     bool ret = false;
     size_t start = display.find(':') + 1;
@@ -200,7 +200,7 @@ bool CppsshTransport::parseDisplay(const std::string& display, int* displayNum, 
     return ret;
 }
 
-bool CppsshTransport::establishX11()
+bool CppsshTransportImpl::establishX11()
 {
     bool ret = false;
     std::string display;
@@ -218,7 +218,7 @@ bool CppsshTransport::establishX11()
 }
 
 #ifdef WIN32
-bool CppsshTransport::establishLocalX11(const std::string& display)
+bool CppsshTransportImpl::establishLocalX11(const std::string& display)
 {
     bool ret = false;
     UNREF_PARAM(display);
@@ -266,7 +266,7 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
 }
 
 #else
-bool CppsshTransport::establishLocalX11(const std::string& display)
+bool CppsshTransportImpl::establishLocalX11(const std::string& display)
 {
     bool ret = false;
     struct sockaddr_un addr;
@@ -304,14 +304,14 @@ bool CppsshTransport::establishLocalX11(const std::string& display)
 }
 
 #endif
-void CppsshTransport::disconnect()
+void CppsshTransportImpl::disconnect()
 {
     cdLog(LogLevel::Info) << "CppsshTransport::disconnect";
     _running = false;
     close(_sock);
 }
 
-bool CppsshTransport::setNonBlocking(bool on)
+bool CppsshTransportImpl::setNonBlocking(bool on)
 {
 #if !defined(WIN32) && !defined(__MINGW32__)
     int options;
@@ -341,7 +341,7 @@ bool CppsshTransport::setNonBlocking(bool on)
     return true;
 }
 
-void CppsshTransport::setupFd(fd_set* fd)
+void CppsshTransportImpl::setupFd(fd_set* fd)
 {
 #if defined(WIN32)
 #pragma warning(push)
@@ -354,7 +354,7 @@ void CppsshTransport::setupFd(fd_set* fd)
 #endif
 }
 
-bool CppsshTransport::wait(bool isWrite)
+bool CppsshTransportImpl::wait(bool isWrite)
 {
     bool ret = false;
     int status = 0;
@@ -386,7 +386,7 @@ bool CppsshTransport::wait(bool isWrite)
     return ret;
 }
 
-bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer, size_t numBytes)
+bool CppsshTransportImpl::receiveMessage(Botan::secure_vector<Botan::byte>* buffer, size_t numBytes)
 {
     bool ret = true;
     while ((buffer->size() < numBytes) && (_running == true))
@@ -401,7 +401,7 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer, 
 }
 
 // Append new receive data to the end of the buffer
-bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
+bool CppsshTransportImpl::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
 {
     bool ret = true;
     int len = 0;
@@ -434,7 +434,7 @@ bool CppsshTransport::receiveMessage(Botan::secure_vector<Botan::byte>* buffer)
     return ret;
 }
 
-bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
+bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
 {
     int len;
     size_t sent = 0;
@@ -460,14 +460,14 @@ bool CppsshTransport::sendMessage(const Botan::secure_vector<Botan::byte>& buffe
     return sent == buffer.size();
 }
 
-CppsshTransport::CppsshTransport(const std::shared_ptr<CppsshSession>& session)
+CppsshTransportImpl::CppsshTransportImpl(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _sock((SOCKET)-1),
     _running(true)
 {
 }
 
-CppsshTransport::~CppsshTransport()
+CppsshTransportImpl::~CppsshTransportImpl()
 {
     _running = false;
 }

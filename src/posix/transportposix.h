@@ -16,25 +16,23 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _TRANSPORT_Hxx
-#define _TRANSPORT_Hxx
+#ifndef _TRANSPORT_POSIX_Hxx
+#define _TRANSPORT_POSIX_Hxx
 
-#ifdef WIN32
-class CppsshTransportWin;
-typedef class CppsshTransportWin CppsshTransport;
-#else
-class CppsshTransportPosix;
-typedef class CppsshTransportPosix CppsshTransport;
-#define SOCKET int
+#include <memory>
+
+class CppsshSession;
+
+class CppsshTransportPosix : public CppsshTransportImpl
+{
+public:
+    CppsshTransportPosix(const std::shared_ptr<CppsshSession>& session)
+        : CppsshTransportImpl(session)
+    {
+    }
+
+protected:
+private:
+};
+
 #endif
-
-#include "transportimpl.h"
-
-#ifdef WIN32
-#include "win/transportwin.h"
-#else
-#include "posix/transportposix.h"
-#endif
-
-#endif
-
