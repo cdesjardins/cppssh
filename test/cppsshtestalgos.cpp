@@ -57,7 +57,6 @@ int main(int argc, char** argv)
             Logger::getLogger().setMinLogLevel(LogLevel::Debug);
             Cppssh::setOptions(argv[4], argv[5]);
 
-            std::vector<std::thread> threads;
             char* keyfile = NULL;
             if (argc == 7)
             {
