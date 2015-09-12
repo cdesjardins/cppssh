@@ -19,8 +19,6 @@
 #ifndef _TRANSPORT_WIN_Hxx
 #define _TRANSPORT_WIN_Hxx
 
-#include <winsock.h>
-
 /*
 ** Note: Do not include this file directly, include transport.h instead
 */

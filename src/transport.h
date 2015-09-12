@@ -22,6 +22,7 @@
 #ifdef WIN32
 class CppsshTransportWin;
 typedef class CppsshTransportWin CppsshTransport;
+#include <winsock.h>
 #else
 class CppsshTransportPosix;
 typedef class CppsshTransportPosix CppsshTransport;

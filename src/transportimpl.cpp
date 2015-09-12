@@ -24,7 +24,10 @@
 #include "messages.h"
 #include "x11channel.h"
 
-#ifndef WIN32
+#ifdef WIN32
+#define close closesocket
+#define socklen_t int
+#else
 #include <netdb.h>
 #include <unistd.h>
 #endif

@@ -16,14 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include "CDLogger/Logger.h"
 #include "transport.h"
 #include "unparam.h"
-
-#define SOCKET_BUFFER_TYPE char
-#define close closesocket
-#define SOCK_CAST (char*)
-#define socklen_t int
 
 class WSockInitializer
 {
@@ -44,6 +39,7 @@ WSockInitializer _wsock32_;
 
 bool CppsshTransportWin::isConnectInProgress()
 {
+    bool ret = false;
     int lastError = WSAGetLastError();
     if (lastError == WSAEWOULDBLOCK)
     {
