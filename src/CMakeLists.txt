@@ -39,7 +39,7 @@ if(MSVC)
     target_link_libraries(cppssh ws2_32)
 endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(cppssh rt)
+    target_link_libraries(cppssh rt pthread)
 endif()
 target_link_libraries(cppssh optimized ${HAVE_BOTAN_LIB} optimized ${HAVE_CDLOGGER_LIB} debug ${HAVE_BOTAN_DBG_LIB} debug ${HAVE_CDLOGGER_DBG_LIB})
 
