@@ -336,18 +336,17 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Bot
     bool ret = false;
     try
     {
-        Botan::HashFunction* hashIt = NULL;
+        std::unique_ptr<Botan::HashFunction> hashIt;
         std::string hashAlgo = getHashAlgo();
         if (hashAlgo.length() > 0)
         {
-            hashIt = Botan::get_hash_function(hashAlgo);
+            hashIt.reset(Botan::get_hash_function(hashAlgo));
         }
 
         if (hashIt != NULL)
         {
             _H = hashIt->process(val);
             *result = _H;
-            delete (hashIt);
             ret = true;
         }
     }
@@ -572,7 +571,8 @@ size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods metho
     size_t keyLen = 0;
     try
     {
-        if (const Botan::BlockCipher* bc = Botan::get_block_cipher(name))
+        std::unique_ptr<Botan::BlockCipher> bc(Botan::get_block_cipher(name));
+        if (bc != NULL)
         {
             keyLen = bc->key_spec().maximum_keylength();
             if (method == cryptoMethods::BLOWFISH_CBC)
@@ -633,13 +633,13 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byt
     {
         Botan::secure_vector<Botan::byte> hashBytes;
         CppsshPacket hashBytesPacket(&hashBytes);
-        Botan::HashFunction* hashIt;
+        std::unique_ptr<Botan::HashFunction> hashIt;
         const char* algo = getHashAlgo();
         uint32_t len;
 
         if (algo != NULL)
         {
-            hashIt = Botan::get_hash_function(algo);
+            hashIt.reset(Botan::get_hash_function(algo));
 
             if (hashIt == NULL)
             {
@@ -665,7 +665,6 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byt
                     len = key->size();
                 }
                 key->resize(nBytes);
-                delete (hashIt);
                 ret = true;
             }
         }
@@ -684,11 +683,11 @@ bool CppsshCrypto::makeNewKeys()
     std::string algo;
     uint32_t keyLen;
     Botan::secure_vector<Botan::byte> key;
-    const Botan::HashFunction* hashAlgo;
+    std::unique_ptr<Botan::HashFunction> hashAlgo;
 
     try
     {
-        hashAlgo = Botan::get_hash_function(getHmacAlgo(_c2sMacMethod));
+        hashAlgo.reset(Botan::get_hash_function(getHmacAlgo(_c2sMacMethod)));
         if (hashAlgo != NULL)
         {
             _c2sMacDigestLen = hashAlgo->output_length();
@@ -699,13 +698,17 @@ bool CppsshCrypto::makeNewKeys()
         {
             return false;
         }
-        //_encryptBlock = Botan::block_size_of(algo);
-        _encryptBlock = Botan::get_block_cipher(algo)->block_size();
         if (algo.length() == 0)
         {
             return false;
         }
 
+        std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::get_block_cipher(algo));
+        if (blockCipher == NULL)
+        {
+            return false;
+        }
+        _encryptBlock = blockCipher->block_size();
         if (computeKey(&key, 'A', _encryptBlock) == false)
         {
             return false;
@@ -724,7 +727,6 @@ bool CppsshCrypto::makeNewKeys()
         }
         Botan::SymmetricKey c2sMac(key);
 
-        const Botan::BlockCipher* blockCipher = Botan::get_block_cipher(algo);
         _encryptFilter = new Botan::Transformation_Filter(
             new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
 
@@ -737,10 +739,8 @@ bool CppsshCrypto::makeNewKeys()
             _hmacOut.reset(new Botan::HMAC(hashAlgo->clone()));
             _hmacOut->set_key(c2sMac);
         }
-        //  if (c2sCmprsMethod == ZLIB) compress = new Pipe (new Zlib_Compression(9));
 
-        //hashAlgo = af.prototype_hash_function(getHmacAlgo(_s2cMacMethod));
-        hashAlgo = Botan::get_hash_function(getHmacAlgo(_s2cMacMethod));
+        hashAlgo.reset(Botan::get_hash_function(getHmacAlgo(_s2cMacMethod)));
         if (hashAlgo != NULL)
         {
             _s2cMacDigestLen = hashAlgo->output_length();
@@ -751,12 +751,17 @@ bool CppsshCrypto::makeNewKeys()
         {
             return false;
         }
-        _decryptBlock = Botan::get_block_cipher(algo)->block_size();
         if (algo.length() == 0)
         {
             return false;
         }
 
+        blockCipher.reset(Botan::get_block_cipher(algo));
+        if (blockCipher == NULL)
+        {
+            return false;
+        }
+        _decryptBlock = blockCipher->block_size();
         if (computeKey(&key, 'B', _decryptBlock) == false)
         {
             return false;
@@ -775,8 +780,6 @@ bool CppsshCrypto::makeNewKeys()
         }
         Botan::SymmetricKey s2cMac(key);
 
-        //blockCipher = af.prototype_block_cipher(algo);
-        blockCipher = Botan::get_block_cipher(algo);
         _decryptFilter = new Botan::Transformation_Filter(
             new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
 
@@ -789,7 +792,6 @@ bool CppsshCrypto::makeNewKeys()
             _hmacIn.reset(new Botan::HMAC(hashAlgo->clone()));
             _hmacIn->set_key(s2cMac);
         }
-        //  if (s2cCmprsMethod == ZLIB) decompress = new Pipe (new Zlib_Decompression);
         ret = true;
     }
     catch (const std::exception& ex)
