@@ -61,11 +61,13 @@ class TestAlgos(unittest.TestCase):
             os.makedirs(actualResultsDir)
         shutil.copy(filename, actualResultsDir)
         os.remove(filename)
-        actualResults = self.getFileContent(actualResultsDir + "/" + filename, cutTimeStamp, ignoreLines)
-        expectedResults = self.getFileContent(expectedResultsDir + "/" + filename, cutTimeStamp, ignoreLines)
+        actualResultsFileName = actualResultsDir + "/" + filename
+        expectedResultsFileName = expectedResultsDir + "/" + filename
+        actualResults = self.getFileContent(actualResultsFileName, cutTimeStamp, ignoreLines)
+        expectedResults = self.getFileContent(expectedResultsFileName, cutTimeStamp, ignoreLines)
         difflist = list(difflib.context_diff(actualResults, expectedResults))
-        self.myAssertTrue(len(actualResults) > 0, "No actual output in " + actualResultsDir + "/" + filename)
-        self.myAssertEqual(len(difflist), 0, "Differences in: " + actualResultsDir + "/" + filename)
+        self.myAssertTrue(len(actualResults) > 0, "No actual output in " + actualResultsFileName)
+        self.myAssertEqual(len(difflist), 0, "Differences in: " + actualResultsFileName + " " + expectedResultsFileName)
         if (len(difflist) > 0):
             for d in difflist:
                 print d
