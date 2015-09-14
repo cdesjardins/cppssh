@@ -78,7 +78,7 @@ class TestAlgos(unittest.TestCase):
         call(cmd.split(" "))
         actualResultsDir = "actualResults/" + cipher + "/" + mac
         expectedResultsDir = "expectedResults/" + cipher + "/" + mac
-        self.cmpOutputFiles("testlog.txt", actualResultsDir, expectedResultsDir, True, [])
+        self.cmpOutputFiles("testlog.txt", actualResultsDir, expectedResultsDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos"])
         self.cmpOutputFiles("testoutput.txt", actualResultsDir, expectedResultsDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY="])
 
     def testAlgos(self):

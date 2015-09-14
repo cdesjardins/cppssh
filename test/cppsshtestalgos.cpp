@@ -15,25 +15,33 @@ void runConnectionTest(char* hostname, char* username, char* password, char* key
         std::vector<std::string> cmdList {"env\n", "mkdir cppsshTestDir\n", "ls -l cppsshTestDir\n", "rmdir cppsshTestDir\n"};
         std::ofstream remoteOutput;
         remoteOutput.open("testoutput.txt");
-        std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
-        size_t txIndex = 0;
-
-        while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
+        if (!remoteOutput)
         {
-            CppsshMessage message;
-            if (Cppssh::read(channel, &message) == true)
-            {
-                remoteOutput << message.message();
-                //std::cout << message.message();
-            }
+            cdLog(LogLevel::Error) << "Unable to open testoutput.txt";
+        }
+        else
+        {
+            std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
+            size_t txIndex = 0;
 
-            if (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(500)) && (txIndex < cmdList.size()))
+            while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
             {
-                Cppssh::writeString(channel, cmdList[txIndex].c_str());
-                txTime = std::chrono::steady_clock::now();
-                txIndex++;
+                CppsshMessage message;
+                if (Cppssh::read(channel, &message) == true)
+                {
+                    remoteOutput << message.message();
+                    //std::cout << message.message();
+                }
+
+                if (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(500)) && (txIndex < cmdList.size()))
+                {
+                    Cppssh::writeString(channel, cmdList[txIndex].c_str());
+                    txTime = std::chrono::steady_clock::now();
+                    txIndex++;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            remoteOutput.close();
         }
     }
     else

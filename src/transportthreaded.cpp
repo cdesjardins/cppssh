@@ -97,14 +97,13 @@ void CppsshTransportThreaded::rxThread()
             {
                 size = sizeof(uint32_t);
             }
-            if (receiveMessage(&incoming, size) == false)
+            while ((incoming.size() < size) && (_running == true) && (receiveMessage(&incoming, size) == true))
             {
-                break;
-            }
-            if (incoming.size() >= size)
-            {
-                CppsshPacket packet(&incoming);
-                size = packet.getCryptoLength();
+                if (incoming.size() >= size)
+                {
+                    CppsshPacket packet(&incoming);
+                    size = packet.getCryptoLength();
+                }
             }
             if ((_running == true) && (incoming.empty() == false))
             {
