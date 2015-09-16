@@ -2,10 +2,7 @@
 #repo init -u https://github.com/cdesjardins/cppsshManifest.git 
 #repo sync
 
-curl https://raw.githubusercontent.com/cdesjardins/ComBomb/master/makeboost.py > makeboost.py
-chmod +x makeboost.py
-#./makeboost.py
-#./buildbotan.sh
+./buildbotan.sh
 
 function runCmake {
     mkdir build
@@ -19,9 +16,6 @@ function runCmake {
 }
 
 cd ../CDLogger
-runCmake
-
-cd ../../QueuePtr
 runCmake
 
 cd ../../cppssh

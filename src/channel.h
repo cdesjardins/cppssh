@@ -22,9 +22,9 @@
 #include "packet.h"
 #include "session.h"
 #include "messages.h"
-#include "tsmem.h"
 #include "transport.h"
-#include "QueuePtr/ThreadSafeQueue.h"
+#include "threadsafemap.h"
+#include "threadsafequeue.h"
 
 class CppsshSubChannel;
 
@@ -71,7 +71,7 @@ private:
     std::string _fakeX11Cookie;
 
     ThreadSafeQueue<Botan::secure_vector<Botan::byte> > _incomingGlobalData;
-    CppsshTsMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
+    ThreadSafeMap<int, std::shared_ptr<CppsshSubChannel> > _channels;
     uint32_t _mainChannel;
     bool _x11ReqSuccess;
     friend class CppsshX11Channel;
