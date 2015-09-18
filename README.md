@@ -4,7 +4,8 @@ To get cppssh and all dependant software:
 repo init -u https://github.com/cdesjardins/cppsshManifest.git 
 repo sync
 cd build
-./build.py --CDLogger --cppssh
+[./]makebotan.py
+[./]build.py --CDLogger --cppssh
 ```
 
 
