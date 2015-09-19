@@ -22,15 +22,15 @@ class TestAlgos(unittest.TestCase):
     def myAssertEqual(self, a, b, msg=None):
         try:
             self.assertEqual(a, b, msg)
-        except AssertionError, e:
-            print str(e)
+        except AssertionError as e:
+            print(str(e))
             self.verificationErrors.append(str(e))
 
     def myAssertTrue(self, a, msg=None):
         try:
             self.assertTrue(a, msg)
-        except AssertionError, e:
-            print str(e)
+        except AssertionError as e:
+            print(str(e))
             self.verificationErrors.append(str(e))
 
     def cutTimeStamp(self, l):
@@ -70,11 +70,11 @@ class TestAlgos(unittest.TestCase):
         self.myAssertEqual(len(difflist), 0, "Differences in: " + actualResultsFileName + " " + expectedResultsFileName)
         if (len(difflist) > 0):
             for d in difflist:
-                print d
+                print(d)
 
     def runAlgoTest(self, password, cipher, mac, keyfile = ""):
         cmd = "../../install/bin/cppsshtestalgos 192.168.1.19 algotester " + password + " " + cipher + " " + mac + " " + keyfile
-        print "Testing: " + cmd
+        print("Testing: " + cmd)
         call(cmd.split(" "))
         actualResultsDir = "actualResults/" + cipher + "/" + mac
         expectedResultsDir = "expectedResults/" + cipher + "/" + mac
@@ -94,9 +94,9 @@ class TestAlgos(unittest.TestCase):
 
     def tearDown(self):
         if (len(self.verificationErrors) == 0):
-            print "OK"
+            print("OK")
         else:
-            print "FAILED (errors=" + str(len(self.verificationErrors)) + ")"
+            print("FAILED (errors=" + str(len(self.verificationErrors)) + ")")
         self.assertEqual(len(self.verificationErrors), 0)
 
 if __name__ == '__main__':
