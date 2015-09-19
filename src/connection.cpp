@@ -89,7 +89,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if ((authWithPassword(username, password) == false) && (authWithKey(username, privKeyFile, password) == false))
+    if ((authWithKey(username, privKeyFile, password) == false) && (authWithPassword(username, password) == false))
     {
         return false;
     }
