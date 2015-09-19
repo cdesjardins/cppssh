@@ -99,7 +99,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
             }
             else
             {
-                Botan::Private_Key* privKey = Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword));
+                std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword)));
                 if (privKey != NULL)
                 {
                     ret = getRSAKeys(privKey);
@@ -270,17 +270,16 @@ bool CppsshKeys::getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> private
     return ret;
 }
 
-bool CppsshKeys::getRSAKeys(Botan::Private_Key* privKey)
+bool CppsshKeys::getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
 {
     bool ret = false;
-    Botan::RSA_PrivateKey* rsaPrivKey = dynamic_cast<Botan::RSA_PrivateKey*>(privKey);
-    if (rsaPrivKey != NULL)
+    _rsaPrivateKey = std::dynamic_pointer_cast<Botan::RSA_PrivateKey>(privKey);
+    if (_rsaPrivateKey != NULL)
     {
-        _rsaPrivateKey.reset(rsaPrivKey);
-        Botan::Public_Key* pubKey = Botan::X509::load_key(Botan::X509::BER_encode(*rsaPrivKey));
+        std::shared_ptr<Botan::Public_Key> pubKey(Botan::X509::load_key(Botan::X509::BER_encode(*_rsaPrivateKey)));
         if (pubKey != NULL)
         {
-            Botan::RSA_PublicKey* rsaPubKey = dynamic_cast<Botan::RSA_PublicKey*>(pubKey);
+            std::shared_ptr<Botan::RSA_PublicKey> rsaPubKey = std::dynamic_pointer_cast<Botan::RSA_PublicKey>(pubKey);
             if (rsaPubKey != NULL)
             {
                 _publicKeyBlob.clear();
@@ -288,29 +287,23 @@ bool CppsshKeys::getRSAKeys(Botan::Private_Key* privKey)
                 publicKeyPacket.addString("ssh-rsa");
                 publicKeyPacket.addBigInt(rsaPubKey->get_e());
                 publicKeyPacket.addBigInt(rsaPubKey->get_n());
-                delete rsaPubKey;
                 ret = true;
-            }
-            else
-            {
-                delete pubKey;
             }
         }
     }
     return ret;
 }
 
-bool CppsshKeys::getDSAKeys(Botan::Private_Key* privKey)
+bool CppsshKeys::getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
 {
     bool ret = false;
-    Botan::DSA_PrivateKey* dsaPrivKey = dynamic_cast<Botan::DSA_PrivateKey*>(privKey);
-    if (dsaPrivKey != NULL)
+    _dsaPrivateKey = std::dynamic_pointer_cast<Botan::DSA_PrivateKey>(privKey);
+    if (_dsaPrivateKey != NULL)
     {
-        _dsaPrivateKey.reset(dsaPrivKey);
-        Botan::Public_Key* pubKey = Botan::X509::load_key(Botan::X509::BER_encode(*privKey));
+        std::shared_ptr<Botan::Public_Key> pubKey(Botan::X509::load_key(Botan::X509::BER_encode(*privKey)));
         if (pubKey != NULL)
         {
-            Botan::DSA_PublicKey* dsaPubKey = dynamic_cast<Botan::DSA_PublicKey*>(pubKey);
+            std::shared_ptr<Botan::DSA_PublicKey> dsaPubKey = std::dynamic_pointer_cast<Botan::DSA_PublicKey>(pubKey);
             if (dsaPubKey != NULL)
             {
                 _publicKeyBlob.clear();
@@ -320,12 +313,7 @@ bool CppsshKeys::getDSAKeys(Botan::Private_Key* privKey)
                 publicKeyPacket.addBigInt(dsaPubKey->group_q());
                 publicKeyPacket.addBigInt(dsaPubKey->group_g());
                 publicKeyPacket.addBigInt(dsaPubKey->get_y());
-                delete dsaPubKey;
                 ret = true;
-            }
-            else
-            {
-                delete pubKey;
             }
         }
     }
