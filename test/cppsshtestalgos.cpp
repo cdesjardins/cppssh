@@ -11,7 +11,7 @@
 void runConnectionTest(const char* hostname, const char* username, const char* password, const char* keyfile)
 {
     int channel;
-    if (Cppssh::connect(&channel, hostname, 22, username, keyfile, password, 10000) == true)
+    if (Cppssh::connect(&channel, hostname, 22, username, keyfile, password, 10000) == CPPSSH_CONNECT_OK)
     {
         std::vector<std::string> cmdList {"env\n", "mkdir cppsshTestDir\n", "ls -l cppsshTestDir\n", "rmdir cppsshTestDir\n"};
         std::ofstream remoteOutput;
