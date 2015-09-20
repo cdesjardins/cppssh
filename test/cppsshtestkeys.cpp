@@ -3,7 +3,12 @@
 #include "CDLogger/Logger.h"
 #include <iostream>
 #include <vector>
-#include <dirent.h>
+
+#ifdef WIN32
+#define DIR_SEP "\\"
+#else
+#define DIR_SEP "/"
+#endif
 
 inline bool endsWith(std::string const& value, std::string const& ending)
 {
@@ -16,26 +21,27 @@ inline bool endsWith(std::string const& value, std::string const& ending)
 
 void getPublicKeys(const char* keydir, std::vector<std::string>* publicKeys)
 {
-    DIR* dir;
-    struct dirent* ent;
-    dir = opendir(keydir);
-    if (dir != nullptr)
+    std::vector<std::string> keyFiles = {
+        "testkey_dsa.pub",
+        "testkey_rsa.pub",
+        "testkey_dsa_pw.pub",
+        "testkey_rsa_pw.pub"
+    };
+    for (std::vector<std::string>::iterator it = keyFiles.begin(); it < keyFiles.end(); it++)
     {
-        do
+        std::string name(keydir);
+        name.append(DIR_SEP);
+        name.append(*it);
+        std::ifstream t(name);
+        if (t)
         {
-            ent = readdir(dir);
-            if (ent != nullptr)
-            {
-                std::string name(ent->d_name);
-                if (endsWith(name, ".pub") == true)
-                {
-                    std::ifstream t(name);
-                    std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-                    publicKeys->push_back(str);
-                }
-            }
-        } while (ent != nullptr);
-        closedir(dir);
+            std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+            publicKeys->push_back(str);
+        }
+        else
+        {
+            cdLog(LogLevel::Error) << "Unable to open file " << name;
+        }
     }
 }
 
@@ -46,7 +52,7 @@ void installPublicKeys(const char* hostname, const char* username, const char* p
     if (publicKeys.size() > 0)
     {
         int channel;
-        if (Cppssh::connect(&channel, hostname, 22, username, nullptr, password, 10000) == true)
+        if (Cppssh::connect(&channel, hostname, 22, username, nullptr, password, 10000) == CPPSSH_CONNECT_OK)
         {
             std::vector<std::string> cmdList { "mkdir -p ~/.ssh\n", "rm ~/.ssh/authorized_keys\n", "touch ~/.ssh/authorized_keys\n", "chmod 600 ~/.ssh/authorized_keys\n"};
             for (std::vector<std::string>::iterator it = publicKeys.begin(); it < publicKeys.end(); it++)
@@ -64,10 +70,14 @@ void installPublicKeys(const char* hostname, const char* username, const char* p
             }
             else
             {
-                //sendCmdList(channel, cmdList, 500, remoteOutput);
+                sendCmdList(channel, cmdList, 500, remoteOutput);
                 remoteOutput.close();
             }
             Cppssh::close(channel);
+        }
+        else
+        {
+            cdLog(LogLevel::Error) << "Did not connect " << channel;
         }
     }
 }

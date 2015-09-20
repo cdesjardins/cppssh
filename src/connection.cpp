@@ -89,7 +89,12 @@ CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short po
     {
         return CPPSSH_CONNECT_ERROR;
     }
-    if ((authWithKey(username, privKeyFile, password) == false) && (authWithPassword(username, password) == false))
+    std::string pkf;
+    if (privKeyFile != nullptr)
+    {
+        pkf.assign(privKeyFile);
+    }
+    if ((authWithKey(username, pkf, password) == false) && (authWithPassword(username, password) == false))
     {
         return CPPSSH_CONNECT_AUTH_FAIL;
     }
