@@ -25,10 +25,10 @@ std::mutex Cppssh::s_cppsshInstMutex;
 
 void Cppssh::create(int apiLevel)
 {
-    if (s_cppsshInst == NULL)
+    if (s_cppsshInst == nullptr)
     {
         std::unique_lock<std::mutex> lock(s_cppsshInstMutex);
-        if (s_cppsshInst == NULL)
+        if (s_cppsshInst == nullptr)
         {
             // A quick check to make sure that the header files in an end program are the
             // same API level as the library was built with.
@@ -62,7 +62,7 @@ bool Cppssh::connect(int* connectionId, const char* host, const short port, cons
 {
     bool ret = false;
     create();
-    if (s_cppsshInst != NULL)
+    if (s_cppsshInst != nullptr)
     {
         ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, term);
     }
@@ -73,7 +73,7 @@ bool Cppssh::checkConnectionId(const int connectionId)
 {
     bool ret = false;
     create();
-    if (s_cppsshInst != NULL)
+    if (s_cppsshInst != nullptr)
     {
         ret = s_cppsshInst->checkConnectionId(connectionId);
     }

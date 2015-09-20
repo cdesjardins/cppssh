@@ -36,7 +36,7 @@ CppsshX11Channel::~CppsshX11Channel()
 
 void CppsshX11Channel::disconnect()
 {
-    if (_x11transport != NULL)
+    if (_x11transport != nullptr)
     {
         _x11transport->disconnect();
     }
@@ -104,7 +104,7 @@ void CppsshX11Channel::x11TxThread()
 void CppsshX11Channel::getDisplay(std::string* display)
 {
     char* d = getenv("DISPLAY");
-    if (d != NULL)
+    if (d != nullptr)
     {
         *display = d;
     }

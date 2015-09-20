@@ -97,7 +97,7 @@ bool CppsshConnection::connect(const char* host, const short port, const char* u
     {
         return false;
     }
-    if (term != NULL)
+    if (term != nullptr)
     {
         _session->_channel->getX11();
         if (_session->_channel->getShell(term) == false)

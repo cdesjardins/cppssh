@@ -35,8 +35,8 @@ SMART_ENUM_DEFINE(cryptoMethods);
 
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
-    _encryptFilter(NULL),
-    _decryptFilter(NULL),
+    _encryptFilter(nullptr),
+    _decryptFilter(nullptr),
     _encryptBlock(0),
     _decryptBlock(0),
     _c2sMacDigestLen(0),
@@ -62,7 +62,7 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Bot
         _encrypt->process_msg(packet);
         *crypted = _encrypt->read_all(_encrypt->message_count() - 1);
 
-        if (_hmacOut != NULL)
+        if (_hmacOut != nullptr)
         {
             CppsshPacket mac(&macStr);
             mac.addInt(seq);
@@ -343,7 +343,7 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Bot
             hashIt.reset(Botan::get_hash_function(hashAlgo));
         }
 
-        if (hashIt != NULL)
+        if (hashIt != nullptr)
         {
             _H = hashIt->process(val);
             *result = _H;
@@ -390,7 +390,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
         {
             case hostkeyMethods::SSH_DSS:
                 dsaKey = getDSAKey(hostKey);
-                if (dsaKey == NULL)
+                if (dsaKey == nullptr)
                 {
                     cdLog(LogLevel::Error) << "DSA key not generated.";
                     return false;
@@ -399,7 +399,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
 
             case hostkeyMethods::SSH_RSA:
                 rsaKey = getRSAKey(hostKey);
-                if (rsaKey == NULL)
+                if (rsaKey == nullptr)
                 {
                     cdLog(LogLevel::Error) << "RSA key not generated.";
                     return false;
@@ -428,7 +428,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, c
             default:
                 break;
         }
-        if (verifier == NULL)
+        if (verifier == nullptr)
         {
             cdLog(LogLevel::Error) << "Key Exchange algorithm: " << _kexMethod << " not supported.";
         }
@@ -562,7 +562,7 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
 
         default:
             cdLog(LogLevel::Error) << "Cryptographic algorithm: " << crypto << " was not defined.";
-            return NULL;
+            return nullptr;
     }
 }
 
@@ -572,7 +572,7 @@ size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods metho
     try
     {
         std::unique_ptr<Botan::BlockCipher> bc(Botan::get_block_cipher(name));
-        if (bc != NULL)
+        if (bc != nullptr)
         {
             keyLen = bc->key_spec().maximum_keylength();
             if (method == cryptoMethods::BLOWFISH_CBC)
@@ -604,11 +604,11 @@ const char* CppsshCrypto::getHmacAlgo(macMethods method)
             return "MD5";
 
         case macMethods::HMAC_NONE:
-            return NULL;
+            return nullptr;
 
         default:
             cdLog(LogLevel::Error) << "HMAC algorithm: " << method << " was not defined.";
-            return NULL;
+            return nullptr;
     }
 }
 
@@ -622,7 +622,7 @@ const char* CppsshCrypto::getHashAlgo()
 
         default:
             cdLog(LogLevel::Error) << "DH Group: " << _kexMethod << " was not defined.";
-            return NULL;
+            return nullptr;
     }
 }
 
@@ -637,11 +637,11 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byt
         const char* algo = getHashAlgo();
         uint32_t len;
 
-        if (algo != NULL)
+        if (algo != nullptr)
         {
             hashIt.reset(Botan::get_hash_function(algo));
 
-            if (hashIt == NULL)
+            if (hashIt == nullptr)
             {
                 cdLog(LogLevel::Error) << "Undefined HASH algorithm encountered while computing the key.";
             }
@@ -688,7 +688,7 @@ bool CppsshCrypto::makeNewKeys()
     try
     {
         hashAlgo.reset(Botan::get_hash_function(getHmacAlgo(_c2sMacMethod)));
-        if (hashAlgo != NULL)
+        if (hashAlgo != nullptr)
         {
             _c2sMacDigestLen = hashAlgo->output_length();
         }
@@ -704,7 +704,7 @@ bool CppsshCrypto::makeNewKeys()
         }
 
         std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::get_block_cipher(algo));
-        if (blockCipher == NULL)
+        if (blockCipher == nullptr)
         {
             return false;
         }
@@ -734,14 +734,14 @@ bool CppsshCrypto::makeNewKeys()
         _encryptFilter->set_iv(c2siv);
         _encrypt.reset(new Botan::Pipe(_encryptFilter));
 
-        if (hashAlgo != NULL)
+        if (hashAlgo != nullptr)
         {
             _hmacOut.reset(new Botan::HMAC(hashAlgo->clone()));
             _hmacOut->set_key(c2sMac);
         }
 
         hashAlgo.reset(Botan::get_hash_function(getHmacAlgo(_s2cMacMethod)));
-        if (hashAlgo != NULL)
+        if (hashAlgo != nullptr)
         {
             _s2cMacDigestLen = hashAlgo->output_length();
         }
@@ -757,7 +757,7 @@ bool CppsshCrypto::makeNewKeys()
         }
 
         blockCipher.reset(Botan::get_block_cipher(algo));
-        if (blockCipher == NULL)
+        if (blockCipher == nullptr)
         {
             return false;
         }
@@ -787,7 +787,7 @@ bool CppsshCrypto::makeNewKeys()
         _decryptFilter->set_iv(s2civ);
         _decrypt.reset(new Botan::Pipe(_decryptFilter));
 
-        if (hashAlgo != NULL)
+        if (hashAlgo != nullptr)
         {
             _hmacIn.reset(new Botan::HMAC(hashAlgo->clone()));
             _hmacIn->set_key(s2cMac);

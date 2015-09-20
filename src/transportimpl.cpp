@@ -86,7 +86,7 @@ bool CppsshTransportImpl::makeConnection(void* remoteAddr)
                 tv.tv_sec = 0;
                 tv.tv_usec = 100000;
                 setupFd(&connectSet);
-                res = select(_sock + 1, NULL, &connectSet, NULL, &tv);
+                res = select(_sock + 1, nullptr, &connectSet, nullptr, &tv);
                 if ((res < 0) && (errno != EINTR))
                 {
                     cdLog(LogLevel::Error) << "Connection failed due to select error";
@@ -204,12 +204,12 @@ bool CppsshTransportImpl::wait(bool isWrite)
         if (isWrite == false)
         {
             setupFd(&fds);
-            status = select(_sock + 1, &fds, NULL, NULL, &waitTime);
+            status = select(_sock + 1, &fds, nullptr, nullptr, &waitTime);
         }
         else
         {
             setupFd(&fds);
-            status = select(_sock + 1, NULL, &fds, NULL, &waitTime);
+            status = select(_sock + 1, nullptr, &fds, nullptr, &waitTime);
         }
         if ((status > 0) && (FD_ISSET(_sock, &fds)))
         {

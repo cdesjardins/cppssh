@@ -45,7 +45,7 @@ public:
     CPPSSH_EXPORT static const char* getCppsshVersion(bool detailed);
     CPPSSH_EXPORT static int getApiLevel();
     // Timeout is in milliseconds
-    // term is the TERM environment variable value (NULL for no shell)
+    // term is the TERM environment variable value (nullptr for no shell)
     CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const char* term = "xterm-color");
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);

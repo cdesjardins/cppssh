@@ -100,7 +100,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
             else
             {
                 std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword)));
-                if (privKey != NULL)
+                if (privKey != nullptr)
                 {
                     ret = getRSAKeys(privKey);
                     if (ret == true)
@@ -274,13 +274,13 @@ bool CppsshKeys::getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
 {
     bool ret = false;
     _rsaPrivateKey = std::dynamic_pointer_cast<Botan::RSA_PrivateKey>(privKey);
-    if (_rsaPrivateKey != NULL)
+    if (_rsaPrivateKey != nullptr)
     {
         std::shared_ptr<Botan::Public_Key> pubKey(Botan::X509::load_key(Botan::X509::BER_encode(*_rsaPrivateKey)));
-        if (pubKey != NULL)
+        if (pubKey != nullptr)
         {
             std::shared_ptr<Botan::RSA_PublicKey> rsaPubKey = std::dynamic_pointer_cast<Botan::RSA_PublicKey>(pubKey);
-            if (rsaPubKey != NULL)
+            if (rsaPubKey != nullptr)
             {
                 _publicKeyBlob.clear();
                 CppsshPacket publicKeyPacket(&_publicKeyBlob);
@@ -298,13 +298,13 @@ bool CppsshKeys::getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
 {
     bool ret = false;
     _dsaPrivateKey = std::dynamic_pointer_cast<Botan::DSA_PrivateKey>(privKey);
-    if (_dsaPrivateKey != NULL)
+    if (_dsaPrivateKey != nullptr)
     {
         std::shared_ptr<Botan::Public_Key> pubKey(Botan::X509::load_key(Botan::X509::BER_encode(*privKey)));
-        if (pubKey != NULL)
+        if (pubKey != nullptr)
         {
             std::shared_ptr<Botan::DSA_PublicKey> dsaPubKey = std::dynamic_pointer_cast<Botan::DSA_PublicKey>(pubKey);
-            if (dsaPubKey != NULL)
+            if (dsaPubKey != nullptr)
             {
                 _publicKeyBlob.clear();
                 CppsshPacket publicKeyPacket(&_publicKeyBlob);
@@ -350,7 +350,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
     sigData.addVectorField(sessionID);
     sigData.addVector(signingData);
 
-    if (_rsaPrivateKey == NULL)
+    if (_rsaPrivateKey == nullptr)
     {
         cdLog(LogLevel::Error) << "Private RSA key not initialized.";
     }
@@ -383,7 +383,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
     sigData.addVectorField(sessionID);
     sigData.addVector(signingData);
 
-    if (_dsaPrivateKey == NULL)
+    if (_dsaPrivateKey == nullptr)
     {
         cdLog(LogLevel::Error) << "Private DSA key not initialized.";
     }

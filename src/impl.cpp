@@ -53,7 +53,7 @@ CppsshImpl::CppsshImpl()
 
     CppsshImpl::COMPRESSION_ALGORITHMS.push_back("none");
 
-    if (RNG == NULL)
+    if (RNG == nullptr)
     {
         RNG = new Botan::Serialized_RNG();
     }
@@ -73,7 +73,7 @@ bool CppsshImpl::connect(int* connectionId, const char* host, const short port, 
         con.reset(new CppsshConnection(*connectionId, timeout));
         _connections.push_back(con);
     }
-    if (con != NULL)
+    if (con != nullptr)
     {
         ret = con->connect(host, port, username, privKeyFile, password, term);
     }
@@ -84,7 +84,7 @@ bool CppsshImpl::isConnected(const int connectionId)
 {
     bool ret = false;
     std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
-    if (con != NULL)
+    if (con != nullptr)
     {
         ret = con->isConnected();
     }
@@ -95,7 +95,7 @@ bool CppsshImpl::write(const int connectionId, const uint8_t* data, size_t bytes
 {
     bool ret = false;
     std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
-    if (con != NULL)
+    if (con != nullptr)
     {
         ret = con->write(data, bytes);
     }
@@ -106,7 +106,7 @@ bool CppsshImpl::read(const int connectionId, CppsshMessage* data)
 {
     bool ret = false;
     std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
-    if (con != NULL)
+    if (con != nullptr)
     {
         ret = con->read(data);
     }
@@ -117,7 +117,7 @@ bool CppsshImpl::windowChange(const int connectionId, const uint32_t cols, const
 {
     bool ret = false;
     std::shared_ptr<CppsshConnection> con = getConnection(connectionId);
-    if (con != NULL)
+    if (con != nullptr)
     {
         ret = con->windowChange(cols, rows);
     }

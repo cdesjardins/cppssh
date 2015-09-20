@@ -65,7 +65,7 @@ int main(int argc, char** argv)
             Logger::getLogger().setMinLogLevel(LogLevel::Debug);
             Cppssh::setOptions(argv[4], argv[5]);
 
-            char* keyfile = NULL;
+            char* keyfile = nullptr;
             if (argc == 7)
             {
                 keyfile = argv[6];
