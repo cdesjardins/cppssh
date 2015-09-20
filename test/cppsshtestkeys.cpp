@@ -21,7 +21,8 @@ inline bool endsWith(std::string const& value, std::string const& ending)
 
 void getPublicKeys(const char* keydir, std::vector<std::string>* publicKeys)
 {
-    std::vector<std::string> keyFiles = {
+    std::vector<std::string> keyFiles =
+    {
         "testkey_dsa.pub",
         "testkey_rsa.pub",
         "testkey_dsa_pw.pub",
