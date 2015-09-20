@@ -218,6 +218,7 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
 
 bool CppsshConnection::authWithPassword(const std::string& username, const std::string& password)
 {
+    bool ret;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
@@ -227,7 +228,12 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     packet.addString("password");
     packet.addByte('\0');
     packet.addString(password);
-    return authenticate(buf);
+    ret = authenticate(buf);
+    if (ret == true)
+    {
+        cdLog(LogLevel::Debug) << "Authenticated with password";
+    }
+    return ret;
 }
 
 bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName, const char* keyPassword)
@@ -278,6 +284,7 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
                 {
                     packet.addVectorField(sigBlob);
                     ret = authenticate(buf);
+                    cdLog(LogLevel::Debug) << "Authenticated with key: " << privKeyFileName;
                 }
             }
         }
