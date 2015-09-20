@@ -103,7 +103,7 @@ void CppsshTransportCrypto::rxThread()
                     if (hMac != ourMac)
                     {
                         cdLog(LogLevel::Error) << "Mismatched HMACs.";
-                        return;
+                        break;
                     }
                     cryptoLen += _session->_crypto->getMacInLen();
                 }

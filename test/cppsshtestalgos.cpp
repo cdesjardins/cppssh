@@ -1,3 +1,4 @@
+#include "cppsshtestutil.h"
 #include "cppssh.h"
 #include "CDLogger/Logger.h"
 #include <iostream>
@@ -7,7 +8,7 @@
 #include <fstream>
 #include <sstream>
 
-void runConnectionTest(char* hostname, char* username, char* password, char* keyfile)
+void runConnectionTest(const char* hostname, const char* username, const char* password, const char* keyfile)
 {
     int channel;
     if (Cppssh::connect(&channel, hostname, 22, username, keyfile, password, 10000) == true)
@@ -21,34 +22,15 @@ void runConnectionTest(char* hostname, char* username, char* password, char* key
         }
         else
         {
-            std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
-            size_t txIndex = 0;
-
-            while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
-            {
-                CppsshMessage message;
-                if (Cppssh::read(channel, &message) == true)
-                {
-                    remoteOutput << message.message();
-                    //std::cout << message.message();
-                }
-
-                if (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(500)) && (txIndex < cmdList.size()))
-                {
-                    Cppssh::writeString(channel, cmdList[txIndex].c_str());
-                    txTime = std::chrono::steady_clock::now();
-                    txIndex++;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
+            sendCmdList(channel, cmdList, 500, remoteOutput);
             remoteOutput.close();
         }
+        Cppssh::close(channel);
     }
     else
     {
         cdLog(LogLevel::Error) << "Did not connect " << channel;
     }
-    Cppssh::close(channel);
 }
 
 int main(int argc, char** argv)

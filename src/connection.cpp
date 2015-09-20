@@ -230,7 +230,7 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
     bool ret = false;
     CppsshKeys keyPair;
 
-    if (keyPair.getKeyPairFromFile(privKeyFileName, keyPassword) == true)
+    if ((privKeyFileName.length() > 0) && (keyPair.getKeyPairFromFile(privKeyFileName, keyPassword) == true))
     {
         Botan::secure_vector<Botan::byte> buf;
         Botan::secure_vector<Botan::byte> beginBuf;

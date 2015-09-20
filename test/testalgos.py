@@ -81,16 +81,38 @@ class TestAlgos(unittest.TestCase):
         self.cmpOutputFiles("testlog.txt", actualResultsDir, expectedResultsDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos"])
         self.cmpOutputFiles("testoutput.txt", actualResultsDir, expectedResultsDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY="])
 
-    def testAlgos(self):
+    def te1stAlgos(self):
         if (os.path.exists("actualResults") == True):
             shutil.rmtree("actualResults")
         for cipher in self.ciphers:
             for mac in self.macs:
                 self.runAlgoTest("password", cipher, mac)
 
+    def getKeyFilename(self, keyType, password):
+        filename = "keys/testkey_" + keyType
+        if (password != ""):
+            filename += "_pw"
+        return filename
+
+    def generateKey(self, keyType, password):
+        filename = self.getKeyFilename(keyType, password)
+        cmd = "ssh-keygen -t " + keyType + " -b 1024 -C test@home.com -f " + filename + " -N " + password
+        print(cmd)
+        call(cmd.split(" "))
+        if (password != ""):
+            cmd = "openssl pkcs8 -in " + filename + " -passin pass:" + password + " -topk8 -v2 des3 -out " + filename + "_new -passout pass:" + password
+            print(cmd)
+            call(cmd.split(" "))
+            shutil.move(filename + "_new", filename)
+
     def testKeys(self):
-        pass
-        # todo: add tests that invoke the runAlgoTest with different types of private keys
+        if (os.path.exists("keys") == True):
+            shutil.rmtree("keys")
+        os.mkdir("keys")
+        self.generateKey("rsa", "")
+        self.generateKey("dsa", "")
+        self.generateKey("rsa", "testpw")
+        self.generateKey("dsa", "testpw")
 
     def tearDown(self):
         if (len(self.verificationErrors) == 0):
