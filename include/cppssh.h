@@ -35,6 +35,17 @@ class CppsshChannel;
 
 #define CPPSSH_API_LEVEL_CURRENT    CPPSSH_API_LEVEL_0
 
+enum CppsshConnectStatus_t
+{
+    CPPSSH_CONNECT_OK,
+    CPPSSH_CONNECT_UNKNOWN_HOST,
+    CPPSSH_CONNECT_AUTH_FAIL,
+    CPPSSH_CONNECT_INCOMPATIBLE_SERVER,
+    CPPSSH_CONNECT_KEX_FAIL,
+
+    CPPSSH_CONNECT_ERROR
+};
+
 class Cppssh
 {
 public:
@@ -46,7 +57,7 @@ public:
     CPPSSH_EXPORT static int getApiLevel();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (nullptr for no shell)
-    CPPSSH_EXPORT static bool connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const char* term = "xterm-color");
+    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const char* term = "xterm-color");
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
     CPPSSH_EXPORT static bool write(const int connectionId, const uint8_t* data, size_t bytes);

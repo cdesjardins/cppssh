@@ -47,66 +47,66 @@ CppsshConnection::~CppsshConnection()
     _session.reset();
 }
 
-bool CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFile, const char* password, const char* term)
+CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFile, const char* password, const char* term)
 {
     if (_session->_channel->establish(host, port) == false)
     {
-        return false;
+        return CPPSSH_CONNECT_UNKNOWN_HOST;
     }
     if (checkRemoteVersion() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
     }
     if (sendLocalVersion() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
     }
     if (_session->_transport->start() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_ERROR;
     }
     CppsshKex kex(_session);
 
     if (kex.handleInit() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_KEX_FAIL;
     }
     if (kex.handleKexDHReply() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_KEX_FAIL;
     }
     if (kex.sendKexNewKeys() == 0)
     {
-        return false;
+        return CPPSSH_CONNECT_KEX_FAIL;
     }
 
     _session->_transport.reset(new CppsshTransportCrypto(_session, _session->_transport->getSocket()));
     if (_session->_transport->start() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_ERROR;
     }
     if (requestService("ssh-userauth") == false)
     {
-        return false;
+        return CPPSSH_CONNECT_ERROR;
     }
     if ((authWithKey(username, privKeyFile, password) == false) && (authWithPassword(username, password) == false))
     {
-        return false;
+        return CPPSSH_CONNECT_AUTH_FAIL;
     }
     if (_session->_channel->openChannel() == false)
     {
-        return false;
+        return CPPSSH_CONNECT_ERROR;
     }
     if (term != nullptr)
     {
         _session->_channel->getX11();
         if (_session->_channel->getShell(term) == false)
         {
-            return false;
+            return CPPSSH_CONNECT_ERROR;
         }
     }
     _connected = true;
-    return true;
+    return CPPSSH_CONNECT_OK;
 }
 
 bool CppsshConnection::write(const uint8_t* data, uint32_t bytes)
