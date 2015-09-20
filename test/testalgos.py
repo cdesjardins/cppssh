@@ -1,4 +1,4 @@
-import unittest, os, shutil, difflib
+import unittest, os, shutil, difflib, stat
 from subprocess import call
 
 class TestAlgos(unittest.TestCase):
@@ -6,8 +6,8 @@ class TestAlgos(unittest.TestCase):
     ciphers = [
         "aes256-cbc",
         "aes192-cbc",
-        "twofish-cbc",
-        "twofish256-cbc",
+        #"twofish-cbc",
+        #"twofish256-cbc",
         "blowfish-cbc",
         "3des-cbc",
         "aes128-cbc",
@@ -18,6 +18,7 @@ class TestAlgos(unittest.TestCase):
         "hmac-sha1"
     ]
     verificationErrors = []
+    diffs = {}
 
     def myAssertEqual(self, a, b, msg=None):
         try:
@@ -46,13 +47,16 @@ class TestAlgos(unittest.TestCase):
 
     def getFileContent(self, filename, cutTimeStamp, ignoreLines):
         ret = []
-        with open(filename) as f:
-            for line in f:
-                l = line.strip()
-                if (cutTimeStamp == True):
-                    l = self.cutTimeStamp(l)
-                if (self.shouldIgnore(l, ignoreLines) == False):
-                    ret.append(l)
+        try:
+            with open(filename) as f:
+                for line in f:
+                    l = line.strip()
+                    if (cutTimeStamp == True):
+                        l = self.cutTimeStamp(l)
+                    if (self.shouldIgnore(l, ignoreLines) == False):
+                        ret.append(l)
+        except IOError:
+            pass
         return sorted(ret)
 
     def cmpOutputFiles(self, filename, actualResultsDir, expectedResultsDir, cutTimeStamp, ignoreLines):
@@ -69,29 +73,38 @@ class TestAlgos(unittest.TestCase):
         self.myAssertTrue(len(actualResults) > 0, "No actual output in " + actualResultsFileName)
         self.myAssertEqual(len(difflist), 0, "Differences in: " + actualResultsFileName + " " + expectedResultsFileName)
         if (len(difflist) > 0):
+            self.diffs[actualResultsFileName] = expectedResultsFileName
             for d in difflist:
                 print(d)
 
-    def runAlgoTest(self, password, cipher, mac, keyfile = ""):
+    def verifyAlgos(self, cipher, mac, actualResultsFileName):
+        actualResults = "\n".join(self.getFileContent(actualResultsFileName, False, []))
+        verified = False
+        if ((" agreed on: " + cipher in actualResults) and (" agreed on: " + mac in actualResults)):
+            verified = True
+        else:
+            self.diffs[actualResultsFileName] = cipher + "/" + mac
+        self.myAssertTrue(verified, "Cipher or mac not found in " + actualResultsFileName)
+
+    def runAlgoTest(self, password, cipher, mac, keyfile):
         cmd = "../../install/bin/cppsshtestalgos 192.168.1.19 algotester " + password + " " + cipher + " " + mac + " " + keyfile
         print("Testing: " + cmd)
         call(cmd.split(" "))
-        actualResultsDir = "actualResults/" + cipher + "/" + mac
-        expectedResultsDir = "expectedResults/" + cipher + "/" + mac
-        self.cmpOutputFiles("testlog.txt", actualResultsDir, expectedResultsDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos"])
-        self.cmpOutputFiles("testoutput.txt", actualResultsDir, expectedResultsDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY="])
-
-    def te1stAlgos(self):
-        if (os.path.exists("actualResults") == True):
-            shutil.rmtree("actualResults")
-        for cipher in self.ciphers:
-            for mac in self.macs:
-                self.runAlgoTest("password", cipher, mac)
+        directory = cipher + "/" + mac
+        if (len(keyfile) > 0):
+            directory += "/" + os.path.basename(keyfile)
+        actualResultsDir = "actualResults/" + directory
+        expectedResultsDir = "expectedResults"
+        self.verifyAlgos(cipher, mac, actualResultsDir + "/testlog.txt")
+        self.cmpOutputFiles("testlog.txt", actualResultsDir, expectedResultsDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos", " agreed on: "])
+        self.cmpOutputFiles("testoutput.txt", actualResultsDir, expectedResultsDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY=", "DISPLAY="])
 
     def getKeyFilename(self, keyType, password):
-        filename = "keys/testkey_" + keyType
-        if (password != ""):
-            filename += "_pw"
+        filename = ""
+        if (len(keyType) > 0):
+            filename = "keys/testkey_" + keyType
+            if (password != ""):
+                filename += "_pw"
         return filename
 
     def generateKey(self, keyType, password):
@@ -104,21 +117,38 @@ class TestAlgos(unittest.TestCase):
             print(cmd)
             call(cmd.split(" "))
             shutil.move(filename + "_new", filename)
+        os.chmod(filename, stat.S_IWUSR | stat.S_IRUSR)
 
     def testKeys(self):
         if (os.path.exists("keys") == True):
             shutil.rmtree("keys")
         os.mkdir("keys")
-        self.generateKey("rsa", "")
-        self.generateKey("dsa", "")
-        self.generateKey("rsa", "testpw")
-        self.generateKey("dsa", "testpw")
+        keys = ["rsa", "dsa", ""]
+        passwords = ["", "testpw"]
+
+        for key in keys:
+            for password in passwords:
+                if (len(key) > 0):
+                    self.generateKey(key, password)
+
+        cmd = "../../install/bin/cppsshtestkeys 192.168.1.19 algotester password keys"
+        call(cmd.split(" "))
+
+        for key in keys:
+            for password in passwords:
+                for cipher in self.ciphers:
+                    for mac in self.macs:
+                        if (len(key) == 0):
+                            password = "password"
+                        self.runAlgoTest(password, cipher, mac, self.getKeyFilename(key, password))
 
     def tearDown(self):
         if (len(self.verificationErrors) == 0):
             print("OK")
         else:
             print("FAILED (errors=" + str(len(self.verificationErrors)) + ")")
+        for k, v in self.diffs.items():
+            print("diff " + k + " " + v)
         self.assertEqual(len(self.verificationErrors), 0)
 
 if __name__ == '__main__':

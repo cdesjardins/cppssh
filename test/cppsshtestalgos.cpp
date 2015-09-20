@@ -22,7 +22,7 @@ void runConnectionTest(const char* hostname, const char* username, const char* p
         }
         else
         {
-            sendCmdList(channel, cmdList, 500, remoteOutput);
+            sendCmdList(channel, cmdList, 700, remoteOutput);
             remoteOutput.close();
         }
         Cppssh::close(channel);
