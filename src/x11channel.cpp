@@ -89,7 +89,7 @@ void CppsshX11Channel::x11RxThread()
 
 void CppsshX11Channel::x11TxThread()
 {
-    cdLog(LogLevel::Debug) << "starting x11 tx thread";
+    cdLog(LogLevel::Debug) << "starting x11 tx thread " << _txChannel;
     while (_x11transport->isRunning() == true)
     {
         Botan::secure_vector<Botan::byte> buf;
@@ -98,7 +98,7 @@ void CppsshX11Channel::x11TxThread()
             writeChannel(buf.data(), buf.size());
         }
     }
-    cdLog(LogLevel::Debug) << "x11 tx thread done";
+    cdLog(LogLevel::Debug) << "x11 tx thread done " << _txChannel;
 }
 
 void CppsshX11Channel::getDisplay(std::string* display)
