@@ -196,7 +196,7 @@ void CppsshSubChannel::handleIncomingControlData(const Botan::secure_vector<Bota
     CppsshConstPacket packet(&buf);
 }
 
-bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket, uint32_t* rxChannel)
+bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t maxPacket, uint32_t txChannel, uint32_t* rxChannel)
 {
     bool ret = createNewSubChannel(channelName, rxChannel);
     if (ret == true)
@@ -287,7 +287,7 @@ void CppsshChannel::handleOpen(const Botan::secure_vector<Botan::byte>& buf)
         else
         {
             uint32_t rxChannel;
-            if (createNewSubChannel(channelName, windowSend, txChannel, maxPacket, &rxChannel) == true)
+            if (createNewSubChannel(channelName, windowSend, maxPacket, txChannel, &rxChannel) == true)
             {
                 sendOpenConfirmation(rxChannel);
             }
