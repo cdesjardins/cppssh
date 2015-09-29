@@ -573,10 +573,16 @@ bool CppsshChannel::waitForGlobalMessage(Botan::secure_vector<Botan::byte>& buf)
 
 void CppsshChannel::handleBanner(const Botan::secure_vector<Botan::byte>& buf)
 {
+    std::shared_ptr<std::unique_lock<std::recursive_mutex> > lock = _channels.getLock();
+    _channels.at(_mainChannel)->handleBanner(buf);
+}
+
+void CppsshSubChannel::handleBanner(const Botan::secure_vector<Botan::byte>& buf)
+{
     const CppsshConstPacket packet(&buf);
     std::shared_ptr<CppsshMessage> message(new CppsshMessage());
     packet.getBannerData(message.get());
-    // FIXME: enqueue the banner to mainChannel incomingChannelData
+    _incomingChannelData.enqueue(message);
 }
 
 void CppsshChannel::handleChannelRequest(const Botan::secure_vector<Botan::byte>& buf)

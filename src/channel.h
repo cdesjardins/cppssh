@@ -131,6 +131,7 @@ public:
     bool readChannel(CppsshMessage* data);
     bool windowChange(const uint32_t cols, const uint32_t rows);
     void setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket);
+    void handleBanner(const Botan::secure_vector<Botan::byte>& buf);
 
 protected:
     ThreadSafeQueue<std::shared_ptr<Botan::secure_vector<Botan::byte> > > _outgoingChannelData;
