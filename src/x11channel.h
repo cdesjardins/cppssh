@@ -20,6 +20,7 @@
 #define _X11_CHANNEL_Hxx
 
 #include "channel.h"
+#include "subchannel.h"
 #include <thread>
 
 class CppsshX11Channel : public CppsshSubChannel
