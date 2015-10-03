@@ -41,6 +41,7 @@ int main(int argc, char** argv)
     }
     else
     {
+        Cppssh::create();
         Logger::getLogger().addStream("testlog.txt");
         try
         {
@@ -59,6 +60,7 @@ int main(int argc, char** argv)
             cdLog(LogLevel::Error) << "Exception: " << ex.what() << std::endl;
         }
     }
+    Cppssh::destroy();
     return 0;
 }
 

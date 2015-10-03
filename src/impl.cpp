@@ -53,14 +53,13 @@ CppsshImpl::CppsshImpl()
 
     CppsshImpl::COMPRESSION_ALGORITHMS.push_back("none");
 
-    if (RNG == nullptr)
-    {
-        RNG = new Botan::Serialized_RNG();
-    }
+    RNG = new Botan::Serialized_RNG();
 }
 
 CppsshImpl::~CppsshImpl()
 {
+    delete RNG;
+    RNG = nullptr;
 }
 
 CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)

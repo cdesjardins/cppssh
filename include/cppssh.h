@@ -67,12 +67,12 @@ public:
     CPPSSH_EXPORT static void setOptions(const char* prefCipher, const char* prefHmac);
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-
-private:
-    static void create()
+    CPPSSH_EXPORT static void create()
     {
         create(CPPSSH_API_LEVEL_CURRENT);
     }
+    CPPSSH_EXPORT static void destroy();
+private:
 
     static void create(int apiLevel);
     static bool checkConnectionId(const int connectionId);

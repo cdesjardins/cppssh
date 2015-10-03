@@ -47,7 +47,6 @@ public:
     static std::vector<std::string> HOSTKEY_ALGORITHMS;
     static std::vector<std::string> COMPRESSION_ALGORITHMS;
     static Botan::RandomNumberGenerator* RNG;
-    static std::shared_ptr<CppsshLogger> GLOBAL_LOGGER;
     bool checkConnectionId(const int connectionId);
 private:
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);

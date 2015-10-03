@@ -43,6 +43,11 @@ void Cppssh::create(int apiLevel)
     }
 }
 
+void Cppssh::destroy()
+{
+    s_cppsshInst.reset();
+}
+
 const char* Cppssh::getCppsshVersion(bool detailed)
 {
     const char* ret = CPPSSH_SHORT_VERSION;
@@ -61,7 +66,6 @@ int Cppssh::getApiLevel()
 CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)
 {
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
-    create();
     if (s_cppsshInst != nullptr)
     {
         ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, term);
@@ -72,7 +76,6 @@ CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const
 bool Cppssh::checkConnectionId(const int connectionId)
 {
     bool ret = false;
-    create();
     if (s_cppsshInst != nullptr)
     {
         ret = s_cppsshInst->checkConnectionId(connectionId);
@@ -112,19 +115,16 @@ bool Cppssh::close(const int connectionId)
 
 void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
 {
-    create();
     CppsshImpl::setOptions(prefCipher, prefHmac);
 }
 
 bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
-    create();
     return CppsshImpl::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
 bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
 {
-    create();
     return CppsshImpl::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
