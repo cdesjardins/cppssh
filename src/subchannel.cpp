@@ -128,6 +128,7 @@ void CppsshSubChannel::setParameters(uint32_t windowSend, uint32_t txChannel, ui
     _txChannel = txChannel;
     _maxPacket = maxPacket;
 }
+
 bool CppsshSubChannel::flushOutgoingChannelData()
 {
     bool ret = true;

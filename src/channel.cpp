@@ -28,7 +28,6 @@
 #include <iomanip>
 #include "debug.h"
 
-
 CppsshChannel::CppsshChannel(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _mainChannel(0),
