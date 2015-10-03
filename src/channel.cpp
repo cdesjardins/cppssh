@@ -463,7 +463,6 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
                 break;
 
             case SSH2_MSG_USERAUTH_BANNER:
-                handleIncomingGlobalData(buf);
                 handleBanner(buf);
                 break;
 

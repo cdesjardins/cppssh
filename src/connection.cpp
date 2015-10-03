@@ -193,10 +193,6 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
 
     if ((_session->_transport->sendMessage(userAuthRequest) == true) && (_session->_channel->waitForGlobalMessage(buf) == true))
     {
-        if (packet.getCommand() == SSH2_MSG_USERAUTH_BANNER)
-        {
-            _session->_channel->waitForGlobalMessage(buf);
-        }
         if ((packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS) || (packet.getCommand() == SSH2_MSG_USERAUTH_PK_OK))
         {
             ret = true;
