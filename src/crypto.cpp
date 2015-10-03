@@ -340,7 +340,7 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Bot
         std::string hashAlgo = getHashAlgo();
         if (hashAlgo.length() > 0)
         {
-            hashIt.reset(Botan::get_hash_function(hashAlgo));
+            hashIt = Botan::HashFunction::create(hashAlgo);
         }
 
         if (hashIt != nullptr)
@@ -571,7 +571,7 @@ size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods metho
     size_t keyLen = 0;
     try
     {
-        std::unique_ptr<Botan::BlockCipher> bc(Botan::get_block_cipher(name));
+        std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(name));
         if (bc != nullptr)
         {
             keyLen = bc->key_spec().maximum_keylength();
@@ -639,7 +639,7 @@ bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byt
 
         if (algo != nullptr)
         {
-            hashIt.reset(Botan::get_hash_function(algo));
+            hashIt = Botan::HashFunction::create(algo);
 
             if (hashIt == nullptr)
             {
@@ -687,7 +687,7 @@ bool CppsshCrypto::makeNewKeys()
 
     try
     {
-        hashAlgo.reset(Botan::get_hash_function(getHmacAlgo(_c2sMacMethod)));
+        hashAlgo = Botan::HashFunction::create(getHmacAlgo(_c2sMacMethod));
         if (hashAlgo != nullptr)
         {
             _c2sMacDigestLen = hashAlgo->output_length();
@@ -703,7 +703,7 @@ bool CppsshCrypto::makeNewKeys()
             return false;
         }
 
-        std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::get_block_cipher(algo));
+        std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::BlockCipher::create(algo));
         if (blockCipher == nullptr)
         {
             return false;
@@ -740,7 +740,7 @@ bool CppsshCrypto::makeNewKeys()
             _hmacOut->set_key(c2sMac);
         }
 
-        hashAlgo.reset(Botan::get_hash_function(getHmacAlgo(_s2cMacMethod)));
+        hashAlgo = Botan::HashFunction::create(getHmacAlgo(_s2cMacMethod));
         if (hashAlgo != nullptr)
         {
             _s2cMacDigestLen = hashAlgo->output_length();
@@ -756,7 +756,7 @@ bool CppsshCrypto::makeNewKeys()
             return false;
         }
 
-        blockCipher.reset(Botan::get_block_cipher(algo));
+        blockCipher = Botan::BlockCipher::create(algo);
         if (blockCipher == nullptr)
         {
             return false;

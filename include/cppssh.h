@@ -71,6 +71,7 @@ public:
     {
         create(CPPSSH_API_LEVEL_CURRENT);
     }
+
     CPPSSH_EXPORT static void destroy();
 private:
 
