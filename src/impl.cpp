@@ -28,7 +28,7 @@ std::vector<std::string> CppsshImpl::KEX_ALGORITHMS;
 std::vector<std::string> CppsshImpl::HOSTKEY_ALGORITHMS;
 std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
 
-Botan::RandomNumberGenerator* CppsshImpl::RNG;
+std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
 CppsshImpl::CppsshImpl()
 {
@@ -53,13 +53,12 @@ CppsshImpl::CppsshImpl()
 
     CppsshImpl::COMPRESSION_ALGORITHMS.push_back("none");
 
-    RNG = new Botan::Serialized_RNG();
+    RNG.reset(new Botan::Serialized_RNG());
 }
 
 CppsshImpl::~CppsshImpl()
 {
-    delete RNG;
-    RNG = nullptr;
+    RNG.reset();
 }
 
 CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)

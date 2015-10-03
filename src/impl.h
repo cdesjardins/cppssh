@@ -46,7 +46,7 @@ public:
     static std::vector<std::string> KEX_ALGORITHMS;
     static std::vector<std::string> HOSTKEY_ALGORITHMS;
     static std::vector<std::string> COMPRESSION_ALGORITHMS;
-    static Botan::RandomNumberGenerator* RNG;
+    static std::shared_ptr<Botan::RandomNumberGenerator> RNG;
     bool checkConnectionId(const int connectionId);
 private:
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
