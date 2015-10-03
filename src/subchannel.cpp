@@ -261,12 +261,9 @@ bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::sec
     return ret;
 }
 
-void CppsshSubChannel::handleBanner(const Botan::secure_vector<Botan::byte>& buf)
+void CppsshSubChannel::handleBanner(const std::shared_ptr<CppsshMessage>& banner)
 {
-    const CppsshConstPacket packet(&buf);
-    std::shared_ptr<CppsshMessage> message(new CppsshMessage());
-    packet.getBannerData(message.get());
-    _incomingChannelData.enqueue(message);
+    _incomingChannelData.enqueue(banner);
 }
 
 uint32_t CppsshSubChannel::getRxWindowSize()

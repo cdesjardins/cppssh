@@ -78,7 +78,7 @@ public:
     bool readChannel(CppsshMessage* data);
     bool windowChange(const uint32_t cols, const uint32_t rows);
     void setParameters(uint32_t windowSend, uint32_t txChannel, uint32_t maxPacket);
-    void handleBanner(const Botan::secure_vector<Botan::byte>& buf);
+    void handleBanner(const std::shared_ptr<CppsshMessage>& banner);
     static uint32_t getRxWindowSize();
 
 protected:

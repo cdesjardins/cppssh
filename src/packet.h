@@ -48,7 +48,6 @@ public:
     bool getString(std::string* result) const;
     bool getBigInt(Botan::BigInt* result) const;
     void getChannelData(CppsshMessage* result) const;
-    void getBannerData(CppsshMessage* result) const;
     uint8_t getByte() const;
     uint32_t getInt() const;
     void skipHeader() const;
