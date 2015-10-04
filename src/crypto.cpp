@@ -705,11 +705,6 @@ bool CppsshCrypto::makeNewKeys()
             return false;
         }
 
-        keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
-        if (keyLen == 0)
-        {
-            return false;
-        }
         std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::BlockCipher::create(algo));
         if (blockCipher == nullptr)
         {
@@ -722,6 +717,11 @@ bool CppsshCrypto::makeNewKeys()
         }
         Botan::InitializationVector c2siv(key);
 
+        keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
+        if (keyLen == 0)
+        {
+            return false;
+        }
         if (computeKey(&key, 'C', keyLen) == false)
         {
             return false;
@@ -758,12 +758,6 @@ bool CppsshCrypto::makeNewKeys()
             return false;
         }
 
-        keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
-        if (keyLen == 0)
-        {
-            return false;
-        }
-
         blockCipher = Botan::BlockCipher::create(algo);
         if (blockCipher == nullptr)
         {
@@ -776,6 +770,11 @@ bool CppsshCrypto::makeNewKeys()
         }
         Botan::InitializationVector s2civ(key);
 
+        keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
+        if (keyLen == 0)
+        {
+            return false;
+        }
         if (computeKey(&key, 'D', keyLen) == false)
         {
             return false;
