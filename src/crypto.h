@@ -84,17 +84,20 @@ public:
     }
 
 private:
+    bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID,
+        cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize,
+        Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe, std::unique_ptr<Botan::HMAC>& hmac) const;
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
-    bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes);
+    bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
     bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
     bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod);
-    std::string getCryptAlgo(cryptoMethods crypto);
-    const char* getHashAlgo();
-    const char* getHmacAlgo(macMethods method);
-    size_t maxKeyLengthOf(const std::string& name, cryptoMethods method);
+    std::string getCryptAlgo(cryptoMethods crypto) const;
+    const char* getHashAlgo() const;
+    const char* getHmacAlgo(macMethods method) const;
+    size_t maxKeyLengthOf(const std::string& name, cryptoMethods method) const;
 
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;
