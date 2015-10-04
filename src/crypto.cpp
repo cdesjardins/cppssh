@@ -700,16 +700,16 @@ bool CppsshCrypto::makeNewKeys()
             _c2sMacDigestLen = hashAlgo->output_length();
         }
         algo = getCryptAlgo(_c2sCryptoMethod);
-        keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
-        if (keyLen == 0)
-        {
-            return false;
-        }
         if (algo.length() == 0)
         {
             return false;
         }
 
+        keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
+        if (keyLen == 0)
+        {
+            return false;
+        }
         std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::BlockCipher::create(algo));
         if (blockCipher == nullptr)
         {
@@ -753,12 +753,13 @@ bool CppsshCrypto::makeNewKeys()
             _s2cMacDigestLen = hashAlgo->output_length();
         }
         algo = getCryptAlgo(_s2cCryptoMethod);
-        keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
-        if (keyLen == 0)
+        if (algo.length() == 0)
         {
             return false;
         }
-        if (algo.length() == 0)
+
+        keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
+        if (keyLen == 0)
         {
             return false;
         }
