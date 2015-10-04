@@ -129,32 +129,36 @@ bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, c
 }
 
 CppsshMessage::CppsshMessage()
-    : _len(0)
+    : _message(nullptr),
+    _len(0)
 {
 }
 
 CppsshMessage::~CppsshMessage()
 {
+    if (_message != nullptr)
+    {
+        delete[] _message;
+    }
 }
 
 const uint8_t* CppsshMessage::message() const
 {
-    return _message.get();
+    return _message;
 }
 
 CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
 {
-    _message = other._message;
-    _len = other._len;
+    setMessage(other._message, other._len);
     return *this;
 }
 
 void CppsshMessage::setMessage(const uint8_t* message, size_t bytes)
 {
-    _message.reset(new uint8_t[bytes + 1]);
+    _message = new uint8_t[bytes + 1];
     _len = bytes;
-    memcpy(_message.get(), message, _len);
-    _message.get()[_len] = 0;
+    memcpy(_message, message, _len);
+    _message[_len] = 0;
 }
 
 size_t CppsshMessage::length() const

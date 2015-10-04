@@ -94,7 +94,7 @@ public:
     friend class CppsshChannel;
 private:
     virtual void setMessage(const uint8_t* message, size_t bytes);
-    std::shared_ptr<uint8_t> _message;
+    uint8_t* _message;
     size_t _len;
 };
 
