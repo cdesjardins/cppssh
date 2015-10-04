@@ -113,9 +113,9 @@ bool Cppssh::close(const int connectionId)
     return checkConnectionId(connectionId) && s_cppsshInst->close(connectionId);
 }
 
-void Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
+bool Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
 {
-    CppsshImpl::setOptions(prefCipher, prefHmac);
+    return CppsshImpl::setOptions(prefCipher, prefHmac);
 }
 
 bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)

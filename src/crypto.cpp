@@ -541,6 +541,9 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto)
         case cryptoMethods::_3DES_CBC:
             return "TripleDES";
 
+        case cryptoMethods::AES128_CTR:
+            return "AES-128/CTR-BE";
+
         case cryptoMethods::AES128_CBC:
             return "AES-128";
 
@@ -571,10 +574,14 @@ size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods metho
     size_t keyLen = 0;
     try
     {
-        std::unique_ptr<Botan::BlockCipher> bc(Botan::BlockCipher::create(name));
-        if (bc != nullptr)
+        std::unique_ptr<Botan::SymmetricAlgorithm> cipher(Botan::BlockCipher::create(name));
+        if (cipher == nullptr)
         {
-            keyLen = bc->key_spec().maximum_keylength();
+            cipher = Botan::StreamCipher::create(name);
+        }
+        if (cipher != nullptr)
+        {
+            keyLen = cipher->key_spec().maximum_keylength();
             if (method == cryptoMethods::BLOWFISH_CBC)
             {
                 keyLen = 16;
