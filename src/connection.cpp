@@ -47,7 +47,8 @@ CppsshConnection::~CppsshConnection()
     _session.reset();
 }
 
-CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short port, const char* username, const char* privKeyFile, const char* password, const char* term)
+CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short port, const char* username,
+                                                const char* privKeyFile, const char* password, const char* term)
 {
     if (_session->_channel->establish(host, port) == false)
     {
@@ -141,7 +142,8 @@ bool CppsshConnection::checkRemoteVersion()
     if (_session->_transport->receiveMessage(&remoteVer) == true)
     {
         std::string sshVer("SSH-2.0");
-        if ((remoteVer.size() >= sshVer.length()) && equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
+        if ((remoteVer.size() >= sshVer.length()) &&
+            equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
         {
             ret = true;
             std::string rv(remoteVer.begin(), remoteVer.end());
@@ -191,7 +193,8 @@ bool CppsshConnection::authenticate(const Botan::secure_vector<Botan::byte>& use
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
 
-    if ((_session->_transport->sendMessage(userAuthRequest) == true) && (_session->_channel->waitForGlobalMessage(buf) == true))
+    if ((_session->_transport->sendMessage(userAuthRequest) == true) &&
+        (_session->_channel->waitForGlobalMessage(buf) == true))
     {
         if ((packet.getCommand() == SSH2_MSG_USERAUTH_SUCCESS) || (packet.getCommand() == SSH2_MSG_USERAUTH_PK_OK))
         {
@@ -232,7 +235,8 @@ bool CppsshConnection::authWithPassword(const std::string& username, const std::
     return ret;
 }
 
-bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName, const char* keyPassword)
+bool CppsshConnection::authWithKey(const std::string& username, const std::string& privKeyFileName,
+                                   const char* keyPassword)
 {
     bool ret = false;
     CppsshKeys keyPair;

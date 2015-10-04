@@ -61,7 +61,9 @@ CppsshImpl::~CppsshImpl()
     RNG.reset();
 }
 
-CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)
+CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username,
+                                          const char* privKeyFile, const char* password, unsigned int timeout,
+                                          const char* term)
 {
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
     std::shared_ptr<CppsshConnection> con;
@@ -156,12 +158,14 @@ bool CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
     return ret;
 }
 
-bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                    short keySize)
 {
     return CppsshKeys::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
-bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                    short keySize)
 {
     return CppsshKeys::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }

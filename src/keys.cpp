@@ -99,7 +99,8 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
             }
             else
             {
-                std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(keyPassword)));
+                std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(
+                                                                                       keyPassword)));
                 if (privKey != nullptr)
                 {
                     ret = getRSAKeys(privKey);
@@ -127,9 +128,12 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
     return ret;
 }
 
-Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findEndOfLine(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader)
+Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findEndOfLine(
+    const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader)
 {
-    Botan::secure_vector<Botan::byte>::const_iterator it = std::search(privateKey.begin(), privateKey.end(), lineHeader.begin(), lineHeader.end());
+    Botan::secure_vector<Botan::byte>::const_iterator it = std::search(privateKey.begin(),
+                                                                       privateKey.end(),
+                                                                       lineHeader.begin(), lineHeader.end());
     if (it != privateKey.end())
     {
         it = std::find(it, privateKey.end(), '\n');
@@ -137,7 +141,8 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findEndOfLine(cons
     return it;
 }
 
-Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header)
+Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyBegin(
+    const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header)
 {
     Botan::secure_vector<Botan::byte>::const_iterator ret;
     ret = findEndOfLine(privateKey, header);
@@ -148,7 +153,8 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyBegin(const
     return ret;
 }
 
-Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer)
+Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyEnd(
+    const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer)
 {
     return privateKey.cend() - footer.length();
 }
@@ -320,7 +326,8 @@ bool CppsshKeys::getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
     return ret;
 }
 
-const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData)
+const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(
+    const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData)
 {
     _signature.clear();
     switch (_keyAlgo)
@@ -341,7 +348,8 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(const Bot
     return _signature;
 }
 
-Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData)
+Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID,
+                                                                   const Botan::secure_vector<Botan::byte>& signingData)
 {
     Botan::secure_vector<Botan::byte> ret;
     Botan::secure_vector<Botan::byte> sigRaw;
@@ -374,7 +382,8 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
     return ret;
 }
 
-Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData)
+Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID,
+                                                                   const Botan::secure_vector<Botan::byte>& signingData)
 {
     Botan::secure_vector<Botan::byte> ret;
     Botan::secure_vector<Botan::byte> sigRaw;
@@ -401,7 +410,8 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
         {
             if (signedRaw.size() != 40)
             {
-                cdLog(LogLevel::Error) << "DSS signature block <> 320 bits. Make sure you are using 1024 bit keys for authentication!";
+                cdLog(LogLevel::Error) <<
+                    "DSS signature block <> 320 bits. Make sure you are using 1024 bit keys for authentication!";
             }
             else
             {
@@ -414,7 +424,8 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
     return ret;
 }
 
-bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                    short keySize)
 {
     bool ret = false;
     std::unique_ptr<Botan::RSA_PrivateKey> rsaPrivKey;
@@ -490,7 +501,8 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
             privKeyFile.open(privKeyFileName);
             if (privKeyFile.is_open() == false)
             {
-                cdLog(LogLevel::Error) << "Cannot open file where the private key is stored.Filename: " << privKeyFileName;
+                cdLog(LogLevel::Error) << "Cannot open file where the private key is stored.Filename: " <<
+                    privKeyFileName;
             }
             else
             {
@@ -509,7 +521,8 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
     return ret;
 }
 
-bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                    short keySize)
 {
     bool ret = false;
     Botan::DER_Encoder encoder;

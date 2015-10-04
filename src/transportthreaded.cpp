@@ -48,7 +48,8 @@ bool CppsshTransportThreaded::start()
     return true;
 }
 
-bool CppsshTransportThreaded::setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf)
+bool CppsshTransportThreaded::setupMessage(const Botan::secure_vector<Botan::byte>& buffer,
+                                           Botan::secure_vector<Botan::byte>* outBuf)
 {
     bool ret = true;
     size_t length = buffer.size();

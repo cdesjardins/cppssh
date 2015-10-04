@@ -57,7 +57,10 @@ public:
     CPPSSH_EXPORT static int getApiLevel();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (nullptr for no shell)
-    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const char* term = "xterm-color");
+    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port,
+                                                       const char* username, const char* privKeyFile,
+                                                       const char* password, unsigned int timeout = 1000,
+                                                       const char* term = "xterm-color");
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
     CPPSSH_EXPORT static bool write(const int connectionId, const uint8_t* data, size_t bytes);
@@ -65,8 +68,10 @@ public:
     CPPSSH_EXPORT static bool windowChange(const int connectionId, const uint32_t cols, const uint32_t rows);
     CPPSSH_EXPORT static bool close(const int connectionId);
     CPPSSH_EXPORT static bool setOptions(const char* prefCipher, const char* prefHmac);
-    CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-    CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+    CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName,
+                                                 const char* pubKeyFileName, short keySize);
+    CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName,
+                                                 const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static void create()
     {
         create(CPPSSH_API_LEVEL_CURRENT);

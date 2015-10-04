@@ -173,7 +173,8 @@ void CppsshChannel::handleClose(const Botan::secure_vector<Botan::byte>& buf)
     _channels.erase(rxChannel);
 }
 
-bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t maxPacket, uint32_t txChannel, uint32_t* rxChannel)
+bool CppsshChannel::createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t maxPacket,
+                                        uint32_t txChannel, uint32_t* rxChannel)
 {
     bool ret = createNewSubChannel(channelName, rxChannel);
     if (ret == true)

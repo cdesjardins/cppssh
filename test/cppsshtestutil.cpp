@@ -7,7 +7,8 @@ void sendCmdList(int channel, const std::vector<std::string>& cmdList, const int
     std::chrono::steady_clock::time_point txTime = std::chrono::steady_clock::now();
     size_t txIndex = 0;
 
-    while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
+    while ((Cppssh::isConnected(channel) == true) &&
+           (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
     {
         CppsshMessage message;
         if (Cppssh::read(channel, &message) == true)
@@ -15,7 +16,8 @@ void sendCmdList(int channel, const std::vector<std::string>& cmdList, const int
             remoteOutput << message.message();
         }
 
-        if (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(periodMs)) && (txIndex < cmdList.size()))
+        if (std::chrono::steady_clock::now() > (txTime + std::chrono::milliseconds(periodMs)) &&
+            (txIndex < cmdList.size()))
         {
             Cppssh::writeString(channel, cmdList[txIndex].c_str());
             txTime = std::chrono::steady_clock::now();

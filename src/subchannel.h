@@ -65,7 +65,8 @@ public:
         return _txChannel;
     }
 
-    virtual bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request, bool wantReply = true);
+    virtual bool doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& request,
+                                  bool wantReply = true);
     virtual void handleIncomingChannelData(const Botan::secure_vector<Botan::byte>& buf);
     virtual void handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf);
     virtual bool handleChannelConfirm();

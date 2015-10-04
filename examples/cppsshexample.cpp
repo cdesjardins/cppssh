@@ -31,7 +31,8 @@ void runConnectionTest(char* hostname, char* username, char* password)
         Cppssh::writeString(channel, "env\n");
         //Cppssh::windowSize(channel, 80, 40);
 
-        while ((Cppssh::isConnected(channel) == true) && (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
+        while ((Cppssh::isConnected(channel) == true) &&
+               (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
         {
             CppsshMessage message;
             if (Cppssh::read(channel, &message) == true)

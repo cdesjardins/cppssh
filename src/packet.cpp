@@ -134,7 +134,9 @@ bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>* result) con
     }
     else
     {
-        *result = Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index, _cdata->begin() + (sizeof(uint32_t) + len + _index));
+        *result =
+            Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index,
+                                              _cdata->begin() + (sizeof(uint32_t) + len + _index));
         _index += sizeof(uint32_t) + len;
     }
     return ret;
@@ -317,7 +319,8 @@ bool CppsshPacket::addFile(const std::string& fileName)
     return ret;
 }
 
-void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len, std::stringstream* ss) const
+void CppsshConstPacket::dumpAscii(Botan::secure_vector<Botan::byte>::const_iterator it, size_t len,
+                                  std::stringstream* ss) const
 {
 #ifdef NDEBUG
     UNREF_PARAM(it);
@@ -357,7 +360,8 @@ void CppsshConstPacket::dumpPacket(const std::string& tag) const
             ss << tag << " " << std::hex << std::setw(6) << std::setfill('0') << offs << ": ";
             cnt = 0;
         }
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)*it << std::dec << std::setw(0) << std::setfill(' ') << " ";
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)*it << std::dec << std::setw(0) <<
+            std::setfill(' ') << " ";
         cnt++;
         offs++;
     }

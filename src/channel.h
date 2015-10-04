@@ -60,7 +60,8 @@ private:
     void handleDisconnect(const CppsshConstPacket& packet);
     void handleOpen(const Botan::secure_vector<Botan::byte>& buf);
     bool runXauth(const char* display, std::string* method, Botan::secure_vector<Botan::byte>* cookie) const;
-    bool createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t maxPacket, uint32_t txChannel, uint32_t* rxChannel);
+    bool createNewSubChannel(const std::string& channelName, uint32_t windowSend, uint32_t maxPacket,
+                             uint32_t txChannel, uint32_t* rxChannel);
     bool createNewSubChannel(const std::string& channelName, uint32_t* rxChannel);
     void sendOpenFailure(uint32_t txChannel, CppsshOpenFailureReason reason);
     void sendOpenConfirmation(uint32_t rxChannel);

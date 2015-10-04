@@ -34,8 +34,10 @@ void Cppssh::create(int apiLevel)
             // same API level as the library was built with.
             if (apiLevel != getApiLevel())
             {
-                cdLog(LogLevel::Error) << "API level defined in cppssh.h differs from API level in the cppssh library." << std::endl;
-                cdLog(LogLevel::Error) << "Current API level: " << apiLevel << " API level in cppssh library: " << CPPSSH_API_LEVEL_CURRENT  << std::endl;
+                cdLog(LogLevel::Error) <<
+                    "API level defined in cppssh.h differs from API level in the cppssh library." << std::endl;
+                cdLog(LogLevel::Error) << "Current API level: " << apiLevel << " API level in cppssh library: " <<
+                    CPPSSH_API_LEVEL_CURRENT  << std::endl;
                 abort();
             }
             s_cppsshInst.reset(new CppsshImpl());
@@ -63,7 +65,9 @@ int Cppssh::getApiLevel()
     return CPPSSH_API_LEVEL_CURRENT;
 }
 
-CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const char* term)
+CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const short port, const char* username,
+                                      const char* privKeyFile, const char* password, unsigned int timeout,
+                                      const char* term)
 {
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
     if (s_cppsshInst != nullptr)
@@ -118,12 +122,14 @@ bool Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
     return CppsshImpl::setOptions(prefCipher, prefHmac);
 }
 
-bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                short keySize)
 {
     return CppsshImpl::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
-bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)
+bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                short keySize)
 {
     return CppsshImpl::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }

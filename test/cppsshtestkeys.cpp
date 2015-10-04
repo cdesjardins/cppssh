@@ -55,7 +55,8 @@ void installPublicKeys(const char* hostname, const char* username, const char* p
         int channel;
         if (Cppssh::connect(&channel, hostname, 22, username, nullptr, password, 10000) == CPPSSH_CONNECT_OK)
         {
-            std::vector<std::string> cmdList { "mkdir -p ~/.ssh\n", "rm ~/.ssh/authorized_keys\n", "touch ~/.ssh/authorized_keys\n", "chmod 600 ~/.ssh/authorized_keys\n"};
+            std::vector<std::string> cmdList { "mkdir -p ~/.ssh\n", "rm ~/.ssh/authorized_keys\n",
+                                               "touch ~/.ssh/authorized_keys\n", "chmod 600 ~/.ssh/authorized_keys\n"};
             for (std::vector<std::string>::iterator it = publicKeys.begin(); it < publicKeys.end(); it++)
             {
                 std::string cmd("echo \"");
@@ -87,7 +88,8 @@ int main(int argc, char** argv)
 {
     if (argc != 5)
     {
-        std::cerr << "Error: Four arguments required: " << argv[0] << " <hostname> <username> <password> <keydir>" << std::endl;
+        std::cerr << "Error: Four arguments required: " << argv[0] << " <hostname> <username> <password> <keydir>" <<
+            std::endl;
     }
     else
     {

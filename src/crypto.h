@@ -34,7 +34,8 @@ SMART_ENUM_DECLARE(macMethods, HMAC_SHA1, HMAC_MD5, HMAC_NONE);
 SMART_ENUM_DECLARE(kexMethods, DIFFIE_HELLMAN_GROUP1_SHA1, DIFFIE_HELLMAN_GROUP14_SHA1);
 SMART_ENUM_DECLARE(hostkeyMethods, SSH_DSS, SSH_RSA);
 SMART_ENUM_DECLARE(cmprsMethods, NONE, ZLIB);
-SMART_ENUM_DECLARE(cryptoMethods, _3DES_CBC, AES128_CTR, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC, TWOFISH_CBC, TWOFISH256_CBC);
+SMART_ENUM_DECLARE(cryptoMethods, _3DES_CBC, AES128_CTR, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC,
+                   TWOFISH_CBC, TWOFISH256_CBC);
 
 class CppsshCrypto
 {
@@ -51,10 +52,13 @@ public:
         return _decryptBlock;
     }
 
-    bool encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
-    bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len);
+    bool encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac,
+                       const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
+    bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet,
+                       uint32_t len);
 
-    void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
+    void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet,
+                    uint32_t seq);
     bool computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val);
 
     bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote);
@@ -85,8 +89,9 @@ public:
 
 private:
     bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID,
-        cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize,
-        Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe, std::unique_ptr<Botan::HMAC>& hmac) const;
+                         cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize,
+                         Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
+                         std::unique_ptr<Botan::HMAC>& hmac) const;
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);

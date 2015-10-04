@@ -106,7 +106,8 @@ bool CppsshKex::handleInit()
 
     _remoteKex.clear();
     CppsshPacket remoteKexPacket(&_remoteKex);
-    remoteKexPacket.addVector(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin(), (packet.getPayloadEnd() - packet.getPadLength())));
+    remoteKexPacket.addVector(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin(),
+                                                                (packet.getPayloadEnd() - packet.getPadLength())));
 
     Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
     const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
@@ -242,7 +243,8 @@ bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>& buf)
 
         if (_session->_transport->sendMessage(buf) == true)
         {
-            if ((_session->_channel->waitForGlobalMessage(buf) == true) && (dhInit.getCommand() == SSH2_MSG_KEXDH_REPLY))
+            if ((_session->_channel->waitForGlobalMessage(buf) == true) &&
+                (dhInit.getCommand() == SSH2_MSG_KEXDH_REPLY))
             {
                 ret = true;
             }

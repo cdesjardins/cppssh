@@ -74,11 +74,13 @@ void CppsshX11Channel::x11RxThread()
         CppsshMessage message;
         if (readChannel(&message) == true)
         {
-            Botan::secure_vector<Botan::byte> buf((Botan::byte*)message.message(), (Botan::byte*)message.message() + message.length());
+            Botan::secure_vector<Botan::byte> buf((Botan::byte*)message.message(),
+                                                  (Botan::byte*)message.message() + message.length());
             if (first == true)
             {
                 CppsshPacket magicPacket(&buf);
-                magicPacket.replace(message.length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
+                magicPacket.replace(
+                    message.length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
                 first = false;
             }
             _x11transport->sendMessage(buf);
@@ -114,7 +116,8 @@ void CppsshX11Channel::getDisplay(std::string* display)
     }
 }
 
-bool CppsshX11Channel::runXauth(const std::string& display, std::string* method, Botan::secure_vector<Botan::byte>* cookie)
+bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
+                                Botan::secure_vector<Botan::byte>* cookie)
 {
     bool ret = false;
 #ifndef WIN32

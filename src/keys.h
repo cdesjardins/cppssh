@@ -32,12 +32,17 @@ public:
     }
 
     bool getKeyPairFromFile(const std::string& privKeyFileName, const char* keyPassword);
-    const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
-    Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
-    Botan::secure_vector<Botan::byte> generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
+    const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID,
+                                                               const Botan::secure_vector<Botan::byte>& signingData);
+    Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID,
+                                                           const Botan::secure_vector<Botan::byte>& signingData);
+    Botan::secure_vector<Botan::byte> generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID,
+                                                           const Botan::secure_vector<Botan::byte>& signingData);
 
-    static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-    static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+    static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                   short keySize);
+    static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
+                                   short keySize);
 
     hostkeyMethods getKeyAlgo()
     {
@@ -56,9 +61,12 @@ private:
     bool getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey);
     bool getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey);
 
-    static Botan::secure_vector<Botan::byte>::const_iterator findEndOfLine(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader);
-    static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
-    static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);
+    static Botan::secure_vector<Botan::byte>::const_iterator findEndOfLine(
+        const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader);
+    static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(
+        const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
+    static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(
+        const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);
 
     static const std::string HEADER_DSA;
     static const std::string FOOTER_DSA;

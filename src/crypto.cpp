@@ -52,7 +52,8 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
 {
 }
 
-bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
+bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac,
+                                 const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> macStr;
@@ -82,7 +83,8 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Bot
     return ret;
 }
 
-bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet, uint32_t len)
+bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
+                                 const Botan::secure_vector<Botan::byte>& packet, uint32_t len)
 {
     bool ret = false;
     uint32_t pLen = packet.size();
@@ -113,7 +115,8 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, c
     return ret;
 }
 
-void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
+void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet,
+                              uint32_t seq)
 {
     Botan::secure_vector<Botan::byte> macStr;
     try
@@ -358,7 +361,8 @@ bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Bot
     return ret;
 }
 
-bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig)
+bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
+                             const Botan::secure_vector<Botan::byte>& sig)
 {
     bool result = false;
     try
@@ -772,9 +776,11 @@ bool CppsshCrypto::makeNewKeys()
     std::unique_ptr<Botan::BlockCipher> blockCipher;
     try
     {
-        if (buildCipherPipe(Botan::ENCRYPTION, 'A', 'C', 'E', _c2sCryptoMethod, _c2sMacMethod, &_c2sMacDigestLen, &_encryptBlock, &_encryptFilter, _encrypt, _hmacOut) == true)
+        if (buildCipherPipe(Botan::ENCRYPTION, 'A', 'C', 'E', _c2sCryptoMethod, _c2sMacMethod, &_c2sMacDigestLen,
+                            &_encryptBlock, &_encryptFilter, _encrypt, _hmacOut) == true)
         {
-            ret = buildCipherPipe(Botan::DECRYPTION, 'B', 'D', 'F', _s2cCryptoMethod, _s2cMacMethod, &_s2cMacDigestLen, &_decryptBlock, &_decryptFilter, _decrypt, _hmacIn);
+            ret = buildCipherPipe(Botan::DECRYPTION, 'B', 'D', 'F', _s2cCryptoMethod, _s2cMacMethod, &_s2cMacDigestLen,
+                                  &_decryptBlock, &_decryptFilter, _decrypt, _hmacIn);
         }
     }
     catch (const std::exception& ex)

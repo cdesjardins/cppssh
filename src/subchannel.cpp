@@ -229,7 +229,8 @@ bool CppsshSubChannel::handleChannelConfirm()
     return ret;
 }
 
-bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata, bool wantReply)
+bool CppsshSubChannel::doChannelRequest(const std::string& req, const Botan::secure_vector<Botan::byte>& reqdata,
+                                        bool wantReply)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> buf;

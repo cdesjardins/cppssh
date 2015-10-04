@@ -91,15 +91,19 @@ void CppsshTransportCrypto::rxThread()
                 if ((cryptoLen > _session->_crypto->getDecryptBlock()) && (_in.size() >= cryptoLen))
                 {
                     Botan::secure_vector<Botan::byte> tmpVar;
-                    tmpVar = Botan::secure_vector<Botan::byte>(_in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
+                    tmpVar = Botan::secure_vector<Botan::byte>(
+                        _in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
                     _session->_crypto->decryptPacket(&tmpVar, tmpVar, tmpVar.size());
                     decrypted += tmpVar;
                 }
-                if (_session->_crypto->getMacInLen() && (_in.size() > 0) && (_in.size() >= (cryptoLen + _session->_crypto->getMacInLen())))
+                if (_session->_crypto->getMacInLen() && (_in.size() > 0) &&
+                    (_in.size() >= (cryptoLen + _session->_crypto->getMacInLen())))
                 {
                     Botan::secure_vector<Botan::byte> ourMac, hMac;
                     _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
-                    hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen, _in.begin() + cryptoLen + _session->_crypto->getMacInLen());
+                    hMac = Botan::secure_vector<Botan::byte>(_in.begin() + cryptoLen,
+                                                             _in.begin() + cryptoLen +
+                                                             _session->_crypto->getMacInLen());
                     if (hMac != ourMac)
                     {
                         cdLog(LogLevel::Error) << "Mismatched HMACs.";
