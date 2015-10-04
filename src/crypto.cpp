@@ -636,49 +636,52 @@ const char* CppsshCrypto::getHashAlgo()
 bool CppsshCrypto::computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes)
 {
     bool ret = false;
-    try
+    if (nBytes > 0)
     {
-        Botan::secure_vector<Botan::byte> hashBytes;
-        CppsshPacket hashBytesPacket(&hashBytes);
-        std::unique_ptr<Botan::HashFunction> hashIt;
-        const char* algo = getHashAlgo();
-        uint32_t len;
-
-        if (algo != nullptr)
+        try
         {
-            hashIt = Botan::HashFunction::create(algo);
+            Botan::secure_vector<Botan::byte> hashBytes;
+            CppsshPacket hashBytesPacket(&hashBytes);
+            std::unique_ptr<Botan::HashFunction> hashIt;
+            const char* algo = getHashAlgo();
+            uint32_t len;
 
-            if (hashIt == nullptr)
+            if (algo != nullptr)
             {
-                cdLog(LogLevel::Error) << "Undefined HASH algorithm encountered while computing the key.";
-            }
-            else
-            {
-                hashBytesPacket.addVectorField(_K);
-                hashBytesPacket.addVector(_H);
-                hashBytesPacket.addByte(ID);
-                hashBytesPacket.addVector(_session->getSessionID());
+                hashIt = Botan::HashFunction::create(algo);
 
-                *key = hashIt->process(hashBytes);
-                len = key->size();
-
-                while (len < nBytes)
+                if (hashIt == nullptr)
                 {
-                    hashBytes.clear();
+                    cdLog(LogLevel::Error) << "Undefined HASH algorithm encountered while computing the key.";
+                }
+                else
+                {
                     hashBytesPacket.addVectorField(_K);
                     hashBytesPacket.addVector(_H);
-                    hashBytesPacket.addVector(*key);
-                    *key += hashIt->process(hashBytes);
+                    hashBytesPacket.addByte(ID);
+                    hashBytesPacket.addVector(_session->getSessionID());
+
+                    *key = hashIt->process(hashBytes);
                     len = key->size();
+
+                    while (len < nBytes)
+                    {
+                        hashBytes.clear();
+                        hashBytesPacket.addVectorField(_K);
+                        hashBytesPacket.addVector(_H);
+                        hashBytesPacket.addVector(*key);
+                        *key += hashIt->process(hashBytes);
+                        len = key->size();
+                    }
+                    key->resize(nBytes);
+                    ret = true;
                 }
-                key->resize(nBytes);
-                ret = true;
             }
         }
-    }
-    catch (const std::exception& ex)
-    {
-        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+        catch (const std::exception& ex)
+        {
+            cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+        }
     }
 
     return ret;
@@ -688,7 +691,6 @@ bool CppsshCrypto::makeNewKeys()
 {
     bool ret = false;
     std::string algo;
-    uint32_t keyLen;
     Botan::secure_vector<Botan::byte> key;
     std::unique_ptr<Botan::HashFunction> hashAlgo;
 
@@ -717,12 +719,7 @@ bool CppsshCrypto::makeNewKeys()
         }
         Botan::InitializationVector c2siv(key);
 
-        keyLen = maxKeyLengthOf(algo, _c2sCryptoMethod);
-        if (keyLen == 0)
-        {
-            return false;
-        }
-        if (computeKey(&key, 'C', keyLen) == false)
+        if (computeKey(&key, 'C', maxKeyLengthOf(algo, _c2sCryptoMethod)) == false)
         {
             return false;
         }
@@ -770,12 +767,7 @@ bool CppsshCrypto::makeNewKeys()
         }
         Botan::InitializationVector s2civ(key);
 
-        keyLen = maxKeyLengthOf(algo, _s2cCryptoMethod);
-        if (keyLen == 0)
-        {
-            return false;
-        }
-        if (computeKey(&key, 'D', keyLen) == false)
+        if (computeKey(&key, 'D', maxKeyLengthOf(algo, _s2cCryptoMethod)) == false)
         {
             return false;
         }
