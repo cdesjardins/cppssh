@@ -130,22 +130,30 @@ bool CppsshImpl::close(int connectionId)
     return true;
 }
 
-void CppsshImpl::setPref(const char* pref, std::vector<std::string>* list)
+bool CppsshImpl::setPref(const char* pref, std::vector<std::string>* list)
 {
+    bool ret = true;
     std::vector<std::string>::iterator it = std::find(list->begin(), list->end(), pref);
     if (it != list->end())
     {
         list->erase(it);
         list->insert(list->begin(), pref);
     }
+    else
+    {
+        cdLog(LogLevel::Error) << "Unable to set preferred algorithm: " << pref;
+        ret = false;
+    }
+    return ret;
 }
 
-void CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
+bool CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
 {
+    bool ret;
     static std::mutex optionsMutex;
     std::unique_lock<std::mutex> lock(optionsMutex);
-    setPref(prefCipher, &CIPHER_ALGORITHMS);
-    setPref(prefHmac, &MAC_ALGORITHMS);
+    ret = ((setPref(prefCipher, &CIPHER_ALGORITHMS) == true) && (setPref(prefHmac, &MAC_ALGORITHMS) == true));
+    return ret;
 }
 
 bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize)

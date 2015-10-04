@@ -27,7 +27,7 @@
 class CppsshImpl
 {
 public:
-    static void setOptions(const char* prefCipher, const char* prefHmac);
+    static bool setOptions(const char* prefCipher, const char* prefHmac);
     static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CppsshImpl();
@@ -50,7 +50,7 @@ public:
     bool checkConnectionId(const int connectionId);
 private:
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
-    static void setPref(const char* pref, std::vector<std::string>* list);
+    static bool setPref(const char* pref, std::vector<std::string>* list);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::mutex _connectionsMutex;
 };
