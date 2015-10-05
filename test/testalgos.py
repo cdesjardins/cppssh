@@ -4,13 +4,16 @@ from subprocess import call
 class TestAlgos(unittest.TestCase):
 
     ciphers = [
-        "aes256-cbc",
+        "aes128-cbc",
         "aes192-cbc",
+        "aes256-cbc",
+        "aes128-ctr",
+        "aes192-ctr",
+        "aes256-ctr",
         #"twofish-cbc",
         #"twofish256-cbc",
         "blowfish-cbc",
         "3des-cbc",
-        "aes128-cbc",
         "cast128-cbc"
     ]
     macs = [

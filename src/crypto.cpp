@@ -54,6 +54,19 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
 {
 }
 
+void CppsshCrypto::setNonce(Botan::Keyed_Filter* filter, Botan::secure_vector<Botan::byte>& nonce) const
+{
+    // reset the IV (nonce)
+    for (int i = nonce.size() - 1; i >= 0; i--)
+    {
+        if ((nonce[i] = (nonce[i] + 1)) != 0)
+        {
+            break;
+        }
+    }
+    filter->set_iv(Botan::InitializationVector(nonce));
+}
+
 bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac,
                                  const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
 {
@@ -64,20 +77,9 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Bot
     {
         for (uint32_t pktIndex = 0; pktIndex < packet.size(); pktIndex += getEncryptBlock())
         {
-            Botan::secure_vector<Botan::byte> p(packet.cbegin() + pktIndex, packet.cbegin() + pktIndex + getEncryptBlock());
-
-            _encrypt->process_msg(p);
+            _encrypt->process_msg(packet.data() + pktIndex, getEncryptBlock());
             *crypted += _encrypt->read_all(_encrypt->message_count() - 1);
-
-            // reset the IV (nonce)
-            for (int i = _c2sNonce.size() - 1; i >= 0; i--)
-            {
-                if ((_c2sNonce[i] = (_c2sNonce[i] + 1)) != 0)
-                {
-                    break;
-                }
-            }
-            _encryptFilter->set_iv(Botan::InitializationVector(_c2sNonce));
+            setNonce(_encryptFilter, _c2sNonce);
         }
         if (_hmacOut != nullptr)
         {
@@ -103,9 +105,9 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
     bool ret = false;
     uint32_t pLen = packet.size();
 
-    if (len % _decryptBlock)
+    if (len % getDecryptBlock())
     {
-        len = len + (len % _decryptBlock);
+        len = len + (len % getDecryptBlock());
     }
 
     if (len > pLen)
@@ -116,20 +118,9 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
     {
         for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += getDecryptBlock())
         {
-            Botan::secure_vector<Botan::byte> p(packet.cbegin() + pktIndex, packet.cbegin() + pktIndex + getDecryptBlock());
-
-            _decrypt->process_msg(p.data(), getDecryptBlock());
+            _decrypt->process_msg(packet.data() + pktIndex, getDecryptBlock());
             *decrypted += _decrypt->read_all(_decrypt->message_count() - 1);
-
-            // reset the IV (nonce)
-            for (int i = _s2cNonce.size() - 1; i >= 0; i--)
-            {
-                if ((_s2cNonce[i] = (_s2cNonce[i] + 1)) != 0)
-                {
-                    break;
-                }
-            }
-            _decryptFilter->set_iv(Botan::InitializationVector(_s2cNonce));
+            setNonce(_decryptFilter, _s2cNonce);
         }
         ret = true;
     }
@@ -574,6 +565,12 @@ std::string CppsshCrypto::getCryptAlgo(cryptoMethods crypto) const
         case cryptoMethods::AES128_CTR:
             return "AES-128/CTR-BE";
 
+        case cryptoMethods::AES192_CTR:
+            return "AES-192/CTR-BE";
+
+        case cryptoMethods::AES256_CTR:
+            return "AES-256/CTR-BE";
+
         case cryptoMethods::AES128_CBC:
             return "AES-128";
 
@@ -772,25 +769,24 @@ bool CppsshCrypto::buildCipherPipe(
     }
     Botan::SymmetricKey mac(buf);
 
-    if (direction == Botan::ENCRYPTION)
+    if ((cryptoMethod == cryptoMethods::AES128_CTR) || (cryptoMethod == cryptoMethods::AES192_CTR) || (cryptoMethod == cryptoMethods::AES256_CTR))
     {
-#if 1
         *filter = new Botan::Transformation_Filter(
             new Botan::Stream_Cipher_Mode(new Botan::CTR_BE(blockCipher->clone())));
-#else
-        *filter = new Botan::Transformation_Filter(
-            new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
-#endif
     }
     else
     {
-#if 1
-        *filter = new Botan::Transformation_Filter(
-            new Botan::Stream_Cipher_Mode(new Botan::CTR_BE(blockCipher->clone())));
-#else
-        *filter = new Botan::Transformation_Filter(
-            new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
-#endif
+        nonce.clear();
+        if (direction == Botan::ENCRYPTION)
+        {
+            *filter = new Botan::Transformation_Filter(
+                new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
+        }
+        else
+        {
+            *filter = new Botan::Transformation_Filter(
+                new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
+        }
     }
 
     (*filter)->set_key(sKey);
