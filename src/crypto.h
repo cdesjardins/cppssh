@@ -34,7 +34,7 @@ SMART_ENUM_DECLARE(macMethods, HMAC_SHA1, HMAC_MD5, HMAC_NONE);
 SMART_ENUM_DECLARE(kexMethods, DIFFIE_HELLMAN_GROUP1_SHA1, DIFFIE_HELLMAN_GROUP14_SHA1);
 SMART_ENUM_DECLARE(hostkeyMethods, SSH_DSS, SSH_RSA);
 SMART_ENUM_DECLARE(cmprsMethods, NONE, ZLIB);
-SMART_ENUM_DECLARE(cryptoMethods, _3DES_CBC, AES128_CTR, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC,
+SMART_ENUM_DECLARE(cryptoMethods, _3DES_CBC, AES128_CTR, AES192_CTR, AES256_CTR, AES128_CBC, AES192_CBC, AES256_CBC, BLOWFISH_CBC, CAST128_CBC,
                    TWOFISH_CBC, TWOFISH256_CBC);
 
 class CppsshCrypto
@@ -103,6 +103,7 @@ private:
     const char* getHashAlgo() const;
     const char* getHmacAlgo(macMethods method) const;
     size_t maxKeyLengthOf(const std::string& name, cryptoMethods method) const;
+    void setNonce(Botan::Keyed_Filter* filter, Botan::secure_vector<Botan::byte>& nonce) const;
 
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;
