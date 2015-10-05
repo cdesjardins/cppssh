@@ -91,7 +91,7 @@ private:
     bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID,
                          cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize,
                          Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
-                         std::unique_ptr<Botan::HMAC>& hmac) const;
+                         std::unique_ptr<Botan::HMAC>& hmac, Botan::secure_vector<Botan::byte>& nonce) const;
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
@@ -111,6 +111,8 @@ private:
     std::unique_ptr<Botan::HMAC> _hmacIn;
     Botan::Keyed_Filter* _encryptFilter;
     Botan::Keyed_Filter* _decryptFilter;
+    Botan::secure_vector<Botan::byte> _c2sNonce;
+    Botan::secure_vector<Botan::byte> _s2cNonce;
 
     uint32_t _encryptBlock;
     uint32_t _decryptBlock;

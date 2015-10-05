@@ -25,6 +25,8 @@
 #include "botan/pk_ops.h"
 #include "botan/cbc.h"
 #include "botan/transform_filter.h"
+#include "botan/stream_mode.h"
+#include "botan/ctr.h"
 #include <string>
 
 SMART_ENUM_DEFINE(macMethods);
@@ -60,9 +62,23 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Bot
 
     try
     {
-        _encrypt->process_msg(packet);
-        *crypted = _encrypt->read_all(_encrypt->message_count() - 1);
+        for (uint32_t pktIndex = 0; pktIndex < packet.size(); pktIndex += getEncryptBlock())
+        {
+            Botan::secure_vector<Botan::byte> p(packet.cbegin() + pktIndex, packet.cbegin() + pktIndex + getEncryptBlock());
 
+            _encrypt->process_msg(p);
+            *crypted += _encrypt->read_all(_encrypt->message_count() - 1);
+
+            // reset the IV (nonce)
+            for (int i = _c2sNonce.size() - 1; i >= 0; i--)
+            {
+                if ((_c2sNonce[i] = (_c2sNonce[i] + 1)) != 0)
+                {
+                    break;
+                }
+            }
+            _encryptFilter->set_iv(Botan::InitializationVector(_c2sNonce));
+        }
         if (_hmacOut != nullptr)
         {
             CppsshPacket mac(&macStr);
@@ -71,8 +87,6 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Bot
             *hmac = _hmacOut->process(macStr);
         }
 
-        // reset the IV (nonce)
-        _encryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
         ret = true;
     }
     catch (const std::exception& ex)
@@ -100,11 +114,23 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
     }
     try
     {
-        _decrypt->process_msg(packet.data(), len);
-        *decrypted = _decrypt->read_all(_decrypt->message_count() - 1);
+        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += getDecryptBlock())
+        {
+            Botan::secure_vector<Botan::byte> p(packet.cbegin() + pktIndex, packet.cbegin() + pktIndex + getDecryptBlock());
 
-        // reset the IV (nonce)
-        _decryptFilter->set_iv(Botan::InitializationVector(Botan::secure_vector<Botan::byte>()));
+            _decrypt->process_msg(p.data(), getDecryptBlock());
+            *decrypted += _decrypt->read_all(_decrypt->message_count() - 1);
+
+            // reset the IV (nonce)
+            for (int i = _s2cNonce.size() - 1; i >= 0; i--)
+            {
+                if ((_s2cNonce[i] = (_s2cNonce[i] + 1)) != 0)
+                {
+                    break;
+                }
+            }
+            _decryptFilter->set_iv(Botan::InitializationVector(_s2cNonce));
+        }
         ret = true;
     }
     catch (const std::exception& ex)
@@ -702,7 +728,8 @@ bool CppsshCrypto::buildCipherPipe(
     uint32_t* blockSize,
     Botan::Keyed_Filter** filter,
     std::unique_ptr<Botan::Pipe>& pipe,
-    std::unique_ptr<Botan::HMAC>& hmac) const
+    std::unique_ptr<Botan::HMAC>& hmac,
+    Botan::secure_vector<Botan::byte>& nonce) const
 {
     std::unique_ptr<Botan::HashFunction> hashAlgo;
     std::string algo;
@@ -731,6 +758,7 @@ bool CppsshCrypto::buildCipherPipe(
         return false;
     }
     Botan::InitializationVector iv(buf);
+    nonce = buf;
 
     if (computeKey(&buf, keyID, maxKeyLengthOf(algo, cryptoMethod)) == false)
     {
@@ -746,13 +774,23 @@ bool CppsshCrypto::buildCipherPipe(
 
     if (direction == Botan::ENCRYPTION)
     {
+#if 1
+        *filter = new Botan::Transformation_Filter(
+            new Botan::Stream_Cipher_Mode(new Botan::CTR_BE(blockCipher->clone())));
+#else
         *filter = new Botan::Transformation_Filter(
             new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
+#endif
     }
     else
     {
+#if 1
+        *filter = new Botan::Transformation_Filter(
+            new Botan::Stream_Cipher_Mode(new Botan::CTR_BE(blockCipher->clone())));
+#else
         *filter = new Botan::Transformation_Filter(
             new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
+#endif
     }
 
     (*filter)->set_key(sKey);
@@ -777,10 +815,10 @@ bool CppsshCrypto::makeNewKeys()
     try
     {
         if (buildCipherPipe(Botan::ENCRYPTION, 'A', 'C', 'E', _c2sCryptoMethod, _c2sMacMethod, &_c2sMacDigestLen,
-                            &_encryptBlock, &_encryptFilter, _encrypt, _hmacOut) == true)
+                            &_encryptBlock, &_encryptFilter, _encrypt, _hmacOut, _c2sNonce) == true)
         {
             ret = buildCipherPipe(Botan::DECRYPTION, 'B', 'D', 'F', _s2cCryptoMethod, _s2cMacMethod, &_s2cMacDigestLen,
-                                  &_decryptBlock, &_decryptFilter, _decrypt, _hmacIn);
+                                  &_decryptBlock, &_decryptFilter, _decrypt, _hmacIn, _s2cNonce);
         }
     }
     catch (const std::exception& ex)

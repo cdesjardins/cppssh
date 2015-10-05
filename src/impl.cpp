@@ -39,6 +39,7 @@ CppsshImpl::CppsshImpl()
     CppsshImpl::CIPHER_ALGORITHMS.push_back("blowfish-cbc");
     CppsshImpl::CIPHER_ALGORITHMS.push_back("3des-cbc");
     CppsshImpl::CIPHER_ALGORITHMS.push_back("aes128-cbc");
+    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes128-ctr");
     CppsshImpl::CIPHER_ALGORITHMS.push_back("cast128-cbc");
 
     CppsshImpl::MAC_ALGORITHMS.push_back("hmac-md5");
