@@ -769,7 +769,8 @@ bool CppsshCrypto::buildCipherPipe(
     }
     Botan::SymmetricKey mac(buf);
 
-    if ((cryptoMethod == cryptoMethods::AES128_CTR) || (cryptoMethod == cryptoMethods::AES192_CTR) || (cryptoMethod == cryptoMethods::AES256_CTR))
+    if ((cryptoMethod == cryptoMethods::AES128_CTR) || (cryptoMethod == cryptoMethods::AES192_CTR) ||
+        (cryptoMethod == cryptoMethods::AES256_CTR))
     {
         *filter = new Botan::Transformation_Filter(
             new Botan::Stream_Cipher_Mode(new Botan::CTR_BE(blockCipher->clone())));
