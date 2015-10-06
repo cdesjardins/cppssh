@@ -42,12 +42,12 @@ class CppsshCrypto
 public:
     CppsshCrypto(const std::shared_ptr<CppsshSession>& session);
 
-    uint32_t getEncryptBlock()
+    uint32_t getEncryptBlock() const
     {
         return _encryptBlock;
     }
 
-    uint32_t getDecryptBlock()
+    uint32_t getDecryptBlock() const
     {
         return _decryptBlock;
     }
@@ -58,10 +58,10 @@ public:
                        uint32_t len);
 
     void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet,
-                    uint32_t seq);
+                    uint32_t seq)  const;
     bool computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val);
 
-    bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote);
+    bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote) const;
     bool verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig);
 
     bool negotiatedKex(const std::string& kexAlgo);
@@ -77,12 +77,12 @@ public:
     bool makeKexSecret(Botan::secure_vector<Botan::byte>* result, Botan::BigInt& f);
     bool makeNewKeys();
 
-    uint32_t getMacOutLen()
+    uint32_t getMacOutLen() const
     {
         return _c2sMacDigestLen;
     }
 
-    uint32_t getMacInLen()
+    uint32_t getMacInLen() const
     {
         return _s2cMacDigestLen;
     }
@@ -98,7 +98,7 @@ private:
     bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
     bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
-    bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod);
+    bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod) const;
     std::string getCryptAlgo(cryptoMethods crypto) const;
     const char* getHashAlgo() const;
     const char* getHmacAlgo(macMethods method) const;

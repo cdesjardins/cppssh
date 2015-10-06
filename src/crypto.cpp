@@ -133,7 +133,7 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
 }
 
 void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet,
-                              uint32_t seq)
+                              uint32_t seq) const
 {
     Botan::secure_vector<Botan::byte> macStr;
     try
@@ -156,7 +156,7 @@ void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Bot
     }
 }
 
-bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& local, const std::string& remote)
+bool CppsshCrypto::agree(std::string* result, const std::vector<std::string>& local, const std::string& remote) const
 {
     bool ret = false;
     std::vector<std::string>::const_iterator agreedAlgo;
@@ -225,7 +225,7 @@ bool CppsshCrypto::negotiatedHostkey(const std::string& hostkeyAlgo)
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod)
+bool CppsshCrypto::negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod) const
 {
     bool ret = false;
     *cmprsMethod = SEcmprsMethods::string2SmrtEnum(cmprsAlgo);
