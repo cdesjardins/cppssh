@@ -67,23 +67,21 @@ void CppsshTransportCrypto::rxThread()
         CppsshPacket packet(&_in);
         while (_running == true)
         {
-            decrypted.clear();
             uint32_t cryptoLen = 0;
-            size_t size = _session->_crypto->getDecryptBlock();
+            decrypted.clear();
 
-            if (receiveMessage(&_in, size) == false)
+            if (receiveMessage(&_in, _session->_crypto->getDecryptBlock()) == false)
             {
                 break;
             }
             if (_in.size() >= _session->_crypto->getDecryptBlock())
             {
                 _session->_crypto->decryptPacket(&decrypted, _in, _session->_crypto->getDecryptBlock());
-                int macLen = _session->_crypto->getMacInLen();
                 CppsshConstPacket cpacket(&decrypted);
                 cryptoLen = cpacket.getCryptoLength();
                 if ((cpacket.getCommand() > 0) && (cpacket.getCommand() < 0xff))
                 {
-                    if (receiveMessage(&_in, cryptoLen + macLen) == false)
+                    if (receiveMessage(&_in, cryptoLen + _session->_crypto->getMacInLen()) == false)
                     {
                         break;
                     }
@@ -100,19 +98,7 @@ void CppsshTransportCrypto::rxThread()
                     break;
                 }
             }
-            if (decrypted.empty() == false)
-            {
-                _rxSeq++;
-                _session->_channel->handleReceived(decrypted);
-                if (_in.size() <= cryptoLen)
-                {
-                    _in.clear();
-                }
-                else
-                {
-                    _in.erase(_in.begin(), _in.begin() + cryptoLen);
-                }
-            }
+            processDecryptedData(decrypted, cryptoLen);
         }
     }
     catch (const std::exception& ex)
@@ -144,4 +130,21 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
         }
     }
     return ret;
+}
+
+void CppsshTransportCrypto::processDecryptedData(const Botan::secure_vector<Botan::byte>& decrypted, uint32_t cryptoLen)
+{
+    if (decrypted.empty() == false)
+    {
+        _rxSeq++;
+        _session->_channel->handleReceived(decrypted);
+        if (_in.size() <= cryptoLen)
+        {
+            _in.clear();
+        }
+        else
+        {
+            _in.erase(_in.begin(), _in.begin() + cryptoLen);
+        }
+    }
 }
