@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import unittest, os, shutil, difflib, stat, random, argparse, sys
 from subprocess import call
 
