@@ -41,7 +41,7 @@ bool CppsshTransportCrypto::sendMessage(const Botan::secure_vector<Botan::byte>&
     Botan::secure_vector<Botan::byte> hmac;
     Botan::secure_vector<Botan::byte> buf;
     setupMessage(buffer, &buf);
-    if (_session->_crypto->encryptPacket(&crypted, &hmac, buf, _txSeq) == false)
+    if (_session->_crypto->encryptPacket(&crypted, &hmac, buf.data(), buf.size(), _txSeq) == false)
     {
         cdLog(LogLevel::Error) << "Failure to encrypt the payload.";
         return false;
@@ -77,8 +77,7 @@ void CppsshTransportCrypto::rxThread()
             }
             if (_in.size() >= decryptBlockSize)
             {
-                _session->_crypto->decryptPacket(&decrypted, _in, decryptBlockSize);
-                _in.erase(_in.begin(), _in.begin() + decryptBlockSize);
+                _session->_crypto->decryptPacket(&decrypted, _in.data(), decryptBlockSize);
                 CppsshConstPacket cpacket(&decrypted);
                 cryptoLen = cpacket.getCryptoLength();
                 if ((cpacket.getCommand() > 0) && (cpacket.getCommand() < 0xff))
@@ -88,17 +87,16 @@ void CppsshTransportCrypto::rxThread()
                         break;
                     }
                 }
-                if ((cryptoLen > decryptBlockSize) && ((_in.size() + decryptBlockSize) >= cryptoLen))
+                if ((cryptoLen > decryptBlockSize) && (_in.size() >= cryptoLen))
                 {
-                    _session->_crypto->decryptPacket(&decrypted, _in, cryptoLen - decryptBlockSize);
-                    _in.erase(_in.begin(), _in.begin() + cryptoLen - decryptBlockSize);
+                    _session->_crypto->decryptPacket(&decrypted, _in.data() + decryptBlockSize, cryptoLen - decryptBlockSize);
                 }
-                if (computeMac(decrypted) == false)
+                if (computeMac(decrypted, &cryptoLen) == false)
                 {
                     break;
                 }
             }
-            processDecryptedData(decrypted);
+            processDecryptedData(decrypted, cryptoLen);
         }
     }
     catch (const std::exception& ex)
@@ -109,7 +107,7 @@ void CppsshTransportCrypto::rxThread()
     cdLog(LogLevel::Debug) << "crypto rx thread done";
 }
 
-bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& decrypted)
+bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& decrypted, uint32_t* cryptoLen)
 {
     bool ret = true;
     if (_session->_crypto->getMacInLen() && (_in.size() > 0) &&
@@ -118,24 +116,32 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
         Botan::secure_vector<Botan::byte> ourMac;
         _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
 
-        if (std::equal(_in.begin(), _in.begin() + _session->_crypto->getMacInLen(), ourMac.begin()) == false)
+        if (std::equal(_in.begin() + (*cryptoLen), _in.begin() + (*cryptoLen) + _session->_crypto->getMacInLen(), ourMac.begin()) == false)
         {
             cdLog(LogLevel::Error) << "Mismatched HMACs.";
             ret = false;
         }
         else
         {
-            _in.erase(_in.begin(), _in.begin() + _session->_crypto->getMacInLen());
+            *cryptoLen += _session->_crypto->getMacInLen();
         }
     }
     return ret;
 }
 
-void CppsshTransportCrypto::processDecryptedData(const Botan::secure_vector<Botan::byte>& decrypted)
+void CppsshTransportCrypto::processDecryptedData(const Botan::secure_vector<Botan::byte>& decrypted, uint32_t cryptoLen)
 {
     if (decrypted.empty() == false)
     {
         _rxSeq++;
         _session->_channel->handleReceived(decrypted);
+        if (_in.size() <= cryptoLen)
+        {
+            _in.clear();
+        }
+        else
+        {
+            _in.erase(_in.begin(), _in.begin() + cryptoLen);
+        }
     }
 }

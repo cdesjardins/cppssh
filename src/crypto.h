@@ -53,9 +53,9 @@ public:
         return _decryptBlock;
     }
 
-    bool encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac,
-                       const Botan::secure_vector<Botan::byte>& packet, uint32_t seq);
-    bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::secure_vector<Botan::byte>& packet,
+    bool encryptPacket(Botan::secure_vector<Botan::byte>* encrypted, Botan::secure_vector<Botan::byte>* hmac,
+                       const Botan::byte* decrypted, uint32_t len, uint32_t seq);
+    bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::byte* encrypted,
                        uint32_t len);
 
     void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet,

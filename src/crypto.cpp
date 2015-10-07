@@ -67,25 +67,25 @@ void CppsshCrypto::setNonce(Botan::Keyed_Filter* filter, Botan::secure_vector<Bo
     filter->set_iv(Botan::InitializationVector(nonce));
 }
 
-bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Botan::secure_vector<Botan::byte>* hmac,
-                                 const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)
+bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* encrypted, Botan::secure_vector<Botan::byte>* hmac,
+                                 const Botan::byte* decrypted, uint32_t len, uint32_t seq)
 {
     bool ret = false;
     Botan::secure_vector<Botan::byte> macStr;
 
     try
     {
-        for (uint32_t pktIndex = 0; pktIndex < packet.size(); pktIndex += getEncryptBlock())
+        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += getEncryptBlock())
         {
-            _encrypt->process_msg(packet.data() + pktIndex, getEncryptBlock());
-            *crypted += _encrypt->read_all(_encrypt->message_count() - 1);
+            _encrypt->process_msg(decrypted + pktIndex, getEncryptBlock());
+            *encrypted += _encrypt->read_all(_encrypt->message_count() - 1);
             setNonce(_encryptFilter, _c2sNonce);
         }
         if (_hmacOut != nullptr)
         {
             CppsshPacket mac(&macStr);
             mac.addInt(seq);
-            macStr += packet;
+            mac.addRawData(decrypted, len);
             *hmac = _hmacOut->process(macStr);
         }
 
@@ -100,25 +100,21 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* crypted, Bot
 }
 
 bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
-                                 const Botan::secure_vector<Botan::byte>& packet, uint32_t len)
+                                 const Botan::byte* encrypted, uint32_t len)
 {
     bool ret = false;
-    uint32_t pLen = packet.size();
 
     if (len % getDecryptBlock())
     {
         len = len + (len % getDecryptBlock());
     }
 
-    if (len > pLen)
-    {
-        len = pLen;
-    }
     try
     {
         for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += getDecryptBlock())
         {
-            _decrypt->process_msg(packet.data() + pktIndex, getDecryptBlock());
+            Botan::secure_vector<Botan::byte> e(encrypted + pktIndex, encrypted + pktIndex + getDecryptBlock());
+            _decrypt->process_msg(e);
             *decrypted += _decrypt->read_all(_decrypt->message_count() - 1);
             setNonce(_decryptFilter, _s2cNonce);
         }
