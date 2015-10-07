@@ -30,8 +30,8 @@ public:
 
 protected:
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
-    bool computeMac(const Botan::secure_vector<Botan::byte>& packet, uint32_t* cryptoLen) const;
-    void processDecryptedData(const Botan::secure_vector<Botan::byte>& decrypted, uint32_t cryptoLen);
+    bool computeMac(const Botan::secure_vector<Botan::byte>& packet);
+    void processDecryptedData(const Botan::secure_vector<Botan::byte>& decrypted);
 
 private:
     virtual void rxThread();
