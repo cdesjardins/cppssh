@@ -22,6 +22,19 @@ class TestAlgos(unittest.TestCase):
     ]
     verificationErrors = []
     diffs = {}
+    actualResultsBaseDir = "actualResults"
+    expectedResultsBaseDir = "expectedResults"
+    keysBaseDir = "keys"
+
+    @classmethod
+    def setUpClass(cls):
+        if (os.path.exists(cls.actualResultsBaseDir) == True):
+            shutil.rmtree(cls.actualResultsBaseDir)
+        os.makedirs(cls.actualResultsBaseDir)
+
+        if (os.path.exists(cls.keysBaseDir) == True):
+            shutil.rmtree(cls.keysBaseDir)
+        os.mkdir(cls.keysBaseDir)
 
     def myAssertEqual(self, a, b, msg=None):
         try:
@@ -69,8 +82,8 @@ class TestAlgos(unittest.TestCase):
             os.makedirs(actualResultsDir)
         shutil.copy(filename, actualResultsDir)
         os.remove(filename)
-        actualResultsFileName = actualResultsDir + "/" + filename
-        expectedResultsFileName = expectedResultsDir + "/" + filename
+        actualResultsFileName = os.path.join(actualResultsDir, filename)
+        expectedResultsFileName = os.path.join(expectedResultsDir, filename)
         actualResults = self.getFileContent(actualResultsFileName, cutTimeStamp, ignoreLines)
         expectedResults = self.getFileContent(expectedResultsFileName, cutTimeStamp, ignoreLines)
         difflist = list(difflib.context_diff(actualResults, expectedResults))
@@ -91,7 +104,7 @@ class TestAlgos(unittest.TestCase):
         if ((" agreed on: " + cipher in actualResults) and (" agreed on: " + mac in actualResults)):
             verified = True
         elif (verbose == True):
-            self.diffs[actualResultsFileName] = cipher + "/" + mac
+            self.diffs[actualResultsFileName] = os.path.join(cipher, mac)
             self.myAssertTrue(verified, "Cipher or mac not found in " + actualResultsFileName)
         return verified
 
@@ -100,21 +113,20 @@ class TestAlgos(unittest.TestCase):
             cmd = "../../install/bin/cppsshtestalgos 192.168.1.19 algotester " + password + " " + cipher + " " + mac + " " + keyfile
             print("Testing: " + cmd)
             call(cmd.split(" "))
-            directory = cipher + "/" + mac
+            directory = os.path.join(cipher, mac)
             if (len(keyfile) > 0):
-                directory += "/" + os.path.basename(keyfile)
-            actualResultsDir = "actualResults/" + directory
-            expectedResultsDir = "expectedResults"
-            passCnt = self.verifyAlgos(cipher, mac, actualResultsDir + "/testlog.txt", bool(i))
-            passCnt += self.cmpOutputFiles("testlog.txt", actualResultsDir, expectedResultsDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos", " agreed on: ", "Authenticated with"], bool(i))
-            passCnt += self.cmpOutputFiles("testoutput.txt", actualResultsDir, expectedResultsDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY=", "DISPLAY="], bool(i))
+                directory = os.path.join(directory, os.path.basename(keyfile))
+            actualResultsDir = os.path.join(self.actualResultsBaseDir, directory)
+            passCnt = self.verifyAlgos(cipher, mac, os.path.join(actualResultsDir, "testlog.txt"), bool(i))
+            passCnt += self.cmpOutputFiles("testlog.txt", actualResultsDir, self.expectedResultsBaseDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos", " agreed on: ", "Authenticated with"], bool(i))
+            passCnt += self.cmpOutputFiles("testoutput.txt", actualResultsDir, self.expectedResultsBaseDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY=", "DISPLAY="], bool(i))
             if (passCnt == 3):
                 break
 
     def getKeyFilename(self, keyType, password):
         filename = ""
         if (len(keyType) > 0):
-            filename = "keys/testkey_" + keyType
+            filename = os.path.join(self.keysBaseDir, "testkey_" + keyType)
             if (password != ""):
                 filename += "_pw"
         return filename
@@ -132,9 +144,6 @@ class TestAlgos(unittest.TestCase):
         os.chmod(filename, stat.S_IWUSR | stat.S_IRUSR)
 
     def testKeys(self):
-        if (os.path.exists("keys") == True):
-            shutil.rmtree("keys")
-        os.mkdir("keys")
         keys = ["rsa", "dsa", ""]
         passwords = ["", "testpw"]
 
