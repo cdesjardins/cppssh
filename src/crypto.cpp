@@ -751,6 +751,7 @@ bool CppsshCrypto::buildCipherPipe(
         return false;
     }
     Botan::InitializationVector iv(buf);
+    // Save the nonce for use by CTR ciphers
     nonce = buf;
 
     if (computeKey(&buf, keyID, maxKeyLengthOf(algo, cryptoMethod)) == false)
@@ -773,6 +774,8 @@ bool CppsshCrypto::buildCipherPipe(
     }
     else
     {
+        // Clear the nonce for normal block ciphers
+        // botan handles the nonce carry over in the CBC layer
         nonce.clear();
         if (direction == Botan::ENCRYPTION)
         {
