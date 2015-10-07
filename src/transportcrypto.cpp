@@ -89,7 +89,8 @@ void CppsshTransportCrypto::rxThread()
                 }
                 if ((cryptoLen > decryptBlockSize) && (_in.size() >= cryptoLen))
                 {
-                    _session->_crypto->decryptPacket(&decrypted, _in.data() + decryptBlockSize, cryptoLen - decryptBlockSize);
+                    _session->_crypto->decryptPacket(&decrypted,
+                                                     _in.data() + decryptBlockSize, cryptoLen - decryptBlockSize);
                 }
                 if (computeMac(decrypted, &cryptoLen) == false)
                 {
@@ -116,7 +117,8 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
         Botan::secure_vector<Botan::byte> ourMac;
         _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
 
-        if (std::equal(_in.begin() + (*cryptoLen), _in.begin() + (*cryptoLen) + _session->_crypto->getMacInLen(), ourMac.begin()) == false)
+        if (std::equal(_in.begin() + (*cryptoLen), _in.begin() + (*cryptoLen) + _session->_crypto->getMacInLen(),
+                       ourMac.begin()) == false)
         {
             cdLog(LogLevel::Error) << "Mismatched HMACs.";
             ret = false;
@@ -145,3 +147,4 @@ void CppsshTransportCrypto::processDecryptedData(const Botan::secure_vector<Bota
         }
     }
 }
+
