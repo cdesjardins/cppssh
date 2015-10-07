@@ -1,4 +1,4 @@
-import unittest, os, shutil, difflib, stat
+import unittest, os, shutil, difflib, stat, random, argparse, sys
 from subprocess import call
 
 class TestAlgos(unittest.TestCase):
@@ -18,8 +18,20 @@ class TestAlgos(unittest.TestCase):
     ]
     macs = [
         "hmac-md5",
-        "hmac-sha1"
+        "hmac-sha1",
+        "none"
     ]
+    keys = [
+        "rsa",
+        "dsa",
+        ""
+    ]
+    passwords = [
+        "",
+        "testpw"
+    ]
+
+    testCases = []
     verificationErrors = []
     diffs = {}
     actualResultsBaseDir = "actualResults"
@@ -28,6 +40,16 @@ class TestAlgos(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        for key in cls.keys:
+            for password in cls.passwords:
+                for cipher in cls.ciphers:
+                    for mac in cls.macs:
+                        test = { 'key': key, 'password': password, 'cipher': cipher, 'mac': mac }
+                        cls.testCases.append(test)
+
+        if (args.all == False):
+            cls.setupSubset()
+
         if (os.path.exists(cls.actualResultsBaseDir) == True):
             shutil.rmtree(cls.actualResultsBaseDir)
         os.makedirs(cls.actualResultsBaseDir)
@@ -35,6 +57,16 @@ class TestAlgos(unittest.TestCase):
         if (os.path.exists(cls.keysBaseDir) == True):
             shutil.rmtree(cls.keysBaseDir)
         os.mkdir(cls.keysBaseDir)
+
+    @classmethod
+    def setupSubset(cls):
+        print("Running a subset of tests\n\n\n")
+        random.seed()
+        # Run a fraction of the tests
+        numToRemove = len(cls.testCases) - (len(cls.testCases) / 5)
+        for cnt in range(0, numToRemove):
+            index = random.randint(0, len(cls.testCases) - 1)
+            cls.testCases.remove(cls.testCases[index])
 
     def myAssertEqual(self, a, b, msg=None):
         try:
@@ -104,22 +136,22 @@ class TestAlgos(unittest.TestCase):
         if ((" agreed on: " + cipher in actualResults) and (" agreed on: " + mac in actualResults)):
             verified = True
         elif (verbose == True):
-            self.diffs[actualResultsFileName] = os.path.join(cipher, mac)
-            self.myAssertTrue(verified, "Cipher or mac not found in " + actualResultsFileName)
+            self.diffs[actualResultsFileName] = cipher + " / " +  mac
+            self.myAssertTrue(verified, "Cipher or mac not found in " + actualResultsFileName + " " + actualResults)
         return verified
 
     def runAlgoTest(self, password, cipher, mac, keyfile):
         for i in range(0, 2):
             cmd = "../../install/bin/cppsshtestalgos 192.168.1.19 algotester " + password + " " + cipher + " " + mac + " " + keyfile
-            print("Testing: " + cmd)
+            print("Testing[" + str(i) + "]: " + cmd)
             call(cmd.split(" "))
             directory = os.path.join(cipher, mac)
             if (len(keyfile) > 0):
                 directory = os.path.join(directory, os.path.basename(keyfile))
             actualResultsDir = os.path.join(self.actualResultsBaseDir, directory)
-            passCnt = self.verifyAlgos(cipher, mac, os.path.join(actualResultsDir, "testlog.txt"), bool(i))
-            passCnt += self.cmpOutputFiles("testlog.txt", actualResultsDir, self.expectedResultsBaseDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos", " agreed on: ", "Authenticated with"], bool(i))
+            passCnt = self.cmpOutputFiles("testlog.txt", actualResultsDir, self.expectedResultsBaseDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos", " agreed on: ", "Authenticated with"], bool(i))
             passCnt += self.cmpOutputFiles("testoutput.txt", actualResultsDir, self.expectedResultsBaseDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY=", "DISPLAY="], bool(i))
+            passCnt += self.verifyAlgos(cipher, mac, os.path.join(actualResultsDir, "testlog.txt"), bool(i))
             if (passCnt == 3):
                 break
 
@@ -144,24 +176,22 @@ class TestAlgos(unittest.TestCase):
         os.chmod(filename, stat.S_IWUSR | stat.S_IRUSR)
 
     def testKeys(self):
-        keys = ["rsa", "dsa", ""]
-        passwords = ["", "testpw"]
 
-        for key in keys:
-            for password in passwords:
+        for key in self.keys:
+            for password in self.passwords:
                 if (len(key) > 0):
                     self.generateKey(key, password)
 
-        cmd = "../../install/bin/cppsshtestkeys 192.168.1.19 algotester password keys"
+        cmd = "../../install/bin/cppsshtestkeys 192.168.1.19 algotester password " + self.keysBaseDir
         call(cmd.split(" "))
-
-        for key in keys:
-            for password in passwords:
-                for cipher in self.ciphers:
-                    for mac in self.macs:
-                        if (len(key) == 0):
-                            password = "password"
-                        self.runAlgoTest(password, cipher, mac, self.getKeyFilename(key, password))
+        for testCase in self.testCases:
+            key = testCase['key']
+            password = testCase['password']
+            cipher = testCase['cipher']
+            mac = testCase['mac']
+            if (len(key) == 0):
+                password = "password"
+            self.runAlgoTest(password, cipher, mac, self.getKeyFilename(key, password))
 
     def tearDown(self):
         if (len(self.verificationErrors) == 0):
@@ -173,4 +203,10 @@ class TestAlgos(unittest.TestCase):
         self.assertEqual(len(self.verificationErrors), 0)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--all', action='store_true')
+    parser.add_argument('unittest_args', nargs='*')
+    args = parser.parse_args()
+    sys.argv[1:] = args.unittest_args
+
     unittest.main()
