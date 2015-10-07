@@ -65,18 +65,19 @@ void CppsshTransportCrypto::rxThread()
     {
         Botan::secure_vector<Botan::byte> decrypted;
         CppsshPacket packet(&_in);
+        uint32_t decryptBlockSize = _session->_crypto->getDecryptBlock();
         while (_running == true)
         {
             uint32_t cryptoLen = 0;
             decrypted.clear();
 
-            if (receiveMessage(&_in, _session->_crypto->getDecryptBlock()) == false)
+            if (receiveMessage(&_in, decryptBlockSize) == false)
             {
                 break;
             }
-            if (_in.size() >= _session->_crypto->getDecryptBlock())
+            if (_in.size() >= decryptBlockSize)
             {
-                _session->_crypto->decryptPacket(&decrypted, _in, _session->_crypto->getDecryptBlock());
+                _session->_crypto->decryptPacket(&decrypted, _in, decryptBlockSize);
                 CppsshConstPacket cpacket(&decrypted);
                 cryptoLen = cpacket.getCryptoLength();
                 if ((cpacket.getCommand() > 0) && (cpacket.getCommand() < 0xff))
@@ -86,11 +87,11 @@ void CppsshTransportCrypto::rxThread()
                         break;
                     }
                 }
-                if ((cryptoLen > _session->_crypto->getDecryptBlock()) && (_in.size() >= cryptoLen))
+                if ((cryptoLen > decryptBlockSize) && (_in.size() >= cryptoLen))
                 {
                     Botan::secure_vector<Botan::byte> tmpVar;
                     tmpVar = Botan::secure_vector<Botan::byte>(
-                        _in.begin() + _session->_crypto->getDecryptBlock(), _in.begin() + cryptoLen);
+                        _in.begin() + decryptBlockSize, _in.begin() + cryptoLen);
                     _session->_crypto->decryptPacket(&decrypted, tmpVar, tmpVar.size());
                 }
                 if (computeMac(decrypted, &cryptoLen) == false)
