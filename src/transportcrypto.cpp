@@ -80,12 +80,9 @@ void CppsshTransportCrypto::rxThread()
                 _session->_crypto->decryptPacket(&decrypted, _in.data(), decryptBlockSize);
                 CppsshConstPacket cpacket(&decrypted);
                 cryptoLen = cpacket.getCryptoLength();
-                if ((cpacket.getCommand() > 0) && (cpacket.getCommand() < 0xff))
+                if (receiveMessage(&_in, cryptoLen + _session->_crypto->getMacInLen() - decryptBlockSize) == false)
                 {
-                    if (receiveMessage(&_in, cryptoLen + _session->_crypto->getMacInLen() - decryptBlockSize) == false)
-                    {
-                        break;
-                    }
+                    break;
                 }
                 if ((cryptoLen > decryptBlockSize) && (_in.size() >= cryptoLen))
                 {
