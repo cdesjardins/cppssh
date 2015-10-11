@@ -55,14 +55,14 @@ public:
 
     bool verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig);
 
-    bool negotiatedKex(const std::string& kexAlgo);
-    bool negotiatedHostkey(const std::string& hostkeyAlgo);
-    bool negotiatedCryptoC2s(const std::string& cryptoAlgo);
-    bool negotiatedCryptoS2c(const std::string& cryptoAlgo);
-    bool negotiatedMacC2s(const std::string& macAlgo);
-    bool negotiatedMacS2c(const std::string& macAlgo);
-    bool negotiatedCmprsC2s(const std::string& cmprsAlgo);
-    bool negotiatedCmprsS2c(const std::string& cmprsAlgo);
+    bool setNegotiatedKex(const kexMethods kexAlgo);
+    bool setNegotiatedHostkey(const hostkeyMethods hostkeyAlgo);
+    bool setNegotiatedCryptoC2s(const cryptoMethods cryptoAlgo);
+    bool setNegotiatedCryptoS2c(const cryptoMethods cryptoAlgo);
+    bool setNegotiatedMacC2s(const macMethods macAlgo);
+    bool setNegotiatedMacS2c(const macMethods macAlgo);
+    bool setNegotiatedCmprsC2s(const compressionMethods cmprsAlgo);
+    bool setNegotiatedCmprsS2c(const compressionMethods cmprsAlgo);
 
     bool getKexPublic(Botan::BigInt& publicKey);
     bool makeKexSecret(Botan::secure_vector<Botan::byte>* result, Botan::BigInt& f);
@@ -87,9 +87,9 @@ private:
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
-    bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
-    bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
-    bool negotiatedCmprs(const std::string& cmprsAlgo, compressionMethods* cmprsMethod) const;
+    bool setNegotiatedCrypto(const cryptoMethods cryptoAlgo, cryptoMethods* cryptoMethod) const;
+    bool setNegotiatedMac(const macMethods macAlgo, macMethods* macMethod);
+    bool setNegotiatedCmprs(const compressionMethods cmprsAlgo, compressionMethods* cmprsMethod) const;
     //std::string getCryptAlgo(cryptoMethods crypto) const;
     const char* getHashAlgo() const;
     //const std::string& getHmacAlgo(macMethods method) const;

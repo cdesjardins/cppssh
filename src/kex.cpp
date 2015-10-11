@@ -93,6 +93,27 @@ bool CppsshKex::sendInit(Botan::secure_vector<Botan::byte>& buf)
     return ret;
 }
 
+template <typename T> T CppsshKex::runAgreement(const CppsshConstPacket& remoteKexAlgosPacket, const CppsshAlgos<T>& algorithms, const std::string& tag) const
+{
+    T ret = T::MAX_VALS;
+    std::string algos;
+    std::string agreed;
+
+    if (remoteKexAlgosPacket.getString(&algos) == true)
+    {
+        cdLog(LogLevel::Debug) << tag << " algos: " << algos;
+        if (algorithms.agree(&agreed, algos) == true)
+        {
+            algorithms.ssh2enum(agreed, &ret);
+        }
+        else
+        {
+            cdLog(LogLevel::Error) << "No compatible " << tag << " exchange algorithms.";
+        }
+    }
+    return ret;
+}
+
 bool CppsshKex::handleInit()
 {
     Botan::secure_vector<Botan::byte> buf;
@@ -112,118 +133,43 @@ bool CppsshKex::handleInit()
     Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
     const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
 
-    if (remoteKexAlgosPacket.getString(&algos) == false)
+    if (_session->_crypto->setNegotiatedKex(runAgreement<kexMethods>(remoteKexAlgosPacket, CppsshImpl::KEX_ALGORITHMS, "Kex")) == false)
     {
         return false;
     }
-    cdLog(LogLevel::Debug) << "Kex algos: " << algos;
-    if (CppsshImpl::KEX_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible key exchange algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedKex(agreed) == false)
+
+    if (_session->_crypto->setNegotiatedHostkey(runAgreement<hostkeyMethods>(remoteKexAlgosPacket, CppsshImpl::HOSTKEY_ALGORITHMS, "Hostkey")) == false)
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
+
+    if (_session->_crypto->setNegotiatedCryptoC2s(runAgreement<cryptoMethods>(remoteKexAlgosPacket, CppsshImpl::CIPHER_ALGORITHMS, "C2S Cipher")) == false)
     {
         return false;
     }
-    cdLog(LogLevel::Debug) << "Hostkey algos: " << algos;
-    if (CppsshImpl::HOSTKEY_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible Hostkey algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedHostkey(agreed) == false)
+    if (_session->_crypto->setNegotiatedCryptoS2c(runAgreement<cryptoMethods>(remoteKexAlgosPacket, CppsshImpl::CIPHER_ALGORITHMS, "S2C Cipher")) == false)
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
+
+    if (_session->_crypto->setNegotiatedMacC2s(runAgreement<macMethods>(remoteKexAlgosPacket, CppsshImpl::MAC_ALGORITHMS, "C2S MAC")) == false)
     {
         return false;
     }
-    cdLog(LogLevel::Debug) << "C2S Cipher algos: " << algos;
-    if (CppsshImpl::CIPHER_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedCryptoC2s(agreed) == false)
+    if (_session->_crypto->setNegotiatedMacS2c(runAgreement<macMethods>(remoteKexAlgosPacket, CppsshImpl::MAC_ALGORITHMS, "S2C MAC")) == false)
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
+
+    if (_session->_crypto->setNegotiatedCmprsC2s(runAgreement<compressionMethods>(remoteKexAlgosPacket, CppsshImpl::COMPRESSION_ALGORITHMS, "C2S Compression")) == false)
     {
         return false;
     }
-    cdLog(LogLevel::Debug) << "S2C Cipher algos: " << algos;
-    if (CppsshImpl::CIPHER_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedCryptoS2c(agreed) == false)
+    if (_session->_crypto->setNegotiatedCmprsS2c(runAgreement<compressionMethods>(remoteKexAlgosPacket, CppsshImpl::COMPRESSION_ALGORITHMS, "S2C Compression")) == false)
     {
         return false;
     }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
-    {
-        return false;
-    }
-    cdLog(LogLevel::Debug) << "C2S MAC algos: " << algos;
-    if (CppsshImpl::MAC_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedMacC2s(agreed) == false)
-    {
-        return false;
-    }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
-    {
-        return false;
-    }
-    cdLog(LogLevel::Debug) << "S2C MAC algos: " << algos;
-    if (CppsshImpl::MAC_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedMacS2c(agreed) == false)
-    {
-        return false;
-    }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
-    {
-        return false;
-    }
-    cdLog(LogLevel::Debug) << "C2S Compression algos: " << algos;
-    if (CppsshImpl::COMPRESSION_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible compression algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedCmprsC2s(agreed) == false)
-    {
-        return false;
-    }
-    if (remoteKexAlgosPacket.getString(&algos) == false)
-    {
-        return false;
-    }
-    cdLog(LogLevel::Debug) << "S2C Compression algos: " << algos;
-    if (CppsshImpl::COMPRESSION_ALGORITHMS.agree(&agreed, algos) == false)
-    {
-        cdLog(LogLevel::Error) << "No compatible compression algorithms.";
-        return false;
-    }
-    if (_session->_crypto->negotiatedCmprsS2c(agreed) == false)
-    {
-        return false;
-    }
+
     return true;
 }
 

@@ -146,88 +146,111 @@ void CppsshCrypto::computeMac(Botan::secure_vector<Botan::byte>* hmac, const Bot
     }
 }
 
-bool CppsshCrypto::negotiatedKex(const std::string& kexAlgo)
+bool CppsshCrypto::setNegotiatedKex(const kexMethods kexAlgo)
 {
-    bool ret = CppsshImpl::KEX_ALGORITHMS.ssh2enum(kexAlgo, &_kexMethod);
-
-    if (ret == false)
+    bool ret = false;
+    if (kexAlgo == kexMethods::MAX_VALS)
     {
-        cdLog(LogLevel::Error) << "KEX algorithm: '" << kexAlgo << "' not defined.";
+        cdLog(LogLevel::Error) << "KEX algorithm not defined.";
+    }
+    else
+    {
+        _kexMethod = kexAlgo;
+        ret = true;
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedMac(const std::string& macAlgo, macMethods* macMethod)
+bool CppsshCrypto::setNegotiatedMac(const macMethods macAlgo, macMethods* macMethod)
 {
-    bool ret = CppsshImpl::MAC_ALGORITHMS.ssh2enum(macAlgo, macMethod);
+    bool ret = false;
 
-    if (ret == false)
+    if (macAlgo == macMethods::MAX_VALS)
     {
-        cdLog(LogLevel::Error) << "Mac algorithm: '" << macAlgo << "' not defined.";
+        cdLog(LogLevel::Error) << "Mac algorithm not defined.";
+    }
+    else
+    {
+        *macMethod = macAlgo;
+        ret = true;
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedHostkey(const std::string& hostkeyAlgo)
+bool CppsshCrypto::setNegotiatedHostkey(const hostkeyMethods hostkeyAlgo)
 {
-    bool ret = CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(hostkeyAlgo, &_hostkeyMethod);
-
-    if (ret == false)
+    bool ret = false;
+    if (hostkeyAlgo == hostkeyMethods::MAX_VALS)
     {
-        cdLog(LogLevel::Error) << "Host key algorithm: '" << hostkeyAlgo << "' not defined.";
+        cdLog(LogLevel::Error) << "Host key algorithm not defined.";
+    }
+    else
+    {
+        _hostkeyMethod = hostkeyAlgo;
+        ret = true;
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCmprs(const std::string& cmprsAlgo, compressionMethods* cmprsMethod) const
+bool CppsshCrypto::setNegotiatedCmprs(const compressionMethods cmprsAlgo, compressionMethods* cmprsMethod) const
 {
-    bool ret = CppsshImpl::COMPRESSION_ALGORITHMS.ssh2enum(cmprsAlgo, cmprsMethod);
+    bool ret = false;
 
-    if (ret == false)
+    if (cmprsAlgo == compressionMethods::MAX_VALS)
     {
-        cdLog(LogLevel::Error) << "Compression algorithm: '" << cmprsAlgo << "' not defined.";
+        cdLog(LogLevel::Error) << "Compression algorithm not defined.";
+    }
+    else
+    {
+        *cmprsMethod = cmprsAlgo;
+        ret = true;
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod)
+bool CppsshCrypto::setNegotiatedCrypto(const cryptoMethods cryptoAlgo, cryptoMethods* cryptoMethod) const
 {
-    bool ret = CppsshImpl::CIPHER_ALGORITHMS.ssh2enum(cryptoAlgo, cryptoMethod);
-    if (ret == false)
+    bool ret = false;
+    if (cryptoAlgo == cryptoMethods::MAX_VALS)
     {
-        cdLog(LogLevel::Error) << "Cryptographic algorithm: '" << cryptoAlgo << "' not defined.";
+        cdLog(LogLevel::Error) << "Cryptographic algorithm not defined.";
+    }
+    else
+    {
+        *cryptoMethod = cryptoAlgo;
+        ret = true;
     }
     return ret;
 }
 
-bool CppsshCrypto::negotiatedCryptoC2s(const std::string& cryptoAlgo)
+bool CppsshCrypto::setNegotiatedCryptoC2s(const cryptoMethods cryptoAlgo)
 {
-    return negotiatedCrypto(cryptoAlgo, &_c2sCryptoMethod);
+    return setNegotiatedCrypto(cryptoAlgo, &_c2sCryptoMethod);
 }
 
-bool CppsshCrypto::negotiatedCryptoS2c(const std::string& cryptoAlgo)
+bool CppsshCrypto::setNegotiatedCryptoS2c(const cryptoMethods cryptoAlgo)
 {
-    return negotiatedCrypto(cryptoAlgo, &_s2cCryptoMethod);
+    return setNegotiatedCrypto(cryptoAlgo, &_s2cCryptoMethod);
 }
 
-bool CppsshCrypto::negotiatedMacC2s(const std::string& macAlgo)
+bool CppsshCrypto::setNegotiatedMacC2s(const macMethods macAlgo)
 {
-    return negotiatedMac(macAlgo, &_c2sMacMethod);
+    return setNegotiatedMac(macAlgo, &_c2sMacMethod);
 }
 
-bool CppsshCrypto::negotiatedMacS2c(const std::string& macAlgo)
+bool CppsshCrypto::setNegotiatedMacS2c(const macMethods macAlgo)
 {
-    return negotiatedMac(macAlgo, &_s2cMacMethod);
+    return setNegotiatedMac(macAlgo, &_s2cMacMethod);
 }
 
-bool CppsshCrypto::negotiatedCmprsC2s(const std::string& cmprsAlgo)
+bool CppsshCrypto::setNegotiatedCmprsC2s(const compressionMethods cmprsAlgo)
 {
-    return negotiatedCmprs(cmprsAlgo, &_c2sCmprsMethod);
+    return setNegotiatedCmprs(cmprsAlgo, &_c2sCmprsMethod);
 }
 
-bool CppsshCrypto::negotiatedCmprsS2c(const std::string& cmprsAlgo)
+bool CppsshCrypto::setNegotiatedCmprsS2c(const compressionMethods cmprsAlgo)
 {
-    return negotiatedCmprs(cmprsAlgo, &_s2cCmprsMethod);
+    return setNegotiatedCmprs(cmprsAlgo, &_s2cCmprsMethod);
 }
 
 bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
@@ -418,8 +441,9 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secur
     {
         return 0;
     }
-    if (negotiatedHostkey(field) == false)
+    if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
     {
+        cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
         return 0;
     }
 
@@ -464,11 +488,11 @@ std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secur
     {
         return 0;
     }
-    if (negotiatedHostkey(field) == false)
+    if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
     {
+        cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
         return 0;
     }
-
     if (hKeyPacket.getBigInt(&e) == false)
     {
         return 0;

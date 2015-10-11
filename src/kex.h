@@ -22,6 +22,7 @@
 #include "session.h"
 #include "packet.h"
 #include "botan/botan.h"
+#include "cryptoalgos.h"
 #include <memory>
 
 class CppsshKex
@@ -37,6 +38,7 @@ private:
     bool sendKexDHInit(Botan::secure_vector<Botan::byte>& packet);
     void constructLocalKex();
     void makeH(Botan::secure_vector<Botan::byte>* hVector);
+    template <typename T> T runAgreement(const CppsshConstPacket& remoteKexAlgosPacket, const CppsshAlgos<T>& algorithms, const std::string& tag) const;
 
     std::shared_ptr<CppsshSession> _session;
     Botan::secure_vector<Botan::byte> _localKex;
