@@ -27,16 +27,8 @@
 #include "botan/dsa.h"
 #include "botan/rsa.h"
 #include "botan/key_filt.h"
-#include "smrtenum.h"
+#include "cryptoalgos.h"
 #include <memory>
-
-SMART_ENUM_DECLARE(macMethods, HMAC_SHA1, HMAC_MD5, HMAC_NONE);
-SMART_ENUM_DECLARE(kexMethods, DIFFIE_HELLMAN_GROUP1_SHA1, DIFFIE_HELLMAN_GROUP14_SHA1);
-SMART_ENUM_DECLARE(hostkeyMethods, SSH_DSS, SSH_RSA);
-SMART_ENUM_DECLARE(cmprsMethods, NONE, ZLIB);
-SMART_ENUM_DECLARE(cryptoMethods, _3DES_CBC, AES128_CTR, AES192_CTR, AES256_CTR, AES128_CBC, AES192_CBC, AES256_CBC,
-                   BLOWFISH_CBC, CAST128_CBC,
-                   TWOFISH_CBC, TWOFISH256_CBC);
 
 class CppsshCrypto
 {
@@ -61,7 +53,6 @@ public:
                     uint32_t seq)  const;
     bool computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val);
 
-    bool agree(std::string* result, const std::vector<std::string>& local, const std::string& remote) const;
     bool verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig);
 
     bool negotiatedKex(const std::string& kexAlgo);
@@ -98,10 +89,10 @@ private:
     bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
     bool negotiatedCrypto(const std::string& cryptoAlgo, cryptoMethods* cryptoMethod);
     bool negotiatedMac(const std::string& macAlgo, macMethods* macMethod);
-    bool negotiatedCmprs(const std::string& cmprsAlgo, cmprsMethods* cmprsMethod) const;
-    std::string getCryptAlgo(cryptoMethods crypto) const;
+    bool negotiatedCmprs(const std::string& cmprsAlgo, compressionMethods* cmprsMethod) const;
+    //std::string getCryptAlgo(cryptoMethods crypto) const;
     const char* getHashAlgo() const;
-    const char* getHmacAlgo(macMethods method) const;
+    //const std::string& getHmacAlgo(macMethods method) const;
     size_t maxKeyLengthOf(const std::string& name, cryptoMethods method) const;
     void setNonce(Botan::Keyed_Filter* filter, Botan::secure_vector<Botan::byte>& nonce) const;
 
@@ -126,8 +117,8 @@ private:
     hostkeyMethods _hostkeyMethod;
     cryptoMethods _c2sCryptoMethod;
     cryptoMethods _s2cCryptoMethod;
-    cmprsMethods _c2sCmprsMethod;
-    cmprsMethods _s2cCmprsMethod;
+    compressionMethods _c2sCmprsMethod;
+    compressionMethods _s2cCmprsMethod;
 
     std::unique_ptr<Botan::DH_PrivateKey> _privKexKey;
     Botan::secure_vector<Botan::byte> _K;

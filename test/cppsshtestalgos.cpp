@@ -45,7 +45,7 @@ int main(int argc, char** argv)
     {
         Cppssh::create();
         Logger::getLogger().addStream("testlog.txt");
-        //Logger::getLogger().addStream(std::shared_ptr<std::ostream>(&std::cout, [](void*) {}));
+        Logger::getLogger().addStream(std::shared_ptr<std::ostream>(&std::cout, [](void*) {}));
         try
         {
             Logger::getLogger().setMinLogLevel(LogLevel::Debug);

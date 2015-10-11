@@ -22,39 +22,44 @@
 #include "botan/auto_rng.h"
 #include "botan/init.h"
 
-std::vector<std::string> CppsshImpl::CIPHER_ALGORITHMS;
-std::vector<std::string> CppsshImpl::MAC_ALGORITHMS;
-std::vector<std::string> CppsshImpl::KEX_ALGORITHMS;
-std::vector<std::string> CppsshImpl::HOSTKEY_ALGORITHMS;
-std::vector<std::string> CppsshImpl::COMPRESSION_ALGORITHMS;
+CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
+{
+    CryptoStrings<macMethods>(macMethods::HMAC_SHA1, "hmac-sha1", "SHA-1"),
+    CryptoStrings<macMethods>(macMethods::HMAC_MD5, "hmac-md5", "MD5"),
+    CryptoStrings<macMethods>(macMethods::HMAC_NONE, "none", "")
+});
+
+CppsshCryptoAlgos CppsshImpl::CIPHER_ALGORITHMS(std::vector<CryptoStrings<cryptoMethods> >
+{
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES256_CTR, "aes256-ctr", "AES-256/CTR-BE"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES192_CTR, "aes192-ctr", "AES-192/CTR-BE"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES128_CTR, "aes128-ctr", "AES-128/CTR-BE"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES256_CBC, "aes256-cbc", "AES-256"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES192_CBC, "aes192-cbc", "AES-192"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES128_CBC, "aes128-cbc", "AES-128"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::BLOWFISH_CBC, "blowfish-cbc", "Blowfish"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::_3DES_CBC, "3des-cbc", "TripleDES"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::CAST128_CBC, "cast128-cbc", "CAST-128"),
+});
+CppsshKexAlgos CppsshImpl::KEX_ALGORITHMS(std::vector<CryptoStrings<kexMethods> >
+{
+    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1, "diffie-hellman-group14-sha1", "modp/ietf/2048"),
+    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1, "diffie-hellman-group1-sha1", "modp/ietf/1024"),
+});
+CppsshHostkeyAlgos CppsshImpl::HOSTKEY_ALGORITHMS(std::vector<CryptoStrings<hostkeyMethods> >
+{
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_DSS, "ssh-dss", "ssh-dss"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA, "ssh-rsa", "ssh-rsa"),
+});
+CppsshCompressionAlgos CppsshImpl::COMPRESSION_ALGORITHMS(std::vector<CryptoStrings<compressionMethods> >
+{
+    CryptoStrings<compressionMethods>(compressionMethods::NONE, "none", ""),
+});
 
 std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
 CppsshImpl::CppsshImpl()
 {
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes256-ctr");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes192-ctr");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes128-ctr");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes256-cbc");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes192-cbc");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("aes128-cbc");
-    //CppsshImpl::CIPHER_ALGORITHMS.push_back("twofish-cbc");
-    //CppsshImpl::CIPHER_ALGORITHMS.push_back("twofish256-cbc");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("blowfish-cbc");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("3des-cbc");
-    CppsshImpl::CIPHER_ALGORITHMS.push_back("cast128-cbc");
-
-    CppsshImpl::MAC_ALGORITHMS.push_back("hmac-md5");
-    CppsshImpl::MAC_ALGORITHMS.push_back("hmac-sha1");
-    CppsshImpl::MAC_ALGORITHMS.push_back("none");
-
-    CppsshImpl::KEX_ALGORITHMS.push_back("diffie-hellman-group1-sha1");
-    CppsshImpl::KEX_ALGORITHMS.push_back("diffie-hellman-group14-sha1");
-
-    CppsshImpl::HOSTKEY_ALGORITHMS.push_back("ssh-dss");
-    CppsshImpl::HOSTKEY_ALGORITHMS.push_back("ssh-rsa");
-
-    CppsshImpl::COMPRESSION_ALGORITHMS.push_back("none");
 
     RNG.reset(new Botan::Serialized_RNG());
 }
@@ -135,29 +140,12 @@ bool CppsshImpl::close(int connectionId)
     return true;
 }
 
-bool CppsshImpl::setPref(const char* pref, std::vector<std::string>* list)
-{
-    bool ret = true;
-    std::vector<std::string>::iterator it = std::find(list->begin(), list->end(), pref);
-    if (it != list->end())
-    {
-        list->erase(it);
-        list->insert(list->begin(), pref);
-    }
-    else
-    {
-        cdLog(LogLevel::Error) << "Unable to set preferred algorithm: " << pref;
-        ret = false;
-    }
-    return ret;
-}
-
 bool CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
 {
     bool ret;
     static std::mutex optionsMutex;
     std::unique_lock<std::mutex> lock(optionsMutex);
-    ret = ((setPref(prefCipher, &CIPHER_ALGORITHMS) == true) && (setPref(prefHmac, &MAC_ALGORITHMS) == true));
+    ret = ((CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher) == true) && (CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac) == true));
     return ret;
 }
 
@@ -171,18 +159,6 @@ bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
                                     short keySize)
 {
     return CppsshKeys::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
-}
-
-void CppsshImpl::vecToCommaString(const std::vector<std::string>& vec, std::string* outstr)
-{
-    for (const std::string& kex : vec)
-    {
-        if (outstr->length() > 0)
-        {
-            outstr->push_back(',');
-        }
-        std::copy(kex.begin(), kex.end(), std::back_inserter(*outstr));
-    }
 }
 
 std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connectionId)

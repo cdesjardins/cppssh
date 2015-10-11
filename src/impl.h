@@ -19,6 +19,7 @@
 #ifndef _IMPL_Hxx
 #define _IMPL_Hxx
 
+#include "cryptoalgos.h"
 #include "connection.h"
 #include "cppssh.h"
 #include <memory>
@@ -43,18 +44,16 @@ public:
     bool windowChange(const int connectionId, const uint32_t cols, const uint32_t rows);
     bool close(const int connectionId);
 
-    static void vecToCommaString(const std::vector<std::string>& vec, std::string* outstr);
+    static CppsshMacAlgos MAC_ALGORITHMS;
+    static CppsshCryptoAlgos CIPHER_ALGORITHMS;
+    static CppsshKexAlgos KEX_ALGORITHMS;
+    static CppsshHostkeyAlgos HOSTKEY_ALGORITHMS;
+    static CppsshCompressionAlgos COMPRESSION_ALGORITHMS;
 
-    static std::vector<std::string> CIPHER_ALGORITHMS;
-    static std::vector<std::string> MAC_ALGORITHMS;
-    static std::vector<std::string> KEX_ALGORITHMS;
-    static std::vector<std::string> HOSTKEY_ALGORITHMS;
-    static std::vector<std::string> COMPRESSION_ALGORITHMS;
     static std::shared_ptr<Botan::RandomNumberGenerator> RNG;
     bool checkConnectionId(const int connectionId);
 private:
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
-    static bool setPref(const char* pref, std::vector<std::string>* list);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::mutex _connectionsMutex;
 };

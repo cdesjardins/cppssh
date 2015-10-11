@@ -44,12 +44,12 @@ void CppsshKex::constructLocalKex()
     CppsshImpl::RNG->randomize(random.data(), random.size());
 
     std::copy(random.begin(), random.end(), std::back_inserter(_localKex));
-    CppsshImpl::vecToCommaString(CppsshImpl::KEX_ALGORITHMS, &kexStr);
-    CppsshImpl::vecToCommaString(CppsshImpl::HOSTKEY_ALGORITHMS, &hostkeyStr);
 
-    CppsshImpl::vecToCommaString(CppsshImpl::CIPHER_ALGORITHMS, &ciphersStr);
-    CppsshImpl::vecToCommaString(CppsshImpl::MAC_ALGORITHMS, &hmacsStr);
-    CppsshImpl::vecToCommaString(CppsshImpl::COMPRESSION_ALGORITHMS, &compressors);
+    CppsshImpl::KEX_ALGORITHMS.toString(&kexStr);
+    CppsshImpl::HOSTKEY_ALGORITHMS.toString(&hostkeyStr);
+    CppsshImpl::CIPHER_ALGORITHMS.toString(&ciphersStr);
+    CppsshImpl::MAC_ALGORITHMS.toString(&hmacsStr);
+    CppsshImpl::COMPRESSION_ALGORITHMS.toString(&compressors);
 
     CppsshPacket localKex(&_localKex);
 
@@ -117,7 +117,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "Kex algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::KEX_ALGORITHMS, algos) == false)
+    if (CppsshImpl::KEX_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible key exchange algorithms.";
         return false;
@@ -131,7 +131,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "Hostkey algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::HOSTKEY_ALGORITHMS, algos) == false)
+    if (CppsshImpl::HOSTKEY_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible Hostkey algorithms.";
         return false;
@@ -145,7 +145,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "C2S Cipher algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
+    if (CppsshImpl::CIPHER_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
         return false;
@@ -159,7 +159,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "S2C Cipher algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::CIPHER_ALGORITHMS, algos) == false)
+    if (CppsshImpl::CIPHER_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible cryptographic algorithms.";
         return false;
@@ -173,7 +173,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "C2S MAC algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
+    if (CppsshImpl::MAC_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
         return false;
@@ -187,7 +187,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "S2C MAC algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::MAC_ALGORITHMS, algos) == false)
+    if (CppsshImpl::MAC_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible HMAC algorithms.";
         return false;
@@ -201,7 +201,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "C2S Compression algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
+    if (CppsshImpl::COMPRESSION_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible compression algorithms.";
         return false;
@@ -215,7 +215,7 @@ bool CppsshKex::handleInit()
         return false;
     }
     cdLog(LogLevel::Debug) << "S2C Compression algos: " << algos;
-    if (_session->_crypto->agree(&agreed, CppsshImpl::COMPRESSION_ALGORITHMS, algos) == false)
+    if (CppsshImpl::COMPRESSION_ALGORITHMS.agree(&agreed, algos) == false)
     {
         cdLog(LogLevel::Error) << "No compatible compression algorithms.";
         return false;

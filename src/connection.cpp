@@ -24,6 +24,7 @@
 #include "messages.h"
 #include "transportcrypto.h"
 #include "cppssh.h"
+#include "impl.h"
 #include "strtrim.h"
 
 CppsshConnection::CppsshConnection(int connectionId, unsigned int timeout)
@@ -255,7 +256,7 @@ bool CppsshConnection::authWithKey(const std::string& username, const std::strin
         packetBegin.addString("ssh-connection");
         packetBegin.addString("publickey");
 
-        std::string algo = SEhostkeyMethods::smrtEnum2String(keyPair.getKeyAlgo());
+        std::string algo = CppsshImpl::HOSTKEY_ALGORITHMS.enum2ssh(keyPair.getKeyAlgo());
         std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
         packetEnd.addString(algo);
         size_t packetSize = endBuf.size();
