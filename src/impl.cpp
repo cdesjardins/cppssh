@@ -60,7 +60,6 @@ std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
 CppsshImpl::CppsshImpl()
 {
-
     RNG.reset(new Botan::Serialized_RNG());
 }
 
@@ -145,7 +144,9 @@ bool CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
     bool ret;
     static std::mutex optionsMutex;
     std::unique_lock<std::mutex> lock(optionsMutex);
-    ret = ((CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher) == true) && (CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac) == true));
+    ret =
+        ((CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher) == true) &&
+         (CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac) == true));
     return ret;
 }
 

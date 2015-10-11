@@ -25,15 +25,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "CDLogger/Logger.h"
 #include "strtrim.h"
 
-template <class T> class CryptoStrings {
+template <class T> class CryptoStrings
+{
 public:
     CryptoStrings(const T method, const std::string& sshName, const std::string& botanName)
         : _method(method),
         _sshName(sshName),
         _botanName(botanName)
     {
-
     }
+
     static bool ssh2enum(const std::string& sshAlgo, const std::vector<CryptoStrings>& algoList, T* method)
     {
         bool ret = false;
@@ -47,6 +48,7 @@ public:
         }
         return ret;
     }
+
     static const std::string& enum2name(const T method, const std::vector<CryptoStrings>& algoList, bool sshName)
     {
         const static std::string fail;
@@ -86,17 +88,23 @@ public:
     {
         std::sort(_algos.begin(), _algos.end());
     }
+
     CppsshAlgos() = delete;
     CppsshAlgos(const CppsshAlgos&) = delete;
-    virtual ~CppsshAlgos() {}
+    virtual ~CppsshAlgos()
+    {
+    }
+
     bool ssh2enum(const std::string& sshAlgo, T* method) const
     {
         return CryptoStrings<T>::ssh2enum(sshAlgo, _algos, method);
     }
+
     const std::string& enum2botan(const T method) const
     {
         return CryptoStrings<T>::enum2name(method, _algos, false);
     }
+
     const std::string& enum2ssh(const T method) const
     {
         return CryptoStrings<T>::enum2name(method, _algos, true);
@@ -105,7 +113,7 @@ public:
     bool setPref(const char* pref)
     {
         bool ret = false;
-        std::vector<CryptoStrings<T>>::iterator it = findSshName(pref);
+        typename std::vector<CryptoStrings<T> >::iterator it = findSshName(pref);
         if (it != _algos.end())
         {
             std::iter_swap(_algos.begin(), it);
@@ -152,10 +160,11 @@ public:
             std::copy(algo._sshName.begin(), algo._sshName.end(), std::back_inserter(*outstr));
         }
     }
+
 protected:
     typename std::vector<CryptoStrings<T> >::iterator findSshName(const std::string& sshName)
     {
-        for (std::vector<CryptoStrings<T>>::iterator it = _algos.begin(); it != _algos.end(); it++)
+        for (typename std::vector<CryptoStrings<T> >::iterator it = _algos.begin(); it != _algos.end(); it++)
         {
             if ((*it)._sshName == sshName)
             {
@@ -164,11 +173,13 @@ protected:
         }
         return _algos.end();
     }
+
     std::vector<CryptoStrings<T> > _algos;
 private:
 };
 
-enum class macMethods {
+enum class macMethods
+{
     HMAC_SHA1,
     HMAC_MD5,
     HMAC_NONE,
@@ -177,8 +188,8 @@ enum class macMethods {
 
 typedef CppsshAlgos<macMethods> CppsshMacAlgos;
 
-enum class cryptoMethods {
-
+enum class cryptoMethods
+{
     AES256_CTR,
     AES192_CTR,
     AES128_CTR,
@@ -195,7 +206,8 @@ enum class cryptoMethods {
 
 typedef CppsshAlgos<cryptoMethods> CppsshCryptoAlgos;
 
-enum class kexMethods {
+enum class kexMethods
+{
     DIFFIE_HELLMAN_GROUP1_SHA1,
     DIFFIE_HELLMAN_GROUP14_SHA1,
     MAX_VALS,
@@ -203,7 +215,8 @@ enum class kexMethods {
 
 typedef CppsshAlgos<kexMethods> CppsshKexAlgos;
 
-enum class hostkeyMethods {
+enum class hostkeyMethods
+{
     SSH_DSS,
     SSH_RSA,
     MAX_VALS
@@ -211,7 +224,8 @@ enum class hostkeyMethods {
 
 typedef CppsshAlgos<hostkeyMethods> CppsshHostkeyAlgos;
 
-enum class compressionMethods {
+enum class compressionMethods
+{
     NONE,
     MAX_VALS
 };
