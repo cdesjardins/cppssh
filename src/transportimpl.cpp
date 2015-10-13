@@ -275,8 +275,10 @@ bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& b
 {
     int len;
     size_t sent = 0;
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
 
-    while ((sent < buffer.size()) && (_running == true))
+    while ((sent < buffer.size()) && (_running == true) &&
+        (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
     {
         if (wait(true) == true)
         {
@@ -294,6 +296,12 @@ bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& b
         }
         sent += len;
     }
+    if ((sent < buffer.size()) && (_running == true) &&
+        (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
+    {
+        cdLog(LogLevel::Error) << "sendMessage timeout ***";
+    }
+
     return sent == buffer.size();
 }
 
