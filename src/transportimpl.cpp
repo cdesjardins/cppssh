@@ -278,7 +278,7 @@ bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& b
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
 
     while ((sent < buffer.size()) && (_running == true) &&
-        (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
+           (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
     {
         if (wait(true) == true)
         {
