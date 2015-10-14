@@ -64,12 +64,11 @@ void CppsshTransportCrypto::rxThread()
     try
     {
         Botan::secure_vector<Botan::byte> decrypted;
-        CppsshPacket packet(&_in);
-        uint32_t decryptBlockSize = _session->_crypto->getDecryptBlock();
+        const uint32_t decryptBlockSize = _session->_crypto->getDecryptBlock();
+        const uint32_t macSize = _session->_crypto->getMacInLen();
         while (_running == true)
         {
             uint32_t cryptoLen = 0;
-            decrypted.clear();
 
             if (receiveMessage(&_in, decryptBlockSize) == false)
             {
@@ -80,7 +79,7 @@ void CppsshTransportCrypto::rxThread()
                 _session->_crypto->decryptPacket(&decrypted, _in.data(), decryptBlockSize);
                 CppsshConstPacket cpacket(&decrypted);
                 cryptoLen = cpacket.getCryptoLength();
-                if (receiveMessage(&_in, cryptoLen + _session->_crypto->getMacInLen() - decryptBlockSize) == false)
+                if (receiveMessage(&_in, cryptoLen + macSize) == false)
                 {
                     break;
                 }
@@ -95,6 +94,7 @@ void CppsshTransportCrypto::rxThread()
                 }
             }
             processDecryptedData(decrypted, cryptoLen);
+            decrypted.clear();
         }
     }
     catch (const std::exception& ex)
@@ -102,27 +102,34 @@ void CppsshTransportCrypto::rxThread()
         cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
         CppsshDebug::dumpStack(_session->getConnectionId());
     }
+    _running = false;
     cdLog(LogLevel::Debug) << "crypto rx thread done";
 }
 
 bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& decrypted, uint32_t* cryptoLen)
 {
     bool ret = true;
-    if (_session->_crypto->getMacInLen() && (_in.size() > 0) &&
-        (_in.size() >= _session->_crypto->getMacInLen()))
+    const uint32_t macSize = _session->_crypto->getMacInLen();
+    if (macSize > 0)
     {
-        Botan::secure_vector<Botan::byte> ourMac;
-        _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
-
-        if (std::equal(_in.begin() + (*cryptoLen), _in.begin() + (*cryptoLen) + _session->_crypto->getMacInLen(),
-                       ourMac.begin()) == false)
+        if (_in.size() >= ((*cryptoLen) + macSize))
         {
-            cdLog(LogLevel::Error) << "Mismatched HMACs.";
-            ret = false;
+            Botan::secure_vector<Botan::byte> ourMac;
+            _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
+
+            if (std::equal(_in.begin() + (*cryptoLen), _in.begin() + (*cryptoLen) + macSize, ourMac.begin()) == false)
+            {
+                cdLog(LogLevel::Error) << "Mismatched HMACs.";
+                ret = false;
+            }
+            else
+            {
+                *cryptoLen += macSize;
+            }
         }
         else
         {
-            *cryptoLen += _session->_crypto->getMacInLen();
+            cdLog(LogLevel::Error) << "Unable to compute HMAC due to lack of data.";
         }
     }
     return ret;
