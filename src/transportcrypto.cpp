@@ -130,6 +130,7 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
         else
         {
             cdLog(LogLevel::Error) << "Unable to compute HMAC due to lack of data.";
+            ret = false;
         }
     }
     return ret;
