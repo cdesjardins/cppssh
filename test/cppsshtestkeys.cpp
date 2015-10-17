@@ -105,8 +105,8 @@ int main(int argc, char** argv)
         {
             cdLog(LogLevel::Error) << "Exception: " << ex.what() << std::endl;
         }
+        Cppssh::destroy();
     }
-    Cppssh::destroy();
     return 0;
 }
 
