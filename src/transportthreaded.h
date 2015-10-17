@@ -32,6 +32,7 @@ public:
 
 protected:
     bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
+    void stopThreads();
 
     virtual void rxThread();
     virtual void txThread();

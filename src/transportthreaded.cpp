@@ -30,6 +30,11 @@ CppsshTransportThreaded::CppsshTransportThreaded(const std::shared_ptr<CppsshSes
 CppsshTransportThreaded::~CppsshTransportThreaded()
 {
     cdLog(LogLevel::Debug) << "~CppsshTransportThreaded";
+    stopThreads();
+}
+
+void CppsshTransportThreaded::stopThreads()
+{
     _running = false;
     if (_rxThread.joinable() == true)
     {

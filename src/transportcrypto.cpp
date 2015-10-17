@@ -32,6 +32,7 @@ CppsshTransportCrypto::CppsshTransportCrypto(const std::shared_ptr<CppsshSession
 CppsshTransportCrypto::~CppsshTransportCrypto()
 {
     cdLog(LogLevel::Debug) << "~CppsshTransportCrypto";
+    stopThreads();
 }
 
 bool CppsshTransportCrypto::sendMessage(const Botan::secure_vector<Botan::byte>& buffer)
