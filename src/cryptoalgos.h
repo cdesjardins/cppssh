@@ -180,6 +180,8 @@ private:
 
 enum class macMethods
 {
+    HMAC_SHA512,
+    HMAC_SHA256,
     HMAC_SHA1,
     HMAC_MD5,
     HMAC_NONE,
