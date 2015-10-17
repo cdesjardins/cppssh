@@ -57,13 +57,13 @@ bool CppsshTransportThreaded::setupMessage(const Botan::secure_vector<Botan::byt
     Botan::byte padLen;
     uint32_t packetLen;
 
-    uint32_t cryptBlock = _session->_crypto->getEncryptBlock();
-    if (cryptBlock == 0)
+    uint32_t encryptBlockSize = _session->_crypto->getEncryptBlockSize();
+    if (encryptBlockSize == 0)
     {
-        cryptBlock = 8;
+        encryptBlockSize = 8;
     }
 
-    padLen = (Botan::byte)(3 + cryptBlock - ((length + 8) % cryptBlock));
+    padLen = (Botan::byte)(3 + encryptBlockSize - ((length + 8) % encryptBlockSize));
     packetLen = 1 + length + padLen;
 
     out.addInt(packetLen);

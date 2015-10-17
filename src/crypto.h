@@ -36,14 +36,14 @@ class CppsshCrypto
 public:
     CppsshCrypto(const std::shared_ptr<CppsshSession>& session);
 
-    uint32_t getEncryptBlock() const
+    uint32_t getEncryptBlockSize() const
     {
-        return _encryptBlock;
+        return _encryptBlockSize;
     }
 
-    uint32_t getDecryptBlock() const
+    uint32_t getDecryptBlockSize() const
     {
-        return _decryptBlock;
+        return _decryptBlockSize;
     }
 
     bool encryptPacket(Botan::secure_vector<Botan::byte>* encrypted, Botan::secure_vector<Botan::byte>* hmac,
@@ -107,8 +107,8 @@ private:
     Botan::secure_vector<Botan::byte> _c2sNonce;
     Botan::secure_vector<Botan::byte> _s2cNonce;
 
-    uint32_t _encryptBlock;
-    uint32_t _decryptBlock;
+    uint32_t _encryptBlockSize;
+    uint32_t _decryptBlockSize;
     uint32_t _c2sMacDigestLen;
     uint32_t _s2cMacDigestLen;
 

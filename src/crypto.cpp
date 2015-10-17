@@ -33,8 +33,8 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _encryptFilter(nullptr),
     _decryptFilter(nullptr),
-    _encryptBlock(0),
-    _decryptBlock(0),
+    _encryptBlockSize(0),
+    _decryptBlockSize(0),
     _c2sMacDigestLen(0),
     _s2cMacDigestLen(0),
     _c2sMacMethod(macMethods::HMAC_MD5),
@@ -69,9 +69,10 @@ bool CppsshCrypto::encryptPacket(Botan::secure_vector<Botan::byte>* encrypted, B
 
     try
     {
-        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += getEncryptBlock())
+        uint32_t encryptBlockSize = getEncryptBlockSize();
+        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += encryptBlockSize)
         {
-            _encrypt->process_msg(decrypted + pktIndex, getEncryptBlock());
+            _encrypt->process_msg(decrypted + pktIndex, encryptBlockSize);
             *encrypted += _encrypt->read_all(_encrypt->message_count() - 1);
             setNonce(_encryptFilter, _c2sNonce);
         }
@@ -97,17 +98,17 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
                                  const Botan::byte* encrypted, uint32_t len)
 {
     bool ret = false;
-
-    if (len % getDecryptBlock())
+    uint32_t decryptBlockSize = getDecryptBlockSize();
+    if (len % decryptBlockSize)
     {
-        len = len + (len % getDecryptBlock());
+        len = len + (len % decryptBlockSize);
     }
 
     try
     {
-        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += getDecryptBlock())
+        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += decryptBlockSize)
         {
-            Botan::secure_vector<Botan::byte> e(encrypted + pktIndex, encrypted + pktIndex + getDecryptBlock());
+            Botan::secure_vector<Botan::byte> e(encrypted + pktIndex, encrypted + pktIndex + decryptBlockSize);
             _decrypt->process_msg(e);
             *decrypted += _decrypt->read_all(_decrypt->message_count() - 1);
             setNonce(_decryptFilter, _s2cNonce);
@@ -715,10 +716,10 @@ bool CppsshCrypto::makeNewKeys()
     try
     {
         if (buildCipherPipe(Botan::ENCRYPTION, 'A', 'C', 'E', _c2sCryptoMethod, _c2sMacMethod, &_c2sMacDigestLen,
-                            &_encryptBlock, &_encryptFilter, _encrypt, _hmacOut, _c2sNonce) == true)
+                            &_encryptBlockSize, &_encryptFilter, _encrypt, _hmacOut, _c2sNonce) == true)
         {
             ret = buildCipherPipe(Botan::DECRYPTION, 'B', 'D', 'F', _s2cCryptoMethod, _s2cMacMethod, &_s2cMacDigestLen,
-                                  &_decryptBlock, &_decryptFilter, _decrypt, _hmacIn, _s2cNonce);
+                                  &_decryptBlockSize, &_decryptFilter, _decrypt, _hmacIn, _s2cNonce);
         }
     }
     catch (const std::exception& ex)

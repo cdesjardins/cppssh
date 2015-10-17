@@ -64,7 +64,7 @@ void CppsshTransportCrypto::rxThread()
     try
     {
         Botan::secure_vector<Botan::byte> decrypted;
-        const uint32_t decryptBlockSize = _session->_crypto->getDecryptBlock();
+        const uint32_t decryptBlockSize = _session->_crypto->getDecryptBlockSize();
         const uint32_t macSize = _session->_crypto->getMacInLen();
         while (_running == true)
         {
