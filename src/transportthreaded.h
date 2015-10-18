@@ -27,7 +27,7 @@ class CppsshTransportThreaded : public CppsshTransport
 public:
     CppsshTransportThreaded(const std::shared_ptr<CppsshSession>& session);
     virtual ~CppsshTransportThreaded();
-    bool start();
+    bool startThreads() override;
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
 protected:

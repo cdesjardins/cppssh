@@ -63,7 +63,7 @@ CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short po
     {
         return CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
     }
-    if (_session->_transport->start() == false)
+    if (_session->_transport->startThreads() == false)
     {
         return CPPSSH_CONNECT_ERROR;
     }
@@ -83,7 +83,7 @@ CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short po
     }
 
     _session->_transport.reset(new CppsshTransportCrypto(_session, _session->_transport->getSocket()));
-    if (_session->_transport->start() == false)
+    if (_session->_transport->startThreads() == false)
     {
         return CPPSSH_CONNECT_ERROR;
     }

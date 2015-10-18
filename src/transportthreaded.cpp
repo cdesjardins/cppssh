@@ -46,7 +46,7 @@ void CppsshTransportThreaded::stopThreads()
     }
 }
 
-bool CppsshTransportThreaded::start()
+bool CppsshTransportThreaded::startThreads()
 {
     _rxThread = std::thread(&CppsshTransportThreaded::rxThread, this);
     _txThread = std::thread(&CppsshTransportThreaded::txThread, this);

@@ -54,7 +54,7 @@ public:
         return _running;
     }
 
-    virtual bool start()
+    virtual bool startThreads()
     {
         return false;
     }
