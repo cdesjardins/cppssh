@@ -20,7 +20,7 @@ class TestAlgos(unittest.TestCase):
     macs = [
         "hmac-md5",
         "hmac-sha1",
-        "hmac-sha2-512",
+        #"hmac-sha2-512",
         "hmac-sha2-256",
         "none"
     ]
