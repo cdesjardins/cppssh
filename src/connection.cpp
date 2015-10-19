@@ -139,16 +139,17 @@ bool CppsshConnection::isConnected()
 bool CppsshConnection::checkRemoteVersion()
 {
     bool ret = false;
-    Botan::secure_vector<Botan::byte> remoteVer, tmpVar;
+    Botan::secure_vector<Botan::byte> remoteVer;
     if (_session->_transport->receiveMessage(&remoteVer) == true)
     {
         std::string sshVer("SSH-2.0");
+        std::string rv(remoteVer.begin(), remoteVer.end());
+        StrTrim::trim(rv);
+        cdLog(LogLevel::Info) << "Remote version: " << rv;
         if ((remoteVer.size() >= sshVer.length()) &&
-            equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
+            std::equal(remoteVer.begin(), remoteVer.begin() + sshVer.length(), sshVer.begin()))
         {
             ret = true;
-            std::string rv(remoteVer.begin(), remoteVer.end());
-            StrTrim::trim(rv);
             _session->setRemoteVersion(rv);
         }
     }
