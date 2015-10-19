@@ -202,14 +202,13 @@ bool CppsshTransportImpl::wait(bool isWrite)
            (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))
     {
         fd_set fds;
+        setupFd(&fds);
         if (isWrite == false)
         {
-            setupFd(&fds);
             status = select(_sock + 1, &fds, nullptr, nullptr, &waitTime);
         }
         else
         {
-            setupFd(&fds);
             status = select(_sock + 1, nullptr, &fds, nullptr, &waitTime);
         }
         if ((status > 0) && (FD_ISSET(_sock, &fds)))
