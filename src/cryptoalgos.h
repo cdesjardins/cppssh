@@ -184,6 +184,7 @@ enum class macMethods
     HMAC_SHA256,
     HMAC_SHA1,
     HMAC_MD5,
+    HMAC_RIPEMD160,
     HMAC_NONE,
     MAX_VALS
 };
