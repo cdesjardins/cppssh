@@ -33,7 +33,23 @@ class TestAlgos(unittest.TestCase):
         "",
         "testpw"
     ]
-
+    testlogIgnores = [
+        "Kex algos",
+        "Cipher algos",
+        "MAC algos",
+        "Compression algos",
+        "Hostkey algos",
+        " agreed on: ",
+        "Authenticated with",
+        "Remote version: "
+    ]
+    testoutputIgnores = [
+        "Last login:",
+        "SSH_CLIENT=",
+        "SSH_CONNECTION=",
+        "SSH_TTY=",
+        "DISPLAY="
+    ]
     testCases = []
     verificationErrors = []
     diffs = {}
@@ -152,8 +168,8 @@ class TestAlgos(unittest.TestCase):
             if (len(keyfile) > 0):
                 directory = os.path.join(directory, os.path.basename(keyfile))
             actualResultsDir = os.path.join(self.actualResultsBaseDir, directory)
-            passCnt = self.cmpOutputFiles("testlog.txt", actualResultsDir, self.expectedResultsBaseDir, True, ["Kex algos", "Cipher algos", "MAC algos", "Compression algos", "Hostkey algos", " agreed on: ", "Authenticated with"], bool(i))
-            passCnt += self.cmpOutputFiles("testoutput.txt", actualResultsDir, self.expectedResultsBaseDir, False, ["Last login:", "SSH_CLIENT=", "SSH_CONNECTION=", "SSH_TTY=", "DISPLAY="], bool(i))
+            passCnt = self.cmpOutputFiles("testlog.txt", actualResultsDir, self.expectedResultsBaseDir, True, self.testlogIgnores, bool(i))
+            passCnt += self.cmpOutputFiles("testoutput.txt", actualResultsDir, self.expectedResultsBaseDir, False, self.testoutputIgnores, bool(i))
             passCnt += self.verifyAlgos(cipher, mac, os.path.join(actualResultsDir, "testlog.txt"), bool(i))
             if (passCnt == 3):
                 break
