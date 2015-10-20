@@ -24,9 +24,9 @@
 
 CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
 {
-    CryptoStrings<macMethods>(macMethods::HMAC_SHA1,   "hmac-sha1", "SHA-1"),
-    CryptoStrings<macMethods>(macMethods::HMAC_MD5,    "hmac-md5", "MD5"),
-    CryptoStrings<macMethods>(macMethods::HMAC_NONE,   "none", ""),
+    CryptoStrings<macMethods>(macMethods::HMAC_SHA1, "hmac-sha1", "SHA-1"),
+    CryptoStrings<macMethods>(macMethods::HMAC_MD5, "hmac-md5", "MD5"),
+    CryptoStrings<macMethods>(macMethods::HMAC_NONE, "none", ""),
     CryptoStrings<macMethods>(macMethods::HMAC_SHA256, "hmac-sha2-256", "SHA-256"),
     CryptoStrings<macMethods>(macMethods::HMAC_SHA256, "hmac-ripemd160", "RIPEMD-160"),
     // Removed hmac-sha2-512 support due to bugs in some older version of openssh
