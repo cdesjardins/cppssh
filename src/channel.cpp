@@ -488,15 +488,18 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
                 handleChannelRequest(buf);
                 break;
 
-            case SSH2_MSG_IGNORE:
-                break;
-
             case SSH2_MSG_DEBUG:
                 handleDebug(packet);
                 break;
 
             case SSH2_MSG_DISCONNECT:
                 handleDisconnect(packet);
+                break;
+
+            case SSH2_MSG_IGNORE:
+            case SSH2_MSG_GLOBAL_REQUEST:
+            case SSH2_MSG_REQUEST_SUCCESS:
+            case SSH2_MSG_REQUEST_FAILURE:
                 break;
 
             default:

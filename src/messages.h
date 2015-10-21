@@ -38,6 +38,10 @@
 #define SSH2_MSG_USERAUTH_BANNER                        53
 #define SSH2_MSG_USERAUTH_PK_OK                         60
 
+#define SSH2_MSG_GLOBAL_REQUEST                         80
+#define SSH2_MSG_REQUEST_SUCCESS                        81
+#define SSH2_MSG_REQUEST_FAILURE                        82
+
 #define SSH2_MSG_CHANNEL_OPEN                           90
 #define SSH2_MSG_CHANNEL_OPEN_CONFIRMATION              91
 #define SSH2_MSG_CHANNEL_OPEN_FAILURE                   92
