@@ -95,7 +95,7 @@ void CppsshX11Channel::x11TxThread()
     while (_x11transport->isRunning() == true)
     {
         Botan::secure_vector<Botan::byte> buf;
-        if (_x11transport->receiveMessage(&buf) == true)
+        if ((_x11transport->receiveMessage(&buf) == true) && (buf.size() > 0))
         {
             writeChannel(buf.data(), buf.size());
         }
