@@ -281,7 +281,7 @@ bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& b
     {
         if (wait(true) == true)
         {
-            len = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, 0);
+            len = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, MSG_NOSIGNAL);
         }
         else
         {
