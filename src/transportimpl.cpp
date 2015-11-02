@@ -27,6 +27,7 @@
 #ifdef WIN32
 #define close closesocket
 #define socklen_t int
+#define MSG_NOSIGNAL 0
 #else
 #include <netdb.h>
 #include <unistd.h>
