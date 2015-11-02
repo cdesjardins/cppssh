@@ -146,7 +146,7 @@ void CppsshChannel::handleDisconnect(const CppsshConstPacket& packet)
     packet.skipHeader();
     packet.getInt();
     packet.getString(&err);
-    cdLog(LogLevel::Error) << err;
+    cdLog(LogLevel::Error) << "Remote error: " << err;
     disconnect();
 }
 
