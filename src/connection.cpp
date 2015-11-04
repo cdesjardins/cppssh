@@ -49,7 +49,8 @@ CppsshConnection::~CppsshConnection()
 }
 
 CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short port, const char* username,
-                                                const char* privKeyFile, const char* password, const char* term)
+                                                const char* privKeyFile, const char* password, const bool x11Forwarded,
+                                                const char* term)
 {
     if (_session->_channel->establish(host, port) == false)
     {
@@ -106,7 +107,10 @@ CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short po
     }
     if (term != nullptr)
     {
-        _session->_channel->getX11();
+        if (x11Forwarded == true)
+        {
+            _session->_channel->getX11();
+        }
         if (_session->_channel->getShell(term) == false)
         {
             return CPPSSH_CONNECT_ERROR;

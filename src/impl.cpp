@@ -75,7 +75,7 @@ CppsshImpl::~CppsshImpl()
 
 CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username,
                                           const char* privKeyFile, const char* password, unsigned int timeout,
-                                          const char* term)
+                                          const bool x11Forwarded, const char* term)
 {
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
     std::shared_ptr<CppsshConnection> con;
@@ -87,7 +87,7 @@ CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, c
     }
     if (con != nullptr)
     {
-        ret = con->connect(host, port, username, privKeyFile, password, term);
+        ret = con->connect(host, port, username, privKeyFile, password, x11Forwarded, term);
     }
     return ret;
 }

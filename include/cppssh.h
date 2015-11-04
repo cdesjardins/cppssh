@@ -60,6 +60,7 @@ public:
     CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port,
                                                        const char* username, const char* privKeyFile,
                                                        const char* password, unsigned int timeout = 1000,
+                                                       const bool x11Forwarded = true,
                                                        const char* term = "xterm-color");
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
