@@ -150,7 +150,19 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
                 }
                 ret = true;
             }
+            else
+            {
+                cdLog(LogLevel::Error) << "Invalid magic string from xauth: " << magic;
+            }
         }
+        else
+        {
+            cdLog(LogLevel::Error) << "Unable to read magic file: " << tmpname;
+        }
+    }
+    else
+    {
+        cdLog(LogLevel::Error) << "Unable to run command: " << xauth.str();
     }
     remove(tmpname.c_str());
 #else
