@@ -79,7 +79,16 @@ int main(int argc, char** argv)
         Logger::getLogger().addStream(std::shared_ptr<std::ostream>(&std::cout, [](void*) {
         }));
         Logger::getLogger().setMinLogLevel(LogLevel::Debug);
-        Cppssh::setOptions("aes256-cbc", "hmac-md5");
+        size_t cipherLen = Cppssh::getSupportedCiphers(nullptr);
+        size_t hmacLen = Cppssh::getSupportedHmacs(nullptr);
+        std::shared_ptr<char> ciphers(new char[cipherLen + 1]);
+        std::shared_ptr<char> hmacs(new char[hmacLen + 1]);
+        Cppssh::getSupportedCiphers(ciphers.get());
+        Cppssh::getSupportedHmacs(hmacs.get());
+        cdLog(LogLevel::Info) << "Supported ciphers: " << ciphers;
+        cdLog(LogLevel::Info) << "Supported hmacs: " << hmacs;
+        Cppssh::setPreferredCipher("aes256-cbc");
+        Cppssh::setPreferredHmac("hmac-md5");
 
         //Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
         //Cppssh::generateDsaKeyPair("test", "privDsa", "pubDsa", 1024);

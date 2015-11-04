@@ -149,7 +149,7 @@ public:
         return ret;
     }
 
-    void toString(std::string* outstr)
+    void toString(std::string* outstr) const
     {
         for (const CryptoStrings<T>& algo : _algos)
         {

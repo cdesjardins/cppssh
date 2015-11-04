@@ -28,7 +28,11 @@
 class CppsshImpl
 {
 public:
-    static bool setOptions(const char* prefCipher, const char* prefHmac);
+    static bool setPreferredCipher(const char* prefCipher);
+    static bool setPreferredHmac(const char* prefHmac);
+    static size_t getSupportedCiphers(char* ciphers);
+    static size_t getSupportedHmacs(char* hmacs);
+
     static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
                                    short keySize);
     static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
@@ -53,9 +57,11 @@ public:
     static std::shared_ptr<Botan::RandomNumberGenerator> RNG;
     bool checkConnectionId(const int connectionId);
 private:
+    template<typename T> static size_t getSupportedAlogs(const T& algos, char* list);
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::mutex _connectionsMutex;
+    static std::mutex optionsMutex;
 };
 
 #endif

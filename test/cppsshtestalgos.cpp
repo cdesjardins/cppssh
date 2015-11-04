@@ -49,7 +49,8 @@ int main(int argc, char** argv)
         try
         {
             Logger::getLogger().setMinLogLevel(LogLevel::Debug);
-            Cppssh::setOptions(argv[4], argv[5]);
+            Cppssh::setPreferredCipher(argv[4]);
+            Cppssh::setPreferredHmac(argv[5]);
 
             char* keyfile = nullptr;
             if (argc == 7)

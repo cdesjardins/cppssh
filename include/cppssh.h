@@ -68,7 +68,17 @@ public:
     CPPSSH_EXPORT static bool read(const int connectionId, CppsshMessage* data);
     CPPSSH_EXPORT static bool windowChange(const int connectionId, const uint32_t cols, const uint32_t rows);
     CPPSSH_EXPORT static bool close(const int connectionId);
-    CPPSSH_EXPORT static bool setOptions(const char* prefCipher, const char* prefHmac);
+
+    // Set the preferred cipher/hmac, call multiple times to set the order
+    // use getSupportedCipher/Hmac to get the list of possibilities
+    CPPSSH_EXPORT static bool setPreferredCipher(const char* prefCipher);
+    CPPSSH_EXPORT static bool setPreferredHmac(const char* prefHmac);
+    // Call with ciphers or hmacs==NULL to get the length of the returned string
+    // Then call again with a properly sized string as an argument, and it
+    // will be filled with a coma separated list of ciphers.
+    CPPSSH_EXPORT static size_t getSupportedCiphers(char* ciphers);
+    CPPSSH_EXPORT static size_t getSupportedHmacs(char* hmacs);
+
     CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName,
                                                  const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName,

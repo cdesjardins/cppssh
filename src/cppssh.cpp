@@ -118,9 +118,24 @@ bool Cppssh::close(const int connectionId)
     return checkConnectionId(connectionId) && s_cppsshInst->close(connectionId);
 }
 
-bool Cppssh::setOptions(const char* prefCipher, const char* prefHmac)
+bool Cppssh::setPreferredCipher(const char* prefCipher)
 {
-    return CppsshImpl::setOptions(prefCipher, prefHmac);
+    return CppsshImpl::setPreferredCipher(prefCipher);
+}
+
+bool Cppssh::setPreferredHmac(const char* prefHmac)
+{
+    return CppsshImpl::setPreferredHmac(prefHmac);
+}
+
+size_t Cppssh::getSupportedCiphers(char* ciphers)
+{
+    return CppsshImpl::getSupportedCiphers(ciphers);
+}
+
+size_t Cppssh::getSupportedHmacs(char* hmacs)
+{
+    return CppsshImpl::getSupportedHmacs(hmacs);
 }
 
 bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,

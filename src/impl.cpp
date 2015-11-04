@@ -22,6 +22,8 @@
 #include "botan/auto_rng.h"
 #include "botan/init.h"
 
+std::mutex CppsshImpl::optionsMutex;
+
 CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
 {
     CryptoStrings<macMethods>(macMethods::HMAC_SHA1, "hmac-sha1", "SHA-1"),
@@ -144,15 +146,39 @@ bool CppsshImpl::close(int connectionId)
     return true;
 }
 
-bool CppsshImpl::setOptions(const char* prefCipher, const char* prefHmac)
+bool CppsshImpl::setPreferredCipher(const char* prefCipher)
 {
-    bool ret;
-    static std::mutex optionsMutex;
     std::unique_lock<std::mutex> lock(optionsMutex);
-    ret =
-        ((CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher) == true) &&
-         (CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac) == true));
+    return CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher);
+}
+
+bool CppsshImpl::setPreferredHmac(const char* prefHmac)
+{
+    std::unique_lock<std::mutex> lock(optionsMutex);
+    return CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac);
+}
+
+template<typename T> size_t CppsshImpl::getSupportedAlogs(const T& algos, char* list)
+{
+    size_t ret;
+    std::string str;
+    algos.toString(&str);
+    ret = str.length();
+    if (list != nullptr)
+    {
+        std::copy(str.begin(), str.end(), list);
+    }
     return ret;
+}
+
+size_t CppsshImpl::getSupportedCiphers(char* ciphers)
+{
+    return CppsshImpl::getSupportedAlogs(CppsshImpl::CIPHER_ALGORITHMS, ciphers);
+}
+
+size_t CppsshImpl::getSupportedHmacs(char* hmacs)
+{
+    return CppsshImpl::getSupportedAlogs(CppsshImpl::MAC_ALGORITHMS, hmacs);
 }
 
 bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
