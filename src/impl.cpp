@@ -166,7 +166,12 @@ template<typename T> size_t CppsshImpl::getSupportedAlogs(const T& algos, char* 
     ret = str.length();
     if (list != nullptr)
     {
-        std::copy(str.begin(), str.end(), list);
+        for (auto it = str.cbegin(); it != str.cend(); it++)
+        {
+            *list = *it;
+            list++;
+            *list = NULL;
+        }
     }
     return ret;
 }
