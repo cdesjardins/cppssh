@@ -72,7 +72,8 @@ CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
     if (s_cppsshInst != nullptr)
     {
-        ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, x11Forwarded, term);
+        ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, x11Forwarded,
+                                    term);
     }
     return ret;
 }
