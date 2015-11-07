@@ -58,10 +58,12 @@ public:
     {
         return false;
     }
+
     void enableKeepAlives()
     {
         _sendKeepAlives = true;
     }
+
     bool sendKeepAlive()
     {
         bool ret = true;
