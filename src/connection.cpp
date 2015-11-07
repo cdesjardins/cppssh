@@ -115,6 +115,10 @@ CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short po
         {
             return CPPSSH_CONNECT_ERROR;
         }
+        if (keepAlives == true)
+        {
+            _session->_transport->enableKeepAlives();
+        }
     }
     _connected = true;
     return CPPSSH_CONNECT_OK;

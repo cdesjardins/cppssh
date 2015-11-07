@@ -283,6 +283,7 @@ bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& b
         if (wait(true) == true)
         {
             len = ::send(_sock, (char*)(buffer.data() + sent), buffer.size() - sent, MSG_NOSIGNAL);
+            _lastMsgTime = std::chrono::steady_clock::now();
         }
         else
         {
@@ -308,7 +309,8 @@ bool CppsshTransportImpl::sendMessage(const Botan::secure_vector<Botan::byte>& b
 CppsshTransportImpl::CppsshTransportImpl(const std::shared_ptr<CppsshSession>& session)
     : _session(session),
     _sock((SOCKET)-1),
-    _running(true)
+    _running(true),
+    _sendKeepAlives(false)
 {
 }
 
@@ -317,3 +319,18 @@ CppsshTransportImpl::~CppsshTransportImpl()
     _running = false;
 }
 
+bool CppsshTransportImpl::doSendKeepAlive()
+{
+    bool ret = true;
+    if (std::chrono::steady_clock::now() > (_lastMsgTime + std::chrono::minutes(5)))
+    {
+        Botan::secure_vector<Botan::byte> buf;
+        CppsshPacket packet(&buf);
+
+        packet.addByte(SSH2_MSG_GLOBAL_REQUEST);
+        packet.addString("keepalive@combomb.com");
+        packet.addByte(true); // want reply == true
+        ret = sendMessage(buf);
+    }
+    return ret;
+}

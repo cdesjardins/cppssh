@@ -58,6 +58,19 @@ public:
     {
         return false;
     }
+    void enableKeepAlives()
+    {
+        _sendKeepAlives = true;
+    }
+    bool sendKeepAlive()
+    {
+        bool ret = true;
+        if (_sendKeepAlives == true)
+        {
+            ret = doSendKeepAlive();
+        }
+        return ret;
+    }
 
 protected:
     virtual bool establishLocalX11(const std::string& display) = 0;
@@ -65,11 +78,14 @@ protected:
     void setupFd(fd_set* fd);
     bool makeConnection(void* remoteAddr);
     virtual bool isConnectInProgress() = 0;
+    bool doSendKeepAlive();
 
     std::shared_ptr<CppsshSession> _session;
     bool wait(bool isWrite);
     SOCKET _sock;
     volatile bool _running;
+    bool _sendKeepAlives;
+    std::chrono::steady_clock::time_point _lastMsgTime;
 };
 
 #endif
