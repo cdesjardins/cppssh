@@ -50,7 +50,7 @@ CppsshConnection::~CppsshConnection()
 
 CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short port, const char* username,
                                                 const char* privKeyFile, const char* password, const bool x11Forwarded,
-                                                const char* term)
+                                                const bool keepAlives, const char* term)
 {
     if (_session->_channel->establish(host, port) == false)
     {

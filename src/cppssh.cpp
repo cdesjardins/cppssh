@@ -67,13 +67,13 @@ int Cppssh::getApiLevel()
 
 CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const short port, const char* username,
                                       const char* privKeyFile, const char* password, unsigned int timeout,
-                                      const bool x11Forwarded, const char* term)
+                                      const bool x11Forwarded, const bool keepAlives, const char* term)
 {
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
     if (s_cppsshInst != nullptr)
     {
         ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, x11Forwarded,
-                                    term);
+                                    keepAlives, term);
     }
     return ret;
 }
