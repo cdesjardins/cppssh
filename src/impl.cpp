@@ -170,7 +170,7 @@ template<typename T> size_t CppsshImpl::getSupportedAlogs(const T& algos, char* 
         {
             *list = *it;
             list++;
-            *list = NULL;
+            *list = 0;
         }
     }
     return ret;
