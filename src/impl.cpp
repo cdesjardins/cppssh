@@ -22,7 +22,7 @@
 #include "botan/auto_rng.h"
 #include "botan/init.h"
 
-std::mutex CppsshImpl::optionsMutex;
+std::mutex CppsshImpl::_optionsMutex;
 
 CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
 {
@@ -148,13 +148,13 @@ bool CppsshImpl::close(int connectionId)
 
 bool CppsshImpl::setPreferredCipher(const char* prefCipher)
 {
-    std::unique_lock<std::mutex> lock(optionsMutex);
+    std::unique_lock<std::mutex> lock(_optionsMutex);
     return CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher);
 }
 
 bool CppsshImpl::setPreferredHmac(const char* prefHmac)
 {
-    std::unique_lock<std::mutex> lock(optionsMutex);
+    std::unique_lock<std::mutex> lock(_optionsMutex);
     return CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac);
 }
 

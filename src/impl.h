@@ -61,7 +61,7 @@ private:
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
     std::vector<std::shared_ptr<CppsshConnection> > _connections;
     std::mutex _connectionsMutex;
-    static std::mutex optionsMutex;
+    static std::mutex _optionsMutex;
 };
 
 #endif
