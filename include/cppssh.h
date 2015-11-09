@@ -27,7 +27,6 @@
 
 class CppsshImpl;
 class CppsshMessage;
-class CppsshLogger;
 class CppsshConstPacket;
 class CppsshChannel;
 
@@ -105,7 +104,6 @@ public:
     CPPSSH_EXPORT virtual ~CppsshMessage();
     CPPSSH_EXPORT const uint8_t* message() const;
     CPPSSH_EXPORT size_t length() const;
-    friend class CppsshLogger;
     friend class CppsshConstPacket;
     friend class CppsshChannel;
 private:
