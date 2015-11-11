@@ -103,20 +103,20 @@ void CppsshTransportThreaded::rxThread()
             {
                 size = sizeof(uint32_t);
             }
-            else
+            if (receiveMessage(&incoming, size) == true)
             {
                 CppsshPacket packet(&incoming);
                 size = packet.getCryptoLength();
-            }
-            while ((incoming.size() < size) && (_running == true) && (receiveMessage(&incoming, size) == true))
-            {
                 if (incoming.size() >= size)
                 {
-                    CppsshPacket packet(&incoming);
+                    processIncomingData(&incoming, incoming, size);
                     size = packet.getCryptoLength();
                 }
             }
-            processIncomingData(&incoming, incoming, size);
+            else
+            {
+                break;
+            }
         }
     }
     catch (const std::exception& ex)
@@ -124,6 +124,7 @@ void CppsshTransportThreaded::rxThread()
         cdLog(LogLevel::Error) << "rxThread exception: " << ex.what();
         CppsshDebug::dumpStack(_session->getConnectionId());
     }
+    _running = false;
     cdLog(LogLevel::Debug) << "rx thread done";
 }
 
