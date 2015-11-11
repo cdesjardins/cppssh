@@ -94,7 +94,10 @@ void CppsshTransportCrypto::rxThread()
             {
                 break;
             }
-            processDecryptedData(decrypted, cryptoLen);
+            if (processIncomingData(&_in, decrypted, cryptoLen) == true)
+            {
+                _rxSeq++;
+            }
             decrypted.clear();
         }
     }
@@ -135,22 +138,5 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
         }
     }
     return ret;
-}
-
-void CppsshTransportCrypto::processDecryptedData(const Botan::secure_vector<Botan::byte>& decrypted, uint32_t cryptoLen)
-{
-    if (decrypted.empty() == false)
-    {
-        _rxSeq++;
-        _session->_channel->handleReceived(decrypted);
-        if (_in.size() <= cryptoLen)
-        {
-            _in.clear();
-        }
-        else
-        {
-            _in.erase(_in.begin(), _in.begin() + cryptoLen);
-        }
-    }
 }
 

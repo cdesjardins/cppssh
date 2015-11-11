@@ -103,6 +103,11 @@ void CppsshTransportThreaded::rxThread()
             {
                 size = sizeof(uint32_t);
             }
+            else
+            {
+                CppsshPacket packet(&incoming);
+                size = packet.getCryptoLength();
+            }
             while ((incoming.size() < size) && (_running == true) && (receiveMessage(&incoming, size) == true))
             {
                 if (incoming.size() >= size)
@@ -111,20 +116,7 @@ void CppsshTransportThreaded::rxThread()
                     size = packet.getCryptoLength();
                 }
             }
-            if ((_running == true) && (incoming.empty() == false))
-            {
-                _session->_channel->handleReceived(incoming);
-                if (incoming.size() == size)
-                {
-                    incoming.clear();
-                }
-                else
-                {
-                    incoming.erase(incoming.begin(), incoming.begin() + size);
-                    CppsshPacket packet(&incoming);
-                    size = packet.getCryptoLength();
-                }
-            }
+            processIncomingData(&incoming, incoming, size);
         }
     }
     catch (const std::exception& ex)
@@ -156,5 +148,24 @@ void CppsshTransportThreaded::txThread()
         CppsshDebug::dumpStack(_session->getConnectionId());
     }
     cdLog(LogLevel::Debug) << "tx thread done";
+}
+
+bool CppsshTransportThreaded::processIncomingData(Botan::secure_vector<Botan::byte>* inBuf, const Botan::secure_vector<Botan::byte>& incoming, uint32_t dataLen) const
+{
+    bool dataProcessed = false;
+    if ((_running == true) && (incoming.empty() == false))
+    {
+        dataProcessed = true;
+        _session->_channel->handleReceived(incoming);
+        if (inBuf->size() == dataLen)
+        {
+            inBuf->clear();
+        }
+        else
+        {
+            inBuf->erase(inBuf->begin(), inBuf->begin() + dataLen);
+        }
+    }
+    return dataProcessed;
 }
 
