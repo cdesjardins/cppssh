@@ -45,16 +45,19 @@ bool CppsshTransportCrypto::sendMessage(const Botan::secure_vector<Botan::byte>&
     if (_session->_crypto->encryptPacket(&crypted, &hmac, buf.data(), buf.size(), _txSeq) == false)
     {
         cdLog(LogLevel::Error) << "Failure to encrypt the payload.";
-        return false;
-    }
-    crypted += hmac;
-    if (CppsshTransport::sendMessage(crypted) == false)
-    {
         ret = false;
     }
-    if (ret == true)
+    else
     {
-        _txSeq++;
+        crypted += hmac;
+        if (CppsshTransport::sendMessage(crypted) == false)
+        {
+            ret = false;
+        }
+        if (ret == true)
+        {
+            _txSeq++;
+        }
     }
     return ret;
 }
