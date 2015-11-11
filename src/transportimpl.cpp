@@ -234,7 +234,7 @@ bool CppsshTransportImpl::receiveMessage(Botan::secure_vector<Botan::byte>* buff
             break;
         }
     }
-    return ret;
+    return ((ret == true) && (buffer->size() >= numBytes));
 }
 
 // Append new receive data to the end of the buffer
