@@ -31,7 +31,8 @@ public:
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
 protected:
-    bool processIncomingData(Botan::secure_vector<Botan::byte>* inBuf, const Botan::secure_vector<Botan::byte>& incoming, uint32_t dataLen) const;
+    bool processIncomingData(Botan::secure_vector<Botan::byte>* inBuf,
+                             const Botan::secure_vector<Botan::byte>& incoming, uint32_t dataLen) const;
     bool setupMessage(const Botan::secure_vector<Botan::byte>& buffer, Botan::secure_vector<Botan::byte>* outBuf);
     void stopThreads();
 

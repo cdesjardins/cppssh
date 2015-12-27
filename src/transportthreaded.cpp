@@ -151,7 +151,9 @@ void CppsshTransportThreaded::txThread()
     cdLog(LogLevel::Debug) << "tx thread done";
 }
 
-bool CppsshTransportThreaded::processIncomingData(Botan::secure_vector<Botan::byte>* inBuf, const Botan::secure_vector<Botan::byte>& incoming, uint32_t dataLen) const
+bool CppsshTransportThreaded::processIncomingData(Botan::secure_vector<Botan::byte>* inBuf,
+                                                  const Botan::secure_vector<Botan::byte>& incoming,
+                                                  uint32_t dataLen) const
 {
     bool dataProcessed = false;
     if ((_running == true) && (incoming.empty() == false))
