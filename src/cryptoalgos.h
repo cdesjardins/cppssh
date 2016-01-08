@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <iterator>
 #include "CDLogger/Logger.h"
 #include "strtrim.h"
 
