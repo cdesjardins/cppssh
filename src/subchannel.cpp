@@ -94,8 +94,8 @@ void CppsshSubChannel::handleChannelRequest(const Botan::secure_vector<Botan::by
     {
         Botan::secure_vector<Botan::byte> resp;
         CppsshPacket respPkt(&resp);
-		respPkt.addByte(response);
-		respPkt.addInt(_txChannel);
+        respPkt.addByte(response);
+        respPkt.addInt(_txChannel);
         _session->_transport->sendMessage(resp);
     }
 }
