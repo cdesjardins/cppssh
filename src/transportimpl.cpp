@@ -197,7 +197,7 @@ bool CppsshTransportImpl::wait(bool isWrite)
     int status = 0;
     struct timeval waitTime;
     waitTime.tv_sec = 0;
-    waitTime.tv_usec = 0;
+    waitTime.tv_usec = 1000;
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     while ((_running == true) && (ret == false) &&
            (std::chrono::steady_clock::now() < (t0 + std::chrono::milliseconds(_session->getTimeout()))))

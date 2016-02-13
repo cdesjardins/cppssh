@@ -135,7 +135,7 @@ bool CppsshSubChannel::flushOutgoingChannelData()
     while (_outgoingChannelData.size() > 0)
     {
         std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
-        if ((_outgoingChannelData.dequeue(message) == true) && (message->size() > 0))
+        if ((_outgoingChannelData.dequeue(message, 1) == true) && (message->size() > 0))
         {
             _windowSend -= message->size();
             Botan::secure_vector<Botan::byte> buf;
