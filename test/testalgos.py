@@ -48,7 +48,10 @@ class TestAlgos(unittest.TestCase):
         "SSH_CLIENT=",
         "SSH_CONNECTION=",
         "SSH_TTY=",
-        "DISPLAY="
+        "DISPLAY=",
+        "XDG_RUNTIME_DIR=",
+        "XDG_SESSION_ID="
+
     ]
     testCases = []
     verificationErrors = []
@@ -131,22 +134,26 @@ class TestAlgos(unittest.TestCase):
         difflist = []
         if (os.path.exists(actualResultsDir) == False):
             os.makedirs(actualResultsDir)
-        shutil.copy(filename, actualResultsDir)
-        os.remove(filename)
         actualResultsFileName = os.path.join(actualResultsDir, filename)
-        expectedResultsFileName = os.path.join(expectedResultsDir, filename)
-        actualResults = self.getFileContent(actualResultsFileName, cutTimeStamp, ignoreLines)
-        expectedResults = self.getFileContent(expectedResultsFileName, cutTimeStamp, ignoreLines)
-        difflist = list(difflib.context_diff(actualResults, expectedResults))
-        if (verbose == True):
-            self.myAssertTrue(len(actualResults) > 0, "No actual output in " + actualResultsFileName)
-            self.myAssertEqual(len(difflist), 0, "Differences in: " + actualResultsFileName + " " + expectedResultsFileName)
-        if (len(difflist) > 0):
-            verified = False
+        if (os.path.exists(filename) == True):
+            shutil.copy(filename, actualResultsDir)
+            os.remove(filename)
+            expectedResultsFileName = os.path.join(expectedResultsDir, filename)
+            actualResults = self.getFileContent(actualResultsFileName, cutTimeStamp, ignoreLines)
+            expectedResults = self.getFileContent(expectedResultsFileName, cutTimeStamp, ignoreLines)
+            difflist = list(difflib.context_diff(actualResults, expectedResults))
             if (verbose == True):
-                self.diffs[actualResultsFileName] = expectedResultsFileName
-                for d in difflist:
-                    print(d)
+                self.myAssertTrue(len(actualResults) > 0, "No actual output in " + actualResultsFileName)
+                self.myAssertEqual(len(difflist), 0, "Differences in: " + actualResultsFileName + " " + expectedResultsFileName)
+            if (len(difflist) > 0):
+                verified = False
+                if (verbose == True):
+                    self.diffs[actualResultsFileName] = expectedResultsFileName
+                    for d in difflist:
+                        print(d)
+        else:
+            print("Unable to find: " + actualResultsFileName)
+            verified = False
         return verified
 
     def verifyAlgos(self, cipher, mac, actualResultsFileName, verbose):

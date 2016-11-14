@@ -38,9 +38,9 @@ CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> 
 
 CppsshCryptoAlgos CppsshImpl::CIPHER_ALGORITHMS(std::vector<CryptoStrings<cryptoMethods> >
 {
-    CryptoStrings<cryptoMethods>(cryptoMethods::AES256_CTR, "aes256-ctr", "AES-256/CTR-BE"),
-    CryptoStrings<cryptoMethods>(cryptoMethods::AES192_CTR, "aes192-ctr", "AES-192/CTR-BE"),
-    CryptoStrings<cryptoMethods>(cryptoMethods::AES128_CTR, "aes128-ctr", "AES-128/CTR-BE"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES256_CTR, "aes256-ctr", "AES-256"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES192_CTR, "aes192-ctr", "AES-192"),
+    CryptoStrings<cryptoMethods>(cryptoMethods::AES128_CTR, "aes128-ctr", "AES-128"),
     CryptoStrings<cryptoMethods>(cryptoMethods::AES256_CBC, "aes256-cbc", "AES-256"),
     CryptoStrings<cryptoMethods>(cryptoMethods::AES192_CBC, "aes192-cbc", "AES-192"),
     CryptoStrings<cryptoMethods>(cryptoMethods::AES128_CBC, "aes128-cbc", "AES-128"),
@@ -67,7 +67,7 @@ std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
 CppsshImpl::CppsshImpl()
 {
-    RNG.reset(new Botan::Serialized_RNG());
+    RNG.reset(new Botan::Serialized_RNG(new Botan::AutoSeeded_RNG()));
 }
 
 CppsshImpl::~CppsshImpl()

@@ -22,9 +22,8 @@
 #include "impl.h"
 #include "strtrim.h"
 #include "botan/pubkey.h"
-#include "botan/pk_ops.h"
 #include "botan/cbc.h"
-#include "botan/transform_filter.h"
+#include "botan/cipher_filter.h"
 #include "botan/stream_mode.h"
 #include "botan/ctr.h"
 #include <string>
@@ -287,7 +286,7 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Bota
     bool ret = false;
     try
     {
-        Botan::PK_Key_Agreement pkka(*_privKexKey, "Raw");
+        Botan::PK_Key_Agreement pkka(*_privKexKey, *CppsshImpl::RNG, "Raw");
         std::vector<Botan::byte> buf;
         buf.resize(f.bytes());
         Botan::BigInt::encode(buf.data(), f);
@@ -630,6 +629,7 @@ bool CppsshCrypto::buildCipherPipe(
     algo = CppsshImpl::MAC_ALGORITHMS.enum2botan(macMethod);
     if (algo.length() == 0)
     {
+        cdLog(LogLevel::Error) << "Unknown mac algo ";
         return false;
     }
 
@@ -642,17 +642,20 @@ bool CppsshCrypto::buildCipherPipe(
     algo = CppsshImpl::CIPHER_ALGORITHMS.enum2botan(cryptoMethod);
     if (algo.length() == 0)
     {
+        cdLog(LogLevel::Error) << "Unknown cipher algo ";
         return false;
     }
 
     std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::BlockCipher::create(algo));
     if (blockCipher == nullptr)
     {
+        cdLog(LogLevel::Error) << "Unable to get block cipher " << algo;
         return false;
     }
     *blockSize = blockCipher->block_size();
     if (computeKey(&buf, ivID, *blockSize) == false)
     {
+        cdLog(LogLevel::Error) << "Unable to compute nonce key";
         return false;
     }
     Botan::InitializationVector iv(buf);
@@ -661,12 +664,14 @@ bool CppsshCrypto::buildCipherPipe(
 
     if (computeKey(&buf, keyID, maxKeyLengthOf(algo, cryptoMethod)) == false)
     {
+        cdLog(LogLevel::Error) << "Unable to compute key";
         return false;
     }
     Botan::SymmetricKey sKey(buf);
 
     if (computeKey(&buf, macID, *macDigestLen) == false)
     {
+        cdLog(LogLevel::Error) << "Unable to compute mac key";
         return false;
     }
     Botan::SymmetricKey mac(buf);
