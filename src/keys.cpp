@@ -366,7 +366,8 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
     {
         std::vector<Botan::byte> signedRaw;
 
-        std::unique_ptr<Botan::PK_Signer> RSASigner(new Botan::PK_Signer(*_rsaPrivateKey, *CppsshImpl::RNG, "EMSA3(SHA-1)"));
+        std::unique_ptr<Botan::PK_Signer> RSASigner(new Botan::PK_Signer(*_rsaPrivateKey, *CppsshImpl::RNG,
+                                                                         "EMSA3(SHA-1)"));
         signedRaw = RSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
         if (signedRaw.size() == 0)
         {
@@ -400,7 +401,8 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
     {
         std::vector<Botan::byte> signedRaw;
 
-        std::unique_ptr<Botan::PK_Signer> DSASigner(new Botan::PK_Signer(*_dsaPrivateKey, *CppsshImpl::RNG, "EMSA1(SHA-1)"));
+        std::unique_ptr<Botan::PK_Signer> DSASigner(new Botan::PK_Signer(*_dsaPrivateKey, *CppsshImpl::RNG,
+                                                                         "EMSA1(SHA-1)"));
         signedRaw = DSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
         if (signedRaw.size() == 0)
         {

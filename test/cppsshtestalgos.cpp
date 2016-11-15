@@ -8,10 +8,12 @@
 #include <fstream>
 #include <sstream>
 
-void runConnectionTest(const std::string& hostname, const std::string& username, const std::string& password, const char* keyfile)
+void runConnectionTest(const std::string& hostname, const std::string& username, const std::string& password,
+                       const char* keyfile)
 {
     int channel;
-    if (Cppssh::connect(&channel, hostname.c_str(), 22, username.c_str(), keyfile, password.c_str(), 10000) == CPPSSH_CONNECT_OK)
+    if (Cppssh::connect(&channel, hostname.c_str(), 22, username.c_str(), keyfile, password.c_str(),
+                        10000) == CPPSSH_CONNECT_OK)
     {
         std::vector<std::string> cmdList {"env\n", "mkdir cppsshTestDir\n", "ls -l cppsshTestDir\n",
                                           "rmdir cppsshTestDir\n"};
