@@ -323,4 +323,3 @@ bool CppsshKex::sendKexNewKeys()
 
     return ret;
 }
-

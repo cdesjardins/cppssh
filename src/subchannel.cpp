@@ -272,4 +272,3 @@ uint32_t CppsshSubChannel::getRxWindowSize()
 {
     return CPPSSH_RX_WINDOW_SIZE;
 }
-

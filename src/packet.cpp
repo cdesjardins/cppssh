@@ -370,4 +370,3 @@ void CppsshConstPacket::dumpPacket(const std::string& tag) const
     cdLog(LogLevel::Debug) << ss.str();
 #endif
 }
-

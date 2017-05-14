@@ -106,4 +106,3 @@ bool CppsshTransportWin::setNonBlocking(bool on)
     }
     return ret;
 }
-

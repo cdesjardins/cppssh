@@ -612,4 +612,3 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
     }
     return ret;
 }
-

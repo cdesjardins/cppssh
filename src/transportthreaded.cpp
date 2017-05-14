@@ -171,4 +171,3 @@ bool CppsshTransportThreaded::processIncomingData(Botan::secure_vector<Botan::by
     }
     return dataProcessed;
 }
-

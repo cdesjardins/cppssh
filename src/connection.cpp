@@ -307,4 +307,3 @@ bool CppsshConnection::closeConnection()
     _session->_transport->disconnect();
     return true;
 }
-

@@ -139,4 +139,3 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
     }
     return ret;
 }
-

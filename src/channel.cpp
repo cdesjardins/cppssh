@@ -512,4 +512,3 @@ void CppsshChannel::handleReceived(const Botan::secure_vector<Botan::byte>& buf)
         cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
 }
-

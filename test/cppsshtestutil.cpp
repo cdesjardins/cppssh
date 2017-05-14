@@ -26,4 +26,3 @@ void sendCmdList(int channel, const std::vector<std::string>& cmdList, const int
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
-

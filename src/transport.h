@@ -38,4 +38,3 @@ typedef class CppsshTransportPosix CppsshTransport;
 #endif
 
 #endif
-

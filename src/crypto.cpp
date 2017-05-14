@@ -734,4 +734,3 @@ bool CppsshCrypto::makeNewKeys()
 
     return ret;
 }
-

@@ -187,4 +187,3 @@ size_t CppsshMessage::length() const
 {
     return _len;
 }
-

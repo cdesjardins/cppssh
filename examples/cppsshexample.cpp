@@ -110,4 +110,3 @@ int main(int argc, char** argv)
     Cppssh::destroy();
     return 0;
 }
-

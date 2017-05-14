@@ -172,4 +172,3 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
 #endif
     return ret;
 }
-
