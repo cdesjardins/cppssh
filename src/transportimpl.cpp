@@ -40,7 +40,7 @@ bool CppsshTransportImpl::establish(const std::string& host, short port)
     hostent* remoteHost;
 
     remoteHost = gethostbyname(host.c_str());
-    if ((remoteHost == false) || (remoteHost->h_length == 0))
+    if ((remoteHost == nullptr) || (remoteHost->h_length == 0))
     {
         cdLog(LogLevel::Error) << "Host" << host << "not found.";
     }
