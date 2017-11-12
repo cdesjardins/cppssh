@@ -19,6 +19,7 @@
 #ifndef _IMPL_Hxx
 #define _IMPL_Hxx
 
+#include "botan/auto_rng.h"
 #include "cryptoalgos.h"
 #include "connection.h"
 #include "cppssh.h"

@@ -21,7 +21,6 @@
 
 #include "session.h"
 #include "packet.h"
-#include "botan/botan.h"
 #include "cryptoalgos.h"
 #include <memory>
 

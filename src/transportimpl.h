@@ -22,7 +22,7 @@
 /*
 ** Note: Do not include this file directly, include transport.h instead
 */
-#include "botan/botan.h"
+#include "botan/secmem.h"
 #include <memory>
 #include <condition_variable>
 

@@ -21,7 +21,6 @@
 
 #include "transport.h"
 #include "CDLogger/Logger.h"
-#include "botan/botan.h"
 #include <string>
 #include <memory>
 

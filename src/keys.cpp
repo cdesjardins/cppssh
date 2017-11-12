@@ -28,6 +28,7 @@
 #include "botan/b64_filt.h"
 #include "botan/numthry.h"
 #include "botan/pkcs8.h"
+#include "botan/x509_key.h"
 #include <fstream>
 #ifndef WIN32
 #include <sys/stat.h>

@@ -21,7 +21,6 @@
 
 #include "crypto.h"
 #include "session.h"
-#include "botan/botan.h"
 #include "botan/hmac.h"
 #include "botan/dh.h"
 #include "botan/dsa.h"

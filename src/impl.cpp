@@ -19,7 +19,6 @@
 
 #include "impl.h"
 #include "keys.h"
-#include "botan/auto_rng.h"
 #include "botan/init.h"
 
 std::mutex CppsshImpl::_optionsMutex;
