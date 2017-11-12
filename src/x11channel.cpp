@@ -137,6 +137,12 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
             std::copy(std::istream_iterator<std::string>(iss),
                       std::istream_iterator<std::string>(),
                       std::back_inserter(cookies));
+            // If there are multiple xauth entries for the display
+            // then just take the first one.
+            if (cookies.size() > 3)
+            {
+                cookies.erase(cookies.begin() + 3, cookies.end());
+            }
             if (cookies.size() == 3)
             {
                 *method = cookies[1];
