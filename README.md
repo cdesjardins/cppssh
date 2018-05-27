@@ -9,7 +9,7 @@ cd build
 ```
 
 
-cppssh uses the Botan library, version 1.11<br>
+cppssh uses the Botan library, latest version<br>
 https://github.com/randombit/botan <br>
 http://botan.randombit.net/ <br>
 
