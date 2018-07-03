@@ -90,6 +90,10 @@ CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, c
     if (con != nullptr)
     {
         ret = con->connect(host, port, username, privKeyFile, password, x11Forwarded, keepAlives, term);
+        if (ret != CPPSSH_CONNECT_OK)
+        {
+            close(*connectionId);
+        }
     }
     return ret;
 }
