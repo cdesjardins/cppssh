@@ -65,6 +65,7 @@ CppsshCompressionAlgos CppsshImpl::COMPRESSION_ALGORITHMS(std::vector<CryptoStri
 std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 
 CppsshImpl::CppsshImpl()
+    : _connectionId(0)
 {
     RNG.reset(new Botan::Serialized_RNG(new Botan::AutoSeeded_RNG()));
 }
@@ -82,9 +83,9 @@ CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, c
     std::shared_ptr<CppsshConnection> con;
     {// new scope for mutex
         std::unique_lock<std::mutex> lock(_connectionsMutex);
-        *connectionId = _connections.size();
+        *connectionId = ++_connectionId;
         con.reset(new CppsshConnection(*connectionId, timeout));
-        _connections.push_back(con);
+        _connections[*connectionId] = con;
     }
     if (con != nullptr)
     {
@@ -142,6 +143,7 @@ bool CppsshImpl::close(int connectionId)
     std::unique_lock<std::mutex> lock(_connectionsMutex);
     _connections[connectionId]->closeConnection();
     _connections[connectionId].reset();
+    _connections.erase(connectionId);
     return true;
 }
 
@@ -210,7 +212,8 @@ std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connection
 bool CppsshImpl::checkConnectionId(const int connectionId)
 {
     bool ret = false;
-    if ((connectionId >= 0) && (connectionId < (int)_connections.size()))
+    std::unique_lock<std::mutex> lock(_connectionsMutex);
+    if ((connectionId >= 0) && (_connections.find(connectionId) != _connections.end()))
     {
         ret = true;
     }

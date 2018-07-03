@@ -24,7 +24,7 @@
 #include "connection.h"
 #include "cppssh.h"
 #include <memory>
-#include <vector>
+#include <map>
 
 class CppsshImpl
 {
@@ -60,9 +60,10 @@ public:
 private:
     template<typename T> static size_t getSupportedAlogs(const T& algos, char* list);
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
-    std::vector<std::shared_ptr<CppsshConnection> > _connections;
+    std::map<int, std::shared_ptr<CppsshConnection> > _connections;
     std::mutex _connectionsMutex;
     static std::mutex _optionsMutex;
+    int _connectionId;
 };
 
 #endif
