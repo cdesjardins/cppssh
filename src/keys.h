@@ -61,8 +61,6 @@ private:
     bool getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey);
     bool getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey);
 
-    static Botan::secure_vector<Botan::byte>::const_iterator findEndOfLine(
-        const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(
         const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(

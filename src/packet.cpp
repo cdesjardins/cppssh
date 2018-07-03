@@ -314,6 +314,8 @@ bool CppsshPacket::addFile(const std::string& fileName)
         _data->insert(_data->begin(),
                       std::istream_iterator<Botan::byte>(file),
                       std::istream_iterator<Botan::byte>());
+        _data->erase(remove_if(_data->begin(), _data->end(), isspace), _data->end());
+
         ret = true;
     }
     return ret;

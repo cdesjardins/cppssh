@@ -35,10 +35,10 @@
 #endif
 #include "debug.h"
 
-const std::string CppsshKeys::HEADER_DSA = "-----BEGIN DSA PRIVATE KEY-----\n";
-const std::string CppsshKeys::FOOTER_DSA = "-----END DSA PRIVATE KEY-----\n";
-const std::string CppsshKeys::HEADER_RSA = "-----BEGIN RSA PRIVATE KEY-----\n";
-const std::string CppsshKeys::FOOTER_RSA = "-----END RSA PRIVATE KEY-----\n";
+const std::string CppsshKeys::HEADER_DSA = "-----BEGINDSAPRIVATEKEY-----";
+const std::string CppsshKeys::FOOTER_DSA = "-----ENDDSAPRIVATEKEY-----";
+const std::string CppsshKeys::HEADER_RSA = "-----BEGINRSAPRIVATEKEY-----";
+const std::string CppsshKeys::FOOTER_RSA = "-----ENDRSAPRIVATEKEY-----";
 const std::string CppsshKeys::PROC_TYPE = "Proc-Type:";
 const std::string CppsshKeys::DEK_INFO = "DEK-Info:";
 
@@ -76,8 +76,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
     {
         return false;
     }
-    // Find all CR-LF, and remove the CR
-    buf.erase(std::remove(buf.begin(), buf.end(), '\r'), buf.end());
+
     _keyAlgo = hostkeyMethods::MAX_VALS;
 
     try
@@ -129,29 +128,10 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
     return ret;
 }
 
-Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findEndOfLine(
-    const Botan::secure_vector<Botan::byte>& privateKey, const std::string& lineHeader)
-{
-    Botan::secure_vector<Botan::byte>::const_iterator it = std::search(privateKey.begin(),
-                                                                       privateKey.end(),
-                                                                       lineHeader.begin(), lineHeader.end());
-    if (it != privateKey.end())
-    {
-        it = std::find(it, privateKey.end(), '\n');
-    }
-    return it;
-}
-
 Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyBegin(
     const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header)
 {
-    Botan::secure_vector<Botan::byte>::const_iterator ret;
-    ret = findEndOfLine(privateKey, header);
-    while (*ret == '\n')
-    {
-        ret++;
-    }
-    return ret;
+    return privateKey.cbegin() + header.length();
 }
 
 Botan::secure_vector<Botan::byte>::const_iterator CppsshKeys::findKeyEnd(
