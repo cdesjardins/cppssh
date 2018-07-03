@@ -56,8 +56,8 @@ public:
     static CppsshCompressionAlgos COMPRESSION_ALGORITHMS;
 
     static std::shared_ptr<Botan::RandomNumberGenerator> RNG;
-    bool checkConnectionId(const int connectionId);
 private:
+    bool checkConnectionId(const int connectionId);
     template<typename T> static size_t getSupportedAlogs(const T& algos, char* list);
     std::shared_ptr<CppsshConnection> getConnection(const int connectionId);
     std::map<int, std::shared_ptr<CppsshConnection> > _connections;

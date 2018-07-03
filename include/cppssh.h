@@ -92,7 +92,7 @@ private:
 
     static void create(int apiLevel);
     static bool checkConnectionId(const int connectionId);
-    static std::unique_ptr<CppsshImpl> s_cppsshInst;
+    static std::shared_ptr<CppsshImpl> s_cppsshInst;
     static std::mutex s_cppsshInstMutex;
 };
 

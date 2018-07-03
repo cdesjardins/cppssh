@@ -20,7 +20,7 @@
 #include "cppssh.h"
 #include "impl.h"
 
-std::unique_ptr<CppsshImpl> Cppssh::s_cppsshInst;
+std::shared_ptr<CppsshImpl> Cppssh::s_cppsshInst;
 std::mutex Cppssh::s_cppsshInstMutex;
 
 void Cppssh::create(int apiLevel)
@@ -70,27 +70,24 @@ CppsshConnectStatus_t Cppssh::connect(int* connectionId, const char* host, const
                                       const bool x11Forwarded, const bool keepAlives, const char* term)
 {
     CppsshConnectStatus_t ret = CPPSSH_CONNECT_ERROR;
-    if (s_cppsshInst != nullptr)
+    std::shared_ptr<CppsshImpl> cppsshInst = s_cppsshInst;
+    if (cppsshInst != nullptr)
     {
-        ret = s_cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, x11Forwarded,
-                                    keepAlives, term);
-    }
-    return ret;
-}
-
-bool Cppssh::checkConnectionId(const int connectionId)
-{
-    bool ret = false;
-    if (s_cppsshInst != nullptr)
-    {
-        ret = s_cppsshInst->checkConnectionId(connectionId);
+        ret = cppsshInst->connect(connectionId, host, port, username, privKeyFile, password, timeout, x11Forwarded,
+                                  keepAlives, term);
     }
     return ret;
 }
 
 bool Cppssh::isConnected(const int connectionId)
 {
-    return checkConnectionId(connectionId) && s_cppsshInst->isConnected(connectionId);
+    bool ret = false;
+    std::shared_ptr<CppsshImpl> cppsshInst = s_cppsshInst;
+    if (cppsshInst != nullptr)
+    {
+        ret = cppsshInst->isConnected(connectionId);
+    }
+    return ret;
 }
 
 bool Cppssh::writeString(const int connectionId, const char* data)
@@ -100,22 +97,46 @@ bool Cppssh::writeString(const int connectionId, const char* data)
 
 bool Cppssh::write(const int connectionId, const uint8_t* data, size_t bytes)
 {
-    return checkConnectionId(connectionId) && s_cppsshInst->write(connectionId, data, bytes);
+    bool ret = false;
+    std::shared_ptr<CppsshImpl> cppsshInst = s_cppsshInst;
+    if (cppsshInst != nullptr)
+    {
+        ret = cppsshInst->write(connectionId, data, bytes);
+    }
+    return ret;
 }
 
 bool Cppssh::read(const int connectionId, CppsshMessage* data)
 {
-    return checkConnectionId(connectionId) && s_cppsshInst->read(connectionId, data);
+    bool ret = false;
+    std::shared_ptr<CppsshImpl> cppsshInst = s_cppsshInst;
+    if (cppsshInst != nullptr)
+    {
+        ret = cppsshInst->read(connectionId, data);
+    }
+    return ret;
 }
 
 bool Cppssh::windowChange(const int connectionId, const uint32_t cols, const uint32_t rows)
 {
-    return checkConnectionId(connectionId) && s_cppsshInst->windowChange(connectionId, cols, rows);
+    bool ret = false;
+    std::shared_ptr<CppsshImpl> cppsshInst = s_cppsshInst;
+    if (cppsshInst != nullptr)
+    {
+        ret = cppsshInst->windowChange(connectionId, cols, rows);
+    }
+    return ret;
 }
 
 bool Cppssh::close(const int connectionId)
 {
-    return checkConnectionId(connectionId) && s_cppsshInst->close(connectionId);
+    bool ret = false;
+    std::shared_ptr<CppsshImpl> cppsshInst = s_cppsshInst;
+    if (cppsshInst != nullptr)
+    {
+        ret = cppsshInst->close(connectionId);
+    }
+    return ret;
 }
 
 bool Cppssh::setPreferredCipher(const char* prefCipher)

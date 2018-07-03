@@ -141,9 +141,12 @@ bool CppsshImpl::windowChange(const int connectionId, const uint32_t cols, const
 bool CppsshImpl::close(int connectionId)
 {
     std::unique_lock<std::mutex> lock(_connectionsMutex);
-    _connections[connectionId]->closeConnection();
-    _connections[connectionId].reset();
-    _connections.erase(connectionId);
+    if (checkConnectionId(connectionId) == true)
+    {
+        _connections[connectionId]->closeConnection();
+        _connections[connectionId].reset();
+        _connections.erase(connectionId);
+    }
     return true;
 }
 
@@ -204,7 +207,10 @@ std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connection
     std::shared_ptr<CppsshConnection> con;
     {
         std::unique_lock<std::mutex> lock(_connectionsMutex);
-        con = _connections[connectionId];
+        if (checkConnectionId(connectionId) == true)
+        {
+            con = _connections[connectionId];
+        }
     }
     return con;
 }
@@ -212,7 +218,7 @@ std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connection
 bool CppsshImpl::checkConnectionId(const int connectionId)
 {
     bool ret = false;
-    std::unique_lock<std::mutex> lock(_connectionsMutex);
+
     if ((connectionId >= 0) && (_connections.find(connectionId) != _connections.end()))
     {
         ret = true;
