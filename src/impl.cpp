@@ -223,7 +223,7 @@ bool CppsshImpl::checkConnectionId(const int connectionId)
 {
     bool ret = false;
 
-    if ((connectionId >= 0) && (_connections.find(connectionId) != _connections.end()))
+    if (_connections.find(connectionId) != _connections.end())
     {
         ret = true;
     }
