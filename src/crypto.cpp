@@ -341,86 +341,74 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
     bool result = false;
     try
     {
-        std::shared_ptr<Botan::DSA_PublicKey> dsaKey;
-        std::shared_ptr<Botan::RSA_PublicKey> rsaKey;
-        std::unique_ptr<Botan::PK_Verifier> verifier;
         Botan::secure_vector<Botan::byte> sigType, sigData;
         const CppsshConstPacket signaturePacket(&sig);
+        std::string emsa;
 
         if (_H.empty() == true)
         {
             cdLog(LogLevel::Error) << "H was not initialzed.";
-            return false;
         }
-
-        if (signaturePacket.getString(&sigType) == false)
+        else if (signaturePacket.getString(&sigType) == false)
         {
             cdLog(LogLevel::Error) << "Signature without type.";
-            return false;
         }
-        if (signaturePacket.getString(&sigData) == false)
+        else if (signaturePacket.getString(&sigData) == false)
         {
             cdLog(LogLevel::Error) << "Signature without data.";
-            return false;
-        }
-
-        switch (_hostkeyMethod)
-        {
-            case hostkeyMethods::SSH_DSS:
-                dsaKey = getDSAKey(hostKey);
-                if (dsaKey == nullptr)
-                {
-                    cdLog(LogLevel::Error) << "DSA key not generated.";
-                    return false;
-                }
-                break;
-
-            case hostkeyMethods::SSH_RSA:
-                rsaKey = getRSAKey(hostKey);
-                if (rsaKey == nullptr)
-                {
-                    cdLog(LogLevel::Error) << "RSA key not generated.";
-                    return false;
-                }
-                break;
-
-            default:
-                cdLog(LogLevel::Error) << "Hostkey algorithm: " << (int)_hostkeyMethod << " not supported.";
-                return false;
-        }
-
-        switch (_kexMethod)
-        {
-            case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
-            case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
-                if (dsaKey)
-                {
-                    verifier.reset(new Botan::PK_Verifier(*dsaKey, "EMSA1(SHA-1)"));
-                }
-                else if (rsaKey)
-                {
-                    verifier.reset(new Botan::PK_Verifier(*rsaKey, "EMSA3(SHA-1)"));
-                }
-                break;
-
-            default:
-                break;
-        }
-        if (verifier == nullptr)
-        {
-            cdLog(LogLevel::Error) << "Key Exchange algorithm: " << (int)_kexMethod << " not supported.";
         }
         else
         {
-            result = verifier->verify_message(_H, sigData);
-            verifier.reset();
-        }
-        dsaKey.reset();
-        rsaKey.reset();
+            std::shared_ptr<Botan::Public_Key> publicKey;
 
-        if (result == false)
-        {
-            cdLog(LogLevel::Error) << "Failure to verify host signature.";
+            switch (_hostkeyMethod)
+            {
+                case hostkeyMethods::SSH_DSS:
+                    publicKey = getDSAKey(hostKey);
+                    emsa = "EMSA1(SHA-1)";
+                    break;
+
+                case hostkeyMethods::SSH_RSA:
+                    publicKey = getRSAKey(hostKey);
+                    emsa = "EMSA3(SHA-1)";
+                    break;
+
+                default:
+                    cdLog(LogLevel::Error) << "Hostkey algorithm: " << (int)_hostkeyMethod << " not supported.";
+            }
+            if (publicKey == nullptr)
+            {
+                cdLog(LogLevel::Error) << "Public key not generated.";
+            }
+            else
+            {
+                std::unique_ptr<Botan::PK_Verifier> verifier;
+
+                switch (_kexMethod)
+                {
+                    case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
+                    case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
+                        verifier.reset(new Botan::PK_Verifier(*publicKey, emsa));
+                        break;
+                    default:
+                        break;
+                }
+                if (verifier == nullptr)
+                {
+                    cdLog(LogLevel::Error) << "Key Exchange algorithm: " << (int)_kexMethod << " not supported.";
+                }
+                else
+                {
+                    result = verifier->verify_message(_H, sigData);
+                    verifier.reset();
+                }
+                publicKey.reset();
+
+                if (result == false)
+                {
+                    cdLog(LogLevel::Error) << "Failure to verify host signature.";
+                }
+            }
         }
     }
     catch (const std::exception& ex)
