@@ -420,49 +420,35 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
 
 std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
 {
+    std::shared_ptr<Botan::DSA_PublicKey> ret;
     std::string field;
     Botan::BigInt p, q, g, y;
 
     const CppsshConstPacket hKeyPacket(&hostKey);
 
-    if (hKeyPacket.getString(&field) == false)
+    if (hKeyPacket.getString(&field) == true)
     {
-        return 0;
+        if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
+        {
+            cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
+        }
+        else if ((hKeyPacket.getBigInt(&p) == true) &&
+            (hKeyPacket.getBigInt(&q) == true) &&
+            (hKeyPacket.getBigInt(&g) == true) &&
+            (hKeyPacket.getBigInt(&y) == true))
+        {
+            try
+            {
+                Botan::DL_Group keyDL(p, q, g);
+                ret.reset(new Botan::DSA_PublicKey(keyDL, y));
+            }
+            catch (const std::exception& ex)
+            {
+                cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+            }
+        }
     }
-    if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
-    {
-        cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
-        return 0;
-    }
-
-    if (hKeyPacket.getBigInt(&p) == false)
-    {
-        return 0;
-    }
-    if (hKeyPacket.getBigInt(&q) == false)
-    {
-        return 0;
-    }
-    if (hKeyPacket.getBigInt(&g) == false)
-    {
-        return 0;
-    }
-    if (hKeyPacket.getBigInt(&y) == false)
-    {
-        return 0;
-    }
-
-    try
-    {
-        Botan::DL_Group keyDL(p, q, g);
-        std::shared_ptr<Botan::DSA_PublicKey> pubKey(new Botan::DSA_PublicKey(keyDL, y));
-        return pubKey;
-    }
-    catch (const std::exception& ex)
-    {
-        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
-    }
-    return 0;
+    return ret;
 }
 
 std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
