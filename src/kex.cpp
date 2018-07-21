@@ -192,59 +192,35 @@ bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>& buf)
 
 bool CppsshKex::handleKexDHReply()
 {
+    bool ret = false;
     Botan::secure_vector<Botan::byte> buffer;
     Botan::secure_vector<Botan::byte> hSig, kVector, hVector;
     CppsshPacket packet(&buffer);
 
-    if (sendKexDHInit(buffer) == false)
+    if ((sendKexDHInit(buffer) == true) && (buffer.empty() == false))
     {
-        return false;
-    }
-    if (buffer.empty() == true)
-    {
-        return false;
-    }
-    packet.skipHeader();
-    Botan::BigInt publicKey;
+        packet.skipHeader();
+        Botan::BigInt publicKey;
 
-    _hostKey.clear();
-    if (packet.getString(&_hostKey) == false)
-    {
-        return false;
+        _hostKey.clear();
+        if ((packet.getString(&_hostKey) == true) && (packet.getBigInt(&publicKey) == true))
+        {
+            _f.clear();
+            _k.clear();
+            CppsshConstPacket::bn2vector(&_f, publicKey);
+
+            if ((packet.getString(&hSig) == true) && (_session->_crypto->makeKexSecret(&_k, publicKey) == true))
+            {
+                makeH(&hVector);
+                if (hVector.empty() == false)
+                {
+                    _session->setSessionID(hVector);
+                    ret = _session->_crypto->verifySig(_hostKey, hSig);
+                }
+            }
+        }
     }
-
-    if (packet.getBigInt(&publicKey) == false)
-    {
-        return false;
-    }
-    _f.clear();
-    CppsshConstPacket::bn2vector(&_f, publicKey);
-
-    if (packet.getString(&hSig) == false)
-    {
-        return false;
-    }
-
-    _k.clear();
-    if (_session->_crypto->makeKexSecret(&_k, publicKey) == false)
-    {
-        return false;
-    }
-
-    makeH(&hVector);
-    if (hVector.empty() == true)
-    {
-        return false;
-    }
-
-    _session->setSessionID(hVector);
-
-    if (_session->_crypto->verifySig(_hostKey, hSig) == false)
-    {
-        return false;
-    }
-
-    return true;
+    return ret;
 }
 
 void CppsshKex::makeH(Botan::secure_vector<Botan::byte>* hVector)
