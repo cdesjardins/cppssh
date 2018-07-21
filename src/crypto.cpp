@@ -453,38 +453,31 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secur
 
 std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
 {
+    std::shared_ptr<Botan::RSA_PublicKey> ret;
     std::string field;
     Botan::BigInt e, n;
 
     const CppsshConstPacket hKeyPacket(&hostKey);
 
-    if (hKeyPacket.getString(&field) == false)
+    if (hKeyPacket.getString(&field) == true)
     {
-        return 0;
+        if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
+        {
+            cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
+        }
+        else if ((hKeyPacket.getBigInt(&e) == true) && (hKeyPacket.getBigInt(&n) == true))
+        {
+            try
+            {
+                ret.reset(new Botan::RSA_PublicKey(n, e));
+            }
+            catch (const std::exception& ex)
+            {
+                cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+            }
+        }
     }
-    if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
-    {
-        cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
-        return 0;
-    }
-    if (hKeyPacket.getBigInt(&e) == false)
-    {
-        return 0;
-    }
-    if (hKeyPacket.getBigInt(&n) == false)
-    {
-        return 0;
-    }
-    try
-    {
-        std::shared_ptr<Botan::RSA_PublicKey> pubKey(new Botan::RSA_PublicKey(n, e));
-        return pubKey;
-    }
-    catch (const std::exception& ex)
-    {
-        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
-    }
-    return 0;
+    return ret;
 }
 
 size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods method) const
