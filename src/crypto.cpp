@@ -390,6 +390,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
                     case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
                         verifier.reset(new Botan::PK_Verifier(*publicKey, emsa));
                         break;
+
                     default:
                         break;
                 }
@@ -433,9 +434,9 @@ std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secur
             cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
         }
         else if ((hKeyPacket.getBigInt(&p) == true) &&
-            (hKeyPacket.getBigInt(&q) == true) &&
-            (hKeyPacket.getBigInt(&g) == true) &&
-            (hKeyPacket.getBigInt(&y) == true))
+                 (hKeyPacket.getBigInt(&q) == true) &&
+                 (hKeyPacket.getBigInt(&g) == true) &&
+                 (hKeyPacket.getBigInt(&y) == true))
         {
             try
             {

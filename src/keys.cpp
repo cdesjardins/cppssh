@@ -86,7 +86,8 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
         {
             if (isKey(buf, PROC_TYPE, DEK_INFO) == true)
             {
-                cdLog(LogLevel::Error) << "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
+                cdLog(LogLevel::Error) <<
+                "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
             }
             else
             {
@@ -102,7 +103,8 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                 }
                 else
                 {
-                    std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(
+                    std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName,
+                                                                                       *CppsshImpl::RNG, std::string(
                                                                                            keyPassword)));
                     if (privKey != nullptr)
                     {
