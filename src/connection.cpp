@@ -52,76 +52,85 @@ CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short po
                                                 const char* privKeyFile, const char* password, const bool x11Forwarded,
                                                 const bool keepAlives, const char* term)
 {
-    if (_session->_channel->establish(host, port) == false)
-    {
-        return CPPSSH_CONNECT_UNKNOWN_HOST;
-    }
-    if (checkRemoteVersion() == false)
-    {
-        return CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
-    }
-    if (sendLocalVersion() == false)
-    {
-        return CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
-    }
-    if (_session->_transport->startThreads() == false)
-    {
-        return CPPSSH_CONNECT_ERROR;
-    }
+    CppsshConnectStatus_t ret = CPPSSH_CONNECT_OK;
     CppsshKex kex(_session);
 
-    if (kex.handleInit() == false)
+    if (_session->_channel->establish(host, port) == false)
     {
-        return CPPSSH_CONNECT_KEX_FAIL;
+        ret = CPPSSH_CONNECT_UNKNOWN_HOST;
     }
-    if (kex.handleKexDHReply() == false)
+    else if (checkRemoteVersion() == false)
     {
-        return CPPSSH_CONNECT_KEX_FAIL;
+        ret = CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
     }
-    if (kex.sendKexNewKeys() == 0)
+    else if (sendLocalVersion() == false)
     {
-        return CPPSSH_CONNECT_KEX_FAIL;
+        ret = CPPSSH_CONNECT_INCOMPATIBLE_SERVER;
     }
-
-    _session->_transport.reset(new CppsshTransportCrypto(_session, _session->_transport->getSocket()));
-    if (_session->_transport->startThreads() == false)
+    else if (_session->_transport->startThreads() == false)
     {
-        return CPPSSH_CONNECT_ERROR;
+        ret = CPPSSH_CONNECT_ERROR;
     }
-    if (requestService("ssh-userauth") == false)
+    else if (kex.handleInit() == false)
     {
-        return CPPSSH_CONNECT_ERROR;
+        ret = CPPSSH_CONNECT_KEX_FAIL;
     }
-    std::string pkf;
-    if (privKeyFile != nullptr)
+    else if (kex.handleKexDHReply() == false)
     {
-        pkf.assign(privKeyFile);
+        ret = CPPSSH_CONNECT_KEX_FAIL;
     }
-    if ((authWithKey(username, pkf, password) == false) && (authWithPassword(username, password) == false))
+    else if (kex.sendKexNewKeys() == 0)
     {
-        return CPPSSH_CONNECT_AUTH_FAIL;
+        ret = CPPSSH_CONNECT_KEX_FAIL;
     }
-    if (_session->_channel->openChannel() == false)
+    else
     {
-        return CPPSSH_CONNECT_ERROR;
-    }
-    if (term != nullptr)
-    {
-        if (x11Forwarded == true)
+        std::string pkf;
+        _session->_transport.reset(new CppsshTransportCrypto(_session, _session->_transport->getSocket()));
+        if (_session->_transport->startThreads() == false)
         {
-            _session->_channel->getX11();
+            ret = CPPSSH_CONNECT_ERROR;
         }
-        if (_session->_channel->getShell(term) == false)
+        else if (requestService("ssh-userauth") == false)
         {
-            return CPPSSH_CONNECT_ERROR;
+            ret = CPPSSH_CONNECT_ERROR;
         }
-        if (keepAlives == true)
+        else
         {
-            _session->_transport->enableKeepAlives();
+            if (privKeyFile != nullptr)
+            {
+                pkf.assign(privKeyFile);
+            }
+            if ((authWithKey(username, pkf, password) == false) && (authWithPassword(username, password) == false))
+            {
+                ret = CPPSSH_CONNECT_AUTH_FAIL;
+            }
+            else if (_session->_channel->openChannel() == false)
+            {
+                ret = CPPSSH_CONNECT_ERROR;
+            }
+            else
+            {
+                if (term != nullptr)
+                {
+                    if (x11Forwarded == true)
+                    {
+                        _session->_channel->getX11();
+                    }
+                    if (_session->_channel->getShell(term) == false)
+                    {
+                        ret = CPPSSH_CONNECT_ERROR;
+                    }
+                    else if (keepAlives == true)
+                    {
+                        _session->_transport->enableKeepAlives();
+                    }
+                }
+                _connected = true;
+            }
         }
     }
-    _connected = true;
-    return CPPSSH_CONNECT_OK;
+    return ret;
 }
 
 bool CppsshConnection::write(const uint8_t* data, uint32_t bytes)
