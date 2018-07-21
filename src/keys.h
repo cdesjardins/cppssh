@@ -60,6 +60,7 @@ private:
     bool getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey);
     bool getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey);
     bool getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey);
+    bool checkPrivKeyFile(const std::string& privKeyFileName);
 
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(
         const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);

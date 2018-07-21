@@ -53,78 +53,81 @@ bool CppsshKeys::isKey(const Botan::secure_vector<Botan::byte>& buf, std::string
     return ret;
 }
 
-bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const char* keyPassword)
+bool CppsshKeys::checkPrivKeyFile(const std::string& privKeyFileName)
 {
-    bool ret = false;
-    Botan::secure_vector<Botan::byte> buf;
-    CppsshPacket privKeyPacket(&buf);
+    bool ret = true;
 #ifndef WIN32
     struct stat privKeyStatus;
 
     if (lstat(privKeyFileName.c_str(), &privKeyStatus) < 0)
     {
-        return false;
+        ret = false;
     }
-
-    if ((privKeyStatus.st_mode & (S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != 0)
+    else if ((privKeyStatus.st_mode & (S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != 0)
     {
         cdLog(LogLevel::Error) << "Private key file permissions are read/write by others: " << privKeyFileName;
-        return false;
+        ret = false;
     }
 #endif
-    if (privKeyPacket.addFile(privKeyFileName) == false)
-    {
-        return false;
-    }
+    return ret;
+}
 
-    _keyAlgo = hostkeyMethods::MAX_VALS;
+bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const char* keyPassword)
+{
+    bool ret = false;
+    Botan::secure_vector<Botan::byte> buf;
+    CppsshPacket privKeyPacket(&buf);
 
-    try
+    if ((checkPrivKeyFile(privKeyFileName) == true) && (privKeyPacket.addFile(privKeyFileName) == true))
     {
-        if (isKey(buf, PROC_TYPE, DEK_INFO) == true)
+        _keyAlgo = hostkeyMethods::MAX_VALS;
+
+        try
         {
-            cdLog(LogLevel::Error) << "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
-        }
-        else
-        {
-            if (isKey(buf, HEADER_DSA, FOOTER_DSA))
+            if (isKey(buf, PROC_TYPE, DEK_INFO) == true)
             {
-                _keyAlgo = hostkeyMethods::SSH_DSS;
-                ret = getUnencryptedDSAKeys(buf);
-            }
-            else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
-            {
-                _keyAlgo = hostkeyMethods::SSH_RSA;
-                ret = getUnencryptedRSAKeys(buf);
+                cdLog(LogLevel::Error) << "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
             }
             else
             {
-                std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(
-                                                                                       keyPassword)));
-                if (privKey != nullptr)
+                if (isKey(buf, HEADER_DSA, FOOTER_DSA))
                 {
-                    ret = getRSAKeys(privKey);
-                    if (ret == true)
+                    _keyAlgo = hostkeyMethods::SSH_DSS;
+                    ret = getUnencryptedDSAKeys(buf);
+                }
+                else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
+                {
+                    _keyAlgo = hostkeyMethods::SSH_RSA;
+                    ret = getUnencryptedRSAKeys(buf);
+                }
+                else
+                {
+                    std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName, *CppsshImpl::RNG, std::string(
+                                                                                           keyPassword)));
+                    if (privKey != nullptr)
                     {
-                        _keyAlgo = hostkeyMethods::SSH_RSA;
-                    }
-                    else
-                    {
-                        ret = getDSAKeys(privKey);
+                        ret = getRSAKeys(privKey);
                         if (ret == true)
                         {
-                            _keyAlgo = hostkeyMethods::SSH_DSS;
+                            _keyAlgo = hostkeyMethods::SSH_RSA;
+                        }
+                        else
+                        {
+                            ret = getDSAKeys(privKey);
+                            if (ret == true)
+                            {
+                                _keyAlgo = hostkeyMethods::SSH_DSS;
+                            }
                         }
                     }
                 }
             }
         }
+        catch (const std::exception& ex)
+        {
+            cdLog(LogLevel::Error) << "Unable to read keys: " << ex.what();
+        }
     }
-    catch (const std::exception& ex)
-    {
-        cdLog(LogLevel::Error) << "Unable to read keys: " << ex.what();
-    }
-
     return ret;
 }
 
