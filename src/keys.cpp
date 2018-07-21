@@ -87,7 +87,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
             if (isKey(buf, PROC_TYPE, DEK_INFO) == true)
             {
                 cdLog(LogLevel::Error) <<
-                "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
+                    "SSH traditional format private key, use \"openssl pkcs8 -topk8\" to modernize";
             }
             else
             {
