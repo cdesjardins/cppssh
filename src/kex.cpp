@@ -117,76 +117,47 @@ template <typename T> T CppsshKex::runAgreement(const CppsshConstPacket& remoteK
 
 bool CppsshKex::handleInit()
 {
+    bool ret = false;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket packet(&buf);
-    if (sendInit(buf) == false)
+    if (sendInit(buf) == true)
     {
-        return false;
-    }
-    std::string algos;
-    std::string agreed;
+        _remoteKex.clear();
+        CppsshPacket remoteKexPacket(&_remoteKex);
+        remoteKexPacket.addVector(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin(),
+                                                                    (packet.getPayloadEnd() - packet.getPadLength())));
 
-    _remoteKex.clear();
-    CppsshPacket remoteKexPacket(&_remoteKex);
-    remoteKexPacket.addVector(Botan::secure_vector<Botan::byte>(packet.getPayloadBegin(),
-                                                                (packet.getPayloadEnd() - packet.getPadLength())));
+        Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
+        const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
 
-    Botan::secure_vector<Botan::byte> remoteKexAlgos(packet.getPayloadBegin() + 17, packet.getPayloadEnd());
-    const CppsshConstPacket remoteKexAlgosPacket(&remoteKexAlgos);
-
-    if (_session->_crypto->setNegotiatedKex(runAgreement<kexMethods>(remoteKexAlgosPacket, CppsshImpl::KEX_ALGORITHMS,
-                                                                     "Kex")) == false)
-    {
-        return false;
+        if ((_session->_crypto->setNegotiatedKex(runAgreement<kexMethods>(remoteKexAlgosPacket, CppsshImpl::KEX_ALGORITHMS,
+                                                                         "Kex")) == true) &&
+            (_session->_crypto->setNegotiatedHostkey(runAgreement<hostkeyMethods>(remoteKexAlgosPacket,
+                                                                                 CppsshImpl::HOSTKEY_ALGORITHMS,
+                                                                                 "Hostkey")) == true) &&
+            (_session->_crypto->setNegotiatedCryptoC2s(runAgreement<cryptoMethods>(remoteKexAlgosPacket,
+                                                                                  CppsshImpl::CIPHER_ALGORITHMS,
+                                                                                  "C2S Cipher")) == true) &&
+            (_session->_crypto->setNegotiatedCryptoS2c(runAgreement<cryptoMethods>(remoteKexAlgosPacket,
+                                                                                  CppsshImpl::CIPHER_ALGORITHMS,
+                                                                                  "S2C Cipher")) == true) &&
+            (_session->_crypto->setNegotiatedMacC2s(runAgreement<macMethods>(remoteKexAlgosPacket,
+                                                                            CppsshImpl::MAC_ALGORITHMS,
+                                                                            "C2S MAC")) == true) &&
+            (_session->_crypto->setNegotiatedMacS2c(runAgreement<macMethods>(remoteKexAlgosPacket,
+                                                                            CppsshImpl::MAC_ALGORITHMS,
+                                                                            "S2C MAC")) == true) &&
+            (_session->_crypto->setNegotiatedCmprsC2s(runAgreement<compressionMethods>(remoteKexAlgosPacket,
+                                                                                      CppsshImpl::COMPRESSION_ALGORITHMS,
+                                                                                      "C2S Compression")) == true) &&
+            (_session->_crypto->setNegotiatedCmprsS2c(runAgreement<compressionMethods>(remoteKexAlgosPacket,
+                                                                                      CppsshImpl::COMPRESSION_ALGORITHMS,
+                                                                                      "S2C Compression")) == true))
+        {
+            ret = true;
+        }
     }
-
-    if (_session->_crypto->setNegotiatedHostkey(runAgreement<hostkeyMethods>(remoteKexAlgosPacket,
-                                                                             CppsshImpl::HOSTKEY_ALGORITHMS,
-                                                                             "Hostkey")) == false)
-    {
-        return false;
-    }
-
-    if (_session->_crypto->setNegotiatedCryptoC2s(runAgreement<cryptoMethods>(remoteKexAlgosPacket,
-                                                                              CppsshImpl::CIPHER_ALGORITHMS,
-                                                                              "C2S Cipher")) == false)
-    {
-        return false;
-    }
-    if (_session->_crypto->setNegotiatedCryptoS2c(runAgreement<cryptoMethods>(remoteKexAlgosPacket,
-                                                                              CppsshImpl::CIPHER_ALGORITHMS,
-                                                                              "S2C Cipher")) == false)
-    {
-        return false;
-    }
-
-    if (_session->_crypto->setNegotiatedMacC2s(runAgreement<macMethods>(remoteKexAlgosPacket,
-                                                                        CppsshImpl::MAC_ALGORITHMS,
-                                                                        "C2S MAC")) == false)
-    {
-        return false;
-    }
-    if (_session->_crypto->setNegotiatedMacS2c(runAgreement<macMethods>(remoteKexAlgosPacket,
-                                                                        CppsshImpl::MAC_ALGORITHMS,
-                                                                        "S2C MAC")) == false)
-    {
-        return false;
-    }
-
-    if (_session->_crypto->setNegotiatedCmprsC2s(runAgreement<compressionMethods>(remoteKexAlgosPacket,
-                                                                                  CppsshImpl::COMPRESSION_ALGORITHMS,
-                                                                                  "C2S Compression")) == false)
-    {
-        return false;
-    }
-    if (_session->_crypto->setNegotiatedCmprsS2c(runAgreement<compressionMethods>(remoteKexAlgosPacket,
-                                                                                  CppsshImpl::COMPRESSION_ALGORITHMS,
-                                                                                  "S2C Compression")) == false)
-    {
-        return false;
-    }
-
-    return true;
+    return ret;
 }
 
 bool CppsshKex::sendKexDHInit(Botan::secure_vector<Botan::byte>& buf)
