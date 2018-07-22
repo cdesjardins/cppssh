@@ -26,9 +26,9 @@
 2015-09-13 12:50:59.043 (Debug/channel.cpp) handleWindowAdjust 100 2097152
 2015-09-13 12:51:02.049 (Info/transportimpl.cpp) CppsshTransport::disconnect
 2015-09-13 12:51:02.049 (Debug/connection.cpp) ~CppsshConnection
-2015-09-13 12:51:02.049 (Debug/channel.cpp) disconnect[0]
+2015-09-13 12:51:02.049 (Debug/channel.cpp) disconnect[1]
 2015-09-13 12:51:02.049 (Debug/transportcrypto.cpp) ~CppsshTransportCrypto
 2015-09-13 12:51:02.049 (Debug/transportthreaded.cpp) ~CppsshTransportThreaded
 2015-09-13 12:51:02.050 (Debug/transportthreaded.cpp) tx thread done
 2015-09-13 12:51:02.050 (Debug/transportcrypto.cpp) crypto rx thread done
-2015-09-13 12:51:02.050 (Debug/channel.cpp) disconnect[0]
+2015-09-13 12:51:02.050 (Debug/channel.cpp) disconnect[1]
