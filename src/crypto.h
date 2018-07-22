@@ -27,6 +27,7 @@
 #include "botan/rsa.h"
 #include "botan/key_filt.h"
 #include "botan/pipe.h"
+#include "botan/cbc.h"
 #include "cryptoalgos.h"
 #include <memory>
 
@@ -79,6 +80,8 @@ public:
     }
 
 private:
+    std::unique_ptr<Botan::HashFunction> getMacHashAlgo(macMethods macMethod, uint32_t* macDigestLen) const;
+    std::unique_ptr<Botan::BlockCipher> getBlockCipher(cryptoMethods cryptoMethod) const;
     bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID,
                          cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize,
                          Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
@@ -86,7 +89,7 @@ private:
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
-    bool computeKey(Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
+    bool computeKey(const std::string& keyType, Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
     bool setNegotiatedCrypto(const cryptoMethods cryptoAlgo, cryptoMethods* cryptoMethod) const;
     bool setNegotiatedMac(const macMethods macAlgo, macMethods* macMethod);
     bool setNegotiatedCmprs(const compressionMethods cmprsAlgo, compressionMethods* cmprsMethod) const;
