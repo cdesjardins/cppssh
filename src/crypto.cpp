@@ -587,33 +587,35 @@ std::unique_ptr<Botan::HashFunction> CppsshCrypto::getMacHashAlgo(macMethods mac
     algo = CppsshImpl::MAC_ALGORITHMS.enum2botan(macMethod);
     if (algo.length() == 0)
     {
-        cdLog(LogLevel::Error) << "Unknown mac algo ";
-        return false;
+        cdLog(LogLevel::Error) << "Unknown mac algo";
     }
-
-    hashAlgo = Botan::HashFunction::create(algo);
-    if (hashAlgo != nullptr)
+    else
     {
-        *macDigestLen = hashAlgo->output_length();
+        hashAlgo = Botan::HashFunction::create(algo);
+        if (hashAlgo != nullptr)
+        {
+            *macDigestLen = hashAlgo->output_length();
+        }
     }
     return hashAlgo;
 }
 
 std::unique_ptr<Botan::BlockCipher> CppsshCrypto::getBlockCipher(cryptoMethods cryptoMethod) const
 {
+    std::unique_ptr<Botan::BlockCipher> blockCipher;
     std::string algo;
     algo = CppsshImpl::CIPHER_ALGORITHMS.enum2botan(cryptoMethod);
     if (algo.length() == 0)
     {
-        cdLog(LogLevel::Error) << "Unknown cipher algo ";
-        return false;
+        cdLog(LogLevel::Error) << "Unknown cipher algo";
     }
-
-    std::unique_ptr<Botan::BlockCipher> blockCipher(Botan::BlockCipher::create(algo));
-    if (blockCipher == nullptr)
+    else
     {
-        cdLog(LogLevel::Error) << "Unable to get block cipher " << algo;
-        return false;
+        blockCipher = Botan::BlockCipher::create(algo);
+        if (blockCipher == nullptr)
+        {
+            cdLog(LogLevel::Error) << "Unable to get block cipher " << algo;
+        }
     }
     return blockCipher;
 }
