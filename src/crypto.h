@@ -46,12 +46,10 @@ public:
         return _decryptBlockSize;
     }
 
-    bool encryptPacket(Botan::secure_vector<Botan::byte>* encrypted, Botan::secure_vector<Botan::byte>* hmac,
-                       const Botan::byte* decrypted, uint32_t len, uint32_t seq);
+    bool encryptPacket(Botan::secure_vector<Botan::byte>* encrypted, Botan::secure_vector<Botan::byte>* hmac, const Botan::byte* decrypted, uint32_t len, uint32_t seq);
     bool decryptPacket(Botan::secure_vector<Botan::byte>* decrypted, const Botan::byte* encrypted, uint32_t len);
 
-    void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet,
-                    uint32_t seq)  const;
+    void computeMac(Botan::secure_vector<Botan::byte>* hmac, const Botan::secure_vector<Botan::byte>& packet, uint32_t seq)  const;
     bool computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val);
 
     bool verifySig(const Botan::secure_vector<Botan::byte>& hostKey, const Botan::secure_vector<Botan::byte>& sig);
@@ -82,9 +80,7 @@ public:
 private:
     std::unique_ptr<Botan::HashFunction> getMacHashAlgo(macMethods macMethod, uint32_t* macDigestLen) const;
     std::unique_ptr<Botan::BlockCipher> getBlockCipher(cryptoMethods cryptoMethod) const;
-    bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID,
-                         cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize,
-                         Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
+    bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID, cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize, Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
                          std::unique_ptr<Botan::HMAC>& hmac, Botan::secure_vector<Botan::byte>& nonce) const;
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);

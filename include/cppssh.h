@@ -56,10 +56,7 @@ public:
     CPPSSH_EXPORT static int getApiLevel();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (nullptr for no shell)
-    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port,
-                                                       const char* username, const char* privKeyFile,
-                                                       const char* password, unsigned int timeout = 1000,
-                                                       const bool x11Forwarded = true, const bool keepAlives = false,
+    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const bool x11Forwarded = true, const bool keepAlives = false,
                                                        const char* term = "xterm-color");
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);
@@ -78,10 +75,8 @@ public:
     CPPSSH_EXPORT static size_t getSupportedCiphers(char* ciphers);
     CPPSSH_EXPORT static size_t getSupportedHmacs(char* hmacs);
 
-    CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName,
-                                                 const char* pubKeyFileName, short keySize);
-    CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName,
-                                                 const char* pubKeyFileName, short keySize);
+    CPPSSH_EXPORT static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
+    CPPSSH_EXPORT static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
     CPPSSH_EXPORT static void create()
     {
         create(CPPSSH_API_LEVEL_CURRENT);
