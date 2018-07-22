@@ -419,10 +419,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
     std::unique_ptr<Botan::RSA_PrivateKey> rsaPrivKey;
     Botan::BigInt e, n, d, p, q;
     Botan::BigInt dmp1, dmq1, iqmp;
-    std::ofstream privKeyFile;
     std::ofstream pubKeyFile;
-    std::string privKeyEncoded;
-    Botan::DER_Encoder encoder;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket pubKeyBlob(&buf);
 
@@ -472,6 +469,8 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
         }
         if (pubKeyFile.fail() == false)
         {
+            std::ofstream privKeyFile;
+            std::string privKeyEncoded;
             privKeyEncoded = Botan::PEM_Code::encode(
                 Botan::DER_Encoder().start_cons(Botan::SEQUENCE)
                 .encode((size_t)0U)
@@ -513,11 +512,8 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
                                     short keySize)
 {
     bool ret = false;
-    Botan::DER_Encoder encoder;
     Botan::BigInt p, q, g, y, x;
-    std::ofstream privKeyFile;
     std::ofstream pubKeyFile;
-    std::string privKeyEncoded;
     Botan::secure_vector<Botan::byte> buf;
     CppsshPacket pubKeyBlob(&buf);
 
@@ -566,6 +562,10 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
         }
         if (pubKeyFile.fail() == false)
         {
+            Botan::DER_Encoder encoder;
+            std::ofstream privKeyFile;
+            std::string privKeyEncoded;
+
             encoder.start_cons(Botan::SEQUENCE)
             .encode((size_t)0U)
             .encode(p)
