@@ -158,7 +158,7 @@ bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
             }
             else
             {
-                cdLog(LogLevel::Error) << "Invalid magic string from xauth: " << magic;
+                cdLog(LogLevel::Error) << "Invalid magic string from \"" << xauth.str() << "\": " << magic;
             }
         }
         else

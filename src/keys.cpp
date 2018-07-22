@@ -80,6 +80,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
 
     if ((checkPrivKeyFile(privKeyFileName) == true) && (privKeyPacket.addFile(privKeyFileName) == true))
     {
+        privKeyPacket.removeWhitespace();
         _keyAlgo = hostkeyMethods::MAX_VALS;
 
         try

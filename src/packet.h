@@ -74,6 +74,7 @@ public:
     void addByte(const uint8_t ch);
     void addBigInt(const Botan::BigInt& bn);
     bool addFile(const std::string& fileName);
+    void removeWhitespace();
     void copy(const Botan::secure_vector<Botan::byte>& src);
     void replace(size_t startingPos, const Botan::secure_vector<Botan::byte>& src);
     void clear();
