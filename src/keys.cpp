@@ -25,7 +25,6 @@
 #include "botan/ber_dec.h"
 #include "botan/der_enc.h"
 #include "botan/pubkey.h"
-#include "botan/b64_filt.h"
 #include "botan/numthry.h"
 #include "botan/pkcs8.h"
 #include "botan/x509_key.h"
