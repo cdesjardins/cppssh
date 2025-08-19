@@ -49,13 +49,14 @@ CppsshCryptoAlgos CppsshImpl::CIPHER_ALGORITHMS(std::vector<CryptoStrings<crypto
 });
 CppsshKexAlgos CppsshImpl::KEX_ALGORITHMS(std::vector<CryptoStrings<kexMethods> >
 {
-    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1, "diffie-hellman-group14-sha1", "modp/ietf/2048"),
-    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1, "diffie-hellman-group1-sha1", "modp/ietf/1024"),
+    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512, "diffie-hellman-group16-sha512", "modp/ietf/4096"),
+    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP18_SHA512, "diffie-hellman-group18-sha512", "modp/ietf/8192"),
 });
 CppsshHostkeyAlgos CppsshImpl::HOSTKEY_ALGORITHMS(std::vector<CryptoStrings<hostkeyMethods> >
 {
-    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_DSS, "ssh-dss", "ssh-dss"),
-    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA, "ssh-rsa", "ssh-rsa"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_DSS, "ssh-dss", "EMSA1(SHA-1)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA, "ssh-rsa", "EMSA3(SHA-1)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA_SHA2_512, "rsa-sha2-512", "EMSA3(SHA-512)"),
 });
 CppsshCompressionAlgos CppsshImpl::COMPRESSION_ALGORITHMS(std::vector<CryptoStrings<compressionMethods> >
 {

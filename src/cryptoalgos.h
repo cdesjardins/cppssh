@@ -212,8 +212,8 @@ typedef CppsshAlgos<cryptoMethods> CppsshCryptoAlgos;
 
 enum class kexMethods
 {
-    DIFFIE_HELLMAN_GROUP1_SHA1,
-    DIFFIE_HELLMAN_GROUP14_SHA1,
+    DIFFIE_HELLMAN_GROUP16_SHA512,
+    DIFFIE_HELLMAN_GROUP18_SHA512,
     MAX_VALS,
 };
 
@@ -223,6 +223,7 @@ enum class hostkeyMethods
 {
     SSH_DSS,
     SSH_RSA,
+    SSH_RSA_SHA2_512,
     MAX_VALS
 };
 

@@ -38,7 +38,7 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     _s2cMacDigestLen(0),
     _c2sMacMethod(macMethods::HMAC_MD5),
     _s2cMacMethod(macMethods::HMAC_MD5),
-    _kexMethod(kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1),
+    _kexMethod(kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512),
     _hostkeyMethod(hostkeyMethods::SSH_DSS),
     _c2sCryptoMethod(cryptoMethods::AES128_CBC),
     _s2cCryptoMethod(cryptoMethods::AES128_CBC),
@@ -343,7 +343,6 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
     {
         Botan::secure_vector<Botan::byte> sigType, sigData;
         const CppsshConstPacket signaturePacket(&sig);
-        std::string emsa;
 
         if (_H.empty() == true)
         {
@@ -360,17 +359,16 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
         else
         {
             std::shared_ptr<Botan::Public_Key> publicKey;
-
+            std::string emsa = CppsshImpl::HOSTKEY_ALGORITHMS.enum2botan(_hostkeyMethod);
             switch (_hostkeyMethod)
             {
                 case hostkeyMethods::SSH_DSS:
                     publicKey = getDSAKey(hostKey);
-                    emsa = "EMSA1(SHA-1)";
                     break;
 
                 case hostkeyMethods::SSH_RSA:
+                case hostkeyMethods::SSH_RSA_SHA2_512:
                     publicKey = getRSAKey(hostKey);
-                    emsa = "EMSA3(SHA-1)";
                     break;
 
                 default:
@@ -386,8 +384,8 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
 
                 switch (_kexMethod)
                 {
-                    case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
-                    case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
+                    case kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512:
+                    case kexMethods::DIFFIE_HELLMAN_GROUP18_SHA512:
                         verifier.reset(new Botan::PK_Verifier(*publicKey, emsa));
                         break;
 
@@ -512,9 +510,9 @@ const char* CppsshCrypto::getHashAlgo() const
 {
     switch (_kexMethod)
     {
-        case kexMethods::DIFFIE_HELLMAN_GROUP1_SHA1:
-        case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA1:
-            return "SHA-1";
+        case kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512:
+        case kexMethods::DIFFIE_HELLMAN_GROUP18_SHA512:
+            return "SHA-512";
 
         default:
             cdLog(LogLevel::Error) << "DH Group: " << (int)_kexMethod << " was not defined.";
