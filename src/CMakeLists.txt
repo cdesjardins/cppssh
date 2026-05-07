@@ -20,11 +20,11 @@ include_directories (${HAVE_BOTAN} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_S
 
 find_file(HAVE_GIT git)
 if (HAVE_GIT)
-    exec_program(
-        "git"
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ARGS "describe --dirty --always"
-        OUTPUT_VARIABLE FULL_VERSION )
+    execute_process(
+        COMMAND git describe --dirty --always
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE FULL_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(FIND ${FULL_VERSION} "-" index)
     string(SUBSTRING ${FULL_VERSION} 0 ${index} SHORT_VERSION)
 else()
