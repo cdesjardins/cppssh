@@ -99,7 +99,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                 }
                 else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
                 {
-                    _keyAlgo = hostkeyMethods::SSH_RSA;
+                    _keyAlgo = hostkeyMethods::SSH_RSA_SHA2_512;
                     ret = getUnencryptedRSAKeys(buf);
                 }
                 else
@@ -112,7 +112,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                         ret = getRSAKeys(privKey);
                         if (ret == true)
                         {
-                            _keyAlgo = hostkeyMethods::SSH_RSA;
+                            _keyAlgo = hostkeyMethods::SSH_RSA_SHA2_512;
                         }
                         else
                         {
@@ -304,6 +304,7 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(
     switch (_keyAlgo)
     {
         case hostkeyMethods::SSH_RSA:
+        case hostkeyMethods::SSH_RSA_SHA2_512:
             _signature = generateRSASignature(sessionID, signingData);
             break;
 
@@ -336,9 +337,12 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
     else
     {
         std::vector<Botan::byte> signedRaw;
+        const std::string emsa = (_keyAlgo == hostkeyMethods::SSH_RSA_SHA2_512)
+                                 ? "EMSA3(SHA-512)" : "EMSA3(SHA-1)";
+        const std::string sigAlgo = (_keyAlgo == hostkeyMethods::SSH_RSA_SHA2_512)
+                                    ? "rsa-sha2-512" : "ssh-rsa";
 
-        std::unique_ptr<Botan::PK_Signer> RSASigner(new Botan::PK_Signer(*_rsaPrivateKey, *CppsshImpl::RNG,
-                                                                         "EMSA3(SHA-1)"));
+        std::unique_ptr<Botan::PK_Signer> RSASigner(new Botan::PK_Signer(*_rsaPrivateKey, *CppsshImpl::RNG, emsa));
         signedRaw = RSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
         if (signedRaw.size() == 0)
         {
@@ -347,7 +351,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
         else
         {
             CppsshPacket retPacket(&ret);
-            retPacket.addString("ssh-rsa");
+            retPacket.addString(sigAlgo);
             retPacket.addVectorField(Botan::secure_vector<Botan::byte>(signedRaw.begin(), signedRaw.end()));
         }
     }
