@@ -34,6 +34,7 @@
 #include "botan/ec_group.h"
 #include "botan/ec_point.h"
 #include <fstream>
+#include <filesystem>
 #ifndef WIN32
 #include <sys/stat.h>
 #endif
@@ -57,18 +58,20 @@ bool CppsshKeys::isKey(const Botan::secure_vector<Botan::byte>& buf, std::string
 
 bool CppsshKeys::checkPrivKeyFile(const std::string& privKeyFileName)
 {
-    bool ret = true;
+    bool ret = std::filesystem::exists(privKeyFileName);
 #ifndef WIN32
-    struct stat privKeyStatus;
-
-    if (lstat(privKeyFileName.c_str(), &privKeyStatus) < 0)
+    if (ret == true)
     {
-        ret = false;
-    }
-    else if ((privKeyStatus.st_mode & (S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != 0)
-    {
-        cdLog(LogLevel::Error) << "Private key file permissions are read/write by others: " << privKeyFileName;
-        ret = false;
+        struct stat privKeyStatus;
+        if (lstat(privKeyFileName.c_str(), &privKeyStatus) < 0)
+        {
+            ret = false;
+        }
+        else if ((privKeyStatus.st_mode & (S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != 0)
+        {
+            cdLog(LogLevel::Error) << "Private key file permissions are read/write by others: " << privKeyFileName;
+            ret = false;
+        }
     }
 #endif
     return ret;
