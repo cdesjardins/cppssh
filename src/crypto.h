@@ -23,6 +23,15 @@
 #include "session.h"
 #include "botan/mac.h"
 #include "botan/dh.h"
+// Botan's dsa.h emits a "this header is deprecated" #pragma message via
+// BOTAN_DEPRECATED_HEADER. DSA_PublicKey/DSA_PrivateKey are still required
+// for SSH host-key support, so silence the message by neutering the macro
+// for this single include.
+#include "botan/api.h"
+#ifdef BOTAN_DEPRECATED_HEADER
+# undef BOTAN_DEPRECATED_HEADER
+# define BOTAN_DEPRECATED_HEADER(hdr)
+#endif
 #include "botan/dsa.h"
 #include "botan/rsa.h"
 #include "botan/dl_group.h"

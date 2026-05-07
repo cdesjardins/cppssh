@@ -54,7 +54,7 @@ void CppsshConstPacket::bn2vector(Botan::secure_vector<Botan::byte>* result, con
 {
     bool high;
 
-    std::vector<Botan::byte> strVector = Botan::BigInt::encode(bi);
+    std::vector<Botan::byte> strVector = bi.serialize();
 
     high = (*(strVector.begin()) & 0x80) ? true : false;
 

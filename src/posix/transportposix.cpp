@@ -55,7 +55,7 @@ bool CppsshTransportPosix::establishLocalX11(const std::string& display)
 
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, path.str().c_str(), sizeof(addr.sun_path));
+        strncpy(addr.sun_path, path.str().c_str(), sizeof(addr.sun_path) - 1);
         int connectRet = connect(_sock, (struct sockaddr*)&addr, sizeof(addr));
         if (connectRet == 0)
         {

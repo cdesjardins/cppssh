@@ -263,7 +263,7 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
     {
         if (ret == true)
         {
-            _privKexKey.reset(new Botan::DH_PrivateKey(*CppsshImpl::RNG, Botan::DL_Group(dlGroup)));
+            _privKexKey.reset(new Botan::DH_PrivateKey(*CppsshImpl::RNG, Botan::DL_Group::from_name(dlGroup)));
 
             publicKey = _privKexKey->get_int_field("y");
             ret = !publicKey.is_zero();
