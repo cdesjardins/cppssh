@@ -52,6 +52,6 @@ endif()
 
 include(deffilename)
 define_file_basename_for_sources(cppssh)
-set_property(TARGET cppssh PROPERTY CXX_STANDARD 11)
+set_property(TARGET cppssh PROPERTY CXX_STANDARD 20)
 install(TARGETS cppssh DESTINATION lib)
 

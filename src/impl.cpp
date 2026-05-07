@@ -19,7 +19,6 @@
 
 #include "impl.h"
 #include "keys.h"
-#include "botan/init.h"
 
 std::mutex CppsshImpl::_optionsMutex;
 
@@ -68,7 +67,7 @@ std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 CppsshImpl::CppsshImpl()
     : _connectionId(0)
 {
-    RNG.reset(new Botan::Serialized_RNG(new Botan::AutoSeeded_RNG()));
+    RNG.reset(new Botan::AutoSeeded_RNG());
 }
 
 CppsshImpl::~CppsshImpl()

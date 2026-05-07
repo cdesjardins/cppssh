@@ -22,10 +22,7 @@
 #include "impl.h"
 #include "strtrim.h"
 #include "botan/pubkey.h"
-#include "botan/cbc.h"
-#include "botan/cipher_filter.h"
-#include "botan/stream_mode.h"
-#include "botan/ctr.h"
+#include "botan/cipher_mode.h"
 #include <string>
 
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
@@ -267,9 +264,8 @@ bool CppsshCrypto::getKexPublic(Botan::BigInt& publicKey)
         if (ret == true)
         {
             _privKexKey.reset(new Botan::DH_PrivateKey(*CppsshImpl::RNG, Botan::DL_Group(dlGroup)));
-            Botan::DH_PublicKey pubKexKey = *_privKexKey;
 
-            publicKey = pubKexKey.get_y();
+            publicKey = _privKexKey->get_int_field("y");
             ret = !publicKey.is_zero();
         }
     }
@@ -287,9 +283,8 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Bota
     try
     {
         Botan::PK_Key_Agreement pkka(*_privKexKey, *CppsshImpl::RNG, "Raw");
-        std::vector<Botan::byte> buf;
-        buf.resize(f.bytes());
-        Botan::BigInt::encode(buf.data(), f);
+        std::vector<Botan::byte> buf(f.bytes());
+        f.serialize_to(std::span<Botan::byte>(buf.data(), buf.size()));
         Botan::SymmetricKey negotiated = pkka.derive_key(f.bytes(), buf);
 
         if (negotiated.length() > 0)
@@ -306,6 +301,18 @@ bool CppsshCrypto::makeKexSecret(Botan::secure_vector<Botan::byte>* result, Bota
         cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
     return ret;
+}
+
+namespace
+{
+std::string cipherModeAlgo(const std::string& cipherName, bool isCtr)
+{
+    if (isCtr)
+    {
+        return "CTR-BE(" + cipherName + ")";
+    }
+    return cipherName + "/CBC/NoPadding";
+}
 }
 
 bool CppsshCrypto::computeH(Botan::secure_vector<Botan::byte>* result, const Botan::secure_vector<Botan::byte>& val)
@@ -629,63 +636,72 @@ bool CppsshCrypto::buildCipherPipe(
     uint32_t* blockSize,
     Botan::Keyed_Filter** filter,
     std::unique_ptr<Botan::Pipe>& pipe,
-    std::unique_ptr<Botan::HMAC>& hmac,
+    std::unique_ptr<Botan::MessageAuthenticationCode>& hmac,
     Botan::secure_vector<Botan::byte>& nonce) const
 {
     bool ret = false;
-    std::unique_ptr<Botan::HashFunction> hashAlgo;
 
-    hashAlgo = getMacHashAlgo(macMethod, macDigestLen);
-    if (hashAlgo != nullptr)
+    std::string macAlgo = CppsshImpl::MAC_ALGORITHMS.enum2botan(macMethod);
+    if (macAlgo.empty())
     {
-        std::unique_ptr<Botan::BlockCipher> blockCipher(getBlockCipher(cryptoMethod));
-        if (blockCipher != nullptr)
+        cdLog(LogLevel::Error) << "Unknown mac algo";
+        return ret;
+    }
+    std::unique_ptr<Botan::MessageAuthenticationCode> hmacInst =
+        Botan::MessageAuthenticationCode::create("HMAC(" + macAlgo + ")");
+    if (hmacInst == nullptr)
+    {
+        cdLog(LogLevel::Error) << "Unable to create HMAC for " << macAlgo;
+        return ret;
+    }
+    *macDigestLen = hmacInst->output_length();
+
+    std::unique_ptr<Botan::BlockCipher> blockCipher(getBlockCipher(cryptoMethod));
+    if (blockCipher != nullptr)
+    {
+        Botan::secure_vector<Botan::byte> ivbuf;
+        Botan::secure_vector<Botan::byte> symmetricKeyBuf;
+        Botan::secure_vector<Botan::byte> macIdBuf;
+        *blockSize = blockCipher->block_size();
+        bool isCtr = (cryptoMethod == cryptoMethods::AES128_CTR) ||
+                     (cryptoMethod == cryptoMethods::AES192_CTR) ||
+                     (cryptoMethod == cryptoMethods::AES256_CTR);
+        if ((computeKey("nonce", &ivbuf, ivID, *blockSize) == true) &&
+            (computeKey("symmetric", &symmetricKeyBuf, keyID, maxKeyLengthOf(blockCipher->name(), cryptoMethod)) == true) &&
+            (computeKey("mac", &macIdBuf, macID, *macDigestLen) == true))
         {
-            Botan::secure_vector<Botan::byte> ivbuf;
-            Botan::secure_vector<Botan::byte> symmetricKeyBuf;
-            Botan::secure_vector<Botan::byte> macIdBuf;
-            *blockSize = blockCipher->block_size();
-            if ((computeKey("nonce", &ivbuf, ivID, *blockSize) == true) &&
-                (computeKey("symmetric", &symmetricKeyBuf, keyID, maxKeyLengthOf(blockCipher->name(), cryptoMethod)) == true) &&
-                (computeKey("mac", &macIdBuf, macID, *macDigestLen) == true))
+            Botan::InitializationVector iv(ivbuf);
+            Botan::SymmetricKey symmetricKey(symmetricKeyBuf);
+            Botan::SymmetricKey mac(macIdBuf);
+
+            hmacInst->set_key(mac);
+            hmac = std::move(hmacInst);
+
+            std::string modeAlgo = cipherModeAlgo(blockCipher->name(), isCtr);
+            std::unique_ptr<Botan::Cipher_Mode> cipherMode = Botan::Cipher_Mode::create(modeAlgo, direction);
+            if (cipherMode == nullptr)
             {
-                Botan::InitializationVector iv(ivbuf);
-                Botan::SymmetricKey symmetricKey(symmetricKeyBuf);
-                Botan::SymmetricKey mac(macIdBuf);
-
-                hmac.reset(new Botan::HMAC(hashAlgo->clone()));
-                hmac->set_key(mac);
-
-                if ((cryptoMethod == cryptoMethods::AES128_CTR) || (cryptoMethod == cryptoMethods::AES192_CTR) ||
-                    (cryptoMethod == cryptoMethods::AES256_CTR))
-                {
-                    // Save the nonce for use by CTR ciphers
-                    nonce = ivbuf;
-                    *filter = new Botan::Transformation_Filter(
-                        new Botan::Stream_Cipher_Mode(new Botan::CTR_BE(blockCipher->clone())));
-                }
-                else
-                {
-                    // Clear the nonce for normal block ciphers
-                    // botan handles the nonce carry over in the CBC layer
-                    nonce.clear();
-                    if (direction == Botan::ENCRYPTION)
-                    {
-                        *filter = new Botan::Transformation_Filter(
-                            new Botan::CBC_Encryption(blockCipher->clone(), new Botan::Null_Padding));
-                    }
-                    else
-                    {
-                        *filter = new Botan::Transformation_Filter(
-                            new Botan::CBC_Decryption(blockCipher->clone(), new Botan::Null_Padding));
-                    }
-                }
-
-                (*filter)->set_key(symmetricKey);
-                (*filter)->set_iv(iv);
-                pipe.reset(new Botan::Pipe(*filter));
-                ret = true;
+                cdLog(LogLevel::Error) << "Unable to create cipher mode " << modeAlgo;
+                return ret;
             }
+
+            if (isCtr)
+            {
+                // Save the nonce for use by CTR ciphers
+                nonce = ivbuf;
+            }
+            else
+            {
+                // Clear the nonce for normal block ciphers
+                // botan handles the nonce carry over in the CBC layer
+                nonce.clear();
+            }
+
+            *filter = new Botan::Cipher_Mode_Filter(cipherMode.release());
+            (*filter)->set_key(symmetricKey);
+            (*filter)->set_iv(iv);
+            pipe.reset(new Botan::Pipe(*filter));
+            ret = true;
         }
     }
     return ret;
@@ -700,10 +716,10 @@ bool CppsshCrypto::makeNewKeys()
     std::unique_ptr<Botan::BlockCipher> blockCipher;
     try
     {
-        if (buildCipherPipe(Botan::ENCRYPTION, 'A', 'C', 'E', _c2sCryptoMethod, _c2sMacMethod, &_c2sMacDigestLen,
+        if (buildCipherPipe(Botan::Cipher_Dir::Encryption, 'A', 'C', 'E', _c2sCryptoMethod, _c2sMacMethod, &_c2sMacDigestLen,
                             &_encryptBlockSize, &_encryptFilter, _encrypt, _hmacOut, _c2sNonce) == true)
         {
-            ret = buildCipherPipe(Botan::DECRYPTION, 'B', 'D', 'F', _s2cCryptoMethod, _s2cMacMethod, &_s2cMacDigestLen,
+            ret = buildCipherPipe(Botan::Cipher_Dir::Decryption, 'B', 'D', 'F', _s2cCryptoMethod, _s2cMacMethod, &_s2cMacDigestLen,
                                   &_decryptBlockSize, &_decryptFilter, _decrypt, _hmacIn, _s2cNonce);
         }
     }

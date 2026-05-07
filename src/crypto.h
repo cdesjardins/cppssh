@@ -21,13 +21,17 @@
 
 #include "crypto.h"
 #include "session.h"
-#include "botan/hmac.h"
+#include "botan/mac.h"
 #include "botan/dh.h"
 #include "botan/dsa.h"
 #include "botan/rsa.h"
+#include "botan/dl_group.h"
+#include "botan/block_cipher.h"
+#include "botan/stream_cipher.h"
+#include "botan/hash.h"
 #include "botan/filters.h"
 #include "botan/pipe.h"
-#include "botan/cbc.h"
+#include "botan/cipher_mode.h"
 #include "cryptoalgos.h"
 #include <memory>
 
@@ -81,7 +85,7 @@ private:
     std::unique_ptr<Botan::HashFunction> getMacHashAlgo(macMethods macMethod, uint32_t* macDigestLen) const;
     std::unique_ptr<Botan::BlockCipher> getBlockCipher(cryptoMethods cryptoMethod) const;
     bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID, cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize, Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
-                         std::unique_ptr<Botan::HMAC>& hmac, Botan::secure_vector<Botan::byte>& nonce) const;
+                         std::unique_ptr<Botan::MessageAuthenticationCode>& hmac, Botan::secure_vector<Botan::byte>& nonce) const;
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
@@ -98,8 +102,8 @@ private:
     std::shared_ptr<CppsshSession> _session;
     std::unique_ptr<Botan::Pipe> _encrypt;
     std::unique_ptr<Botan::Pipe> _decrypt;
-    std::unique_ptr<Botan::HMAC> _hmacOut;
-    std::unique_ptr<Botan::HMAC> _hmacIn;
+    std::unique_ptr<Botan::MessageAuthenticationCode> _hmacOut;
+    std::unique_ptr<Botan::MessageAuthenticationCode> _hmacIn;
     Botan::Keyed_Filter* _encryptFilter;
     Botan::Keyed_Filter* _decryptFilter;
     Botan::secure_vector<Botan::byte> _c2sNonce;

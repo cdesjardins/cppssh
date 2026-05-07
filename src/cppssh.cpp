@@ -19,6 +19,7 @@
 
 #include "cppssh.h"
 #include "impl.h"
+#include <cstring>
 
 std::shared_ptr<CppsshImpl> Cppssh::s_cppsshInst;
 std::mutex Cppssh::s_cppsshInstMutex;

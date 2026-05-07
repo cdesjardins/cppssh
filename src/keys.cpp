@@ -28,6 +28,7 @@
 #include "botan/numthry.h"
 #include "botan/pkcs8.h"
 #include "botan/x509_key.h"
+#include "botan/data_src.h"
 #include <fstream>
 #ifndef WIN32
 #include <sys/stat.h>
@@ -103,9 +104,9 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                 }
                 else
                 {
-                    std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeyFileName,
-                                                                                       *CppsshImpl::RNG, std::string(
-                                                                                           keyPassword)));
+                    Botan::DataSource_Stream privKeySrc(privKeyFileName);
+                    std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeySrc,
+                                                                                       std::string(keyPassword)));
                     if (privKey != nullptr)
                     {
                         ret = getRSAKeys(privKey);
@@ -158,7 +159,7 @@ bool CppsshKeys::getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> private
     {
         size_t version = 0;
         Botan::BER_Decoder decoder(keyDataRaw);
-        Botan::BER_Decoder sequence = decoder.start_cons(Botan::SEQUENCE);
+        Botan::BER_Decoder sequence = decoder.start_sequence();
 
         sequence.decode(version);
 
@@ -216,7 +217,7 @@ bool CppsshKeys::getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> private
     {
         size_t version;
         Botan::BER_Decoder decoder(keyDataRaw);
-        Botan::BER_Decoder sequence = decoder.start_cons(Botan::SEQUENCE);
+        Botan::BER_Decoder sequence = decoder.start_sequence();
         sequence.decode(version);
 
         if (version)
@@ -242,7 +243,7 @@ bool CppsshKeys::getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> private
             {
                 Botan::DL_Group dsaGroup(p, q, g);
 
-                _dsaPrivateKey.reset(new Botan::DSA_PrivateKey(*CppsshImpl::RNG, dsaGroup, x));
+                _dsaPrivateKey.reset(new Botan::DSA_PrivateKey(dsaGroup, x));
                 _publicKeyBlob.clear();
                 CppsshPacket publicKeyPacket(&_publicKeyBlob);
                 publicKeyPacket.addString("ssh-dss");
@@ -268,20 +269,12 @@ bool CppsshKeys::getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
     _rsaPrivateKey = std::dynamic_pointer_cast<Botan::RSA_PrivateKey>(privKey);
     if (_rsaPrivateKey != nullptr)
     {
-        std::shared_ptr<Botan::Public_Key> pubKey(Botan::X509::load_key(Botan::X509::BER_encode(*_rsaPrivateKey)));
-        if (pubKey != nullptr)
-        {
-            std::shared_ptr<Botan::RSA_PublicKey> rsaPubKey = std::dynamic_pointer_cast<Botan::RSA_PublicKey>(pubKey);
-            if (rsaPubKey != nullptr)
-            {
-                _publicKeyBlob.clear();
-                CppsshPacket publicKeyPacket(&_publicKeyBlob);
-                publicKeyPacket.addString("ssh-rsa");
-                publicKeyPacket.addBigInt(rsaPubKey->get_e());
-                publicKeyPacket.addBigInt(rsaPubKey->get_n());
-                ret = true;
-            }
-        }
+        _publicKeyBlob.clear();
+        CppsshPacket publicKeyPacket(&_publicKeyBlob);
+        publicKeyPacket.addString("ssh-rsa");
+        publicKeyPacket.addBigInt(_rsaPrivateKey->get_e());
+        publicKeyPacket.addBigInt(_rsaPrivateKey->get_n());
+        ret = true;
     }
     return ret;
 }
@@ -292,22 +285,14 @@ bool CppsshKeys::getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
     _dsaPrivateKey = std::dynamic_pointer_cast<Botan::DSA_PrivateKey>(privKey);
     if (_dsaPrivateKey != nullptr)
     {
-        std::shared_ptr<Botan::Public_Key> pubKey(Botan::X509::load_key(Botan::X509::BER_encode(*privKey)));
-        if (pubKey != nullptr)
-        {
-            std::shared_ptr<Botan::DSA_PublicKey> dsaPubKey = std::dynamic_pointer_cast<Botan::DSA_PublicKey>(pubKey);
-            if (dsaPubKey != nullptr)
-            {
-                _publicKeyBlob.clear();
-                CppsshPacket publicKeyPacket(&_publicKeyBlob);
-                publicKeyPacket.addString("ssh-dss");
-                publicKeyPacket.addBigInt(dsaPubKey->group_p());
-                publicKeyPacket.addBigInt(dsaPubKey->group_q());
-                publicKeyPacket.addBigInt(dsaPubKey->group_g());
-                publicKeyPacket.addBigInt(dsaPubKey->get_y());
-                ret = true;
-            }
-        }
+        _publicKeyBlob.clear();
+        CppsshPacket publicKeyPacket(&_publicKeyBlob);
+        publicKeyPacket.addString("ssh-dss");
+        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("p"));
+        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("q"));
+        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("g"));
+        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("y"));
+        ret = true;
     }
     return ret;
 }
@@ -472,7 +457,7 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
             std::ofstream privKeyFile;
             std::string privKeyEncoded;
             privKeyEncoded = Botan::PEM_Code::encode(
-                Botan::DER_Encoder().start_cons(Botan::SEQUENCE)
+                Botan::DER_Encoder().start_sequence()
                 .encode((size_t)0U)
                 .encode(n)
                 .encode(e)
@@ -519,13 +504,12 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
 
     Botan::DL_Group dsaGroup(*CppsshImpl::RNG, Botan::DL_Group::DSA_Kosherizer, keySize);
     Botan::DSA_PrivateKey privDsaKey(*CppsshImpl::RNG, dsaGroup);
-    Botan::DSA_PublicKey pubDsaKey = privDsaKey;
 
     p = dsaGroup.get_p();
     q = dsaGroup.get_q();
     g = dsaGroup.get_g();
-    y = pubDsaKey.get_y();
-    x = privDsaKey.get_x();
+    y = privDsaKey.get_int_field("y");
+    x = privDsaKey.get_int_field("x");
 
     pubKeyBlob.addString("ssh-dss");
     pubKeyBlob.addBigInt(p);
@@ -566,7 +550,7 @@ bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileNam
             std::ofstream privKeyFile;
             std::string privKeyEncoded;
 
-            encoder.start_cons(Botan::SEQUENCE)
+            encoder.start_sequence()
             .encode((size_t)0U)
             .encode(p)
             .encode(q)

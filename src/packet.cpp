@@ -20,6 +20,7 @@
 #include "packet.h"
 #include "cppssh.h"
 #include "CDLogger/Logger.h"
+#include <algorithm>
 #include <fstream>
 #include <iterator>
 #include <iomanip>
