@@ -98,6 +98,10 @@ private:
 
     std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
+    std::shared_ptr<Botan::Public_Key> getECDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
+    std::shared_ptr<Botan::Public_Key> getEd25519Key(const Botan::secure_vector<Botan::byte>& hostKey);
+    bool ecdsaSshSigToRaw(const Botan::secure_vector<Botan::byte>& sigData, size_t coordLen,
+                          std::vector<Botan::byte>* raw);
     bool computeKey(const std::string& keyType, Botan::secure_vector<Botan::byte>* key, Botan::byte ID, uint32_t nBytes) const;
     bool setNegotiatedCrypto(const cryptoMethods cryptoAlgo, cryptoMethods* cryptoMethod) const;
     bool setNegotiatedMac(const macMethods macAlgo, macMethods* macMethod);

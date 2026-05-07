@@ -23,6 +23,11 @@
 #include "strtrim.h"
 #include "botan/pubkey.h"
 #include "botan/cipher_mode.h"
+#include "botan/ecdsa.h"
+#include "botan/ed25519.h"
+#include "botan/ec_group.h"
+#include "botan/ec_point.h"
+#include "botan/ec_apoint.h"
 #include <string>
 
 CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
@@ -378,6 +383,16 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
                     publicKey = getRSAKey(hostKey);
                     break;
 
+                case hostkeyMethods::ECDSA_SHA2_NISTP256:
+                case hostkeyMethods::ECDSA_SHA2_NISTP384:
+                case hostkeyMethods::ECDSA_SHA2_NISTP521:
+                    publicKey = getECDSAKey(hostKey);
+                    break;
+
+                case hostkeyMethods::SSH_ED25519:
+                    publicKey = getEd25519Key(hostKey);
+                    break;
+
                 default:
                     cdLog(LogLevel::Error) << "Hostkey algorithm: " << (int)_hostkeyMethod << " not supported.";
             }
@@ -405,7 +420,26 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
                 }
                 else
                 {
-                    result = verifier->verify_message(_H, sigData);
+                    // For ECDSA, the SSH on-the-wire signature blob is mpint r || mpint s,
+                    // but Botan's verifier expects r||s as raw fixed-length bytes. Convert.
+                    if ((_hostkeyMethod == hostkeyMethods::ECDSA_SHA2_NISTP256) ||
+                        (_hostkeyMethod == hostkeyMethods::ECDSA_SHA2_NISTP384) ||
+                        (_hostkeyMethod == hostkeyMethods::ECDSA_SHA2_NISTP521))
+                    {
+                        const auto* ecPub = dynamic_cast<const Botan::EC_PublicKey*>(publicKey.get());
+                        std::vector<Botan::byte> rawSig;
+                        if ((ecPub != nullptr) &&
+                            (ecdsaSshSigToRaw(sigData, (ecPub->domain().get_p_bits() + 7) / 8, &rawSig) == true))
+                        {
+                            result = verifier->verify_message(
+                                _H,
+                                Botan::secure_vector<Botan::byte>(rawSig.begin(), rawSig.end()));
+                        }
+                    }
+                    else
+                    {
+                        result = verifier->verify_message(_H, sigData);
+                    }
                     verifier.reset();
                 }
                 publicKey.reset();
@@ -484,6 +518,116 @@ std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secur
         }
     }
     return ret;
+}
+
+std::shared_ptr<Botan::Public_Key> CppsshCrypto::getECDSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
+{
+    std::shared_ptr<Botan::Public_Key> ret;
+    std::string algoName, curveName;
+    Botan::secure_vector<Botan::byte> point;
+
+    const CppsshConstPacket hKeyPacket(&hostKey);
+
+    if (hKeyPacket.getString(&algoName) == false)
+    {
+        return ret;
+    }
+    if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(algoName, &_hostkeyMethod) == false)
+    {
+        cdLog(LogLevel::Error) << "Host key algorithm: '" << algoName << "' not defined.";
+        return ret;
+    }
+    if ((hKeyPacket.getString(&curveName) == false) || (hKeyPacket.getString(&point) == false))
+    {
+        cdLog(LogLevel::Error) << "Malformed ECDSA host key blob.";
+        return ret;
+    }
+
+    // Map the SSH curve identifier to the Botan EC group name.
+    const char* groupName = nullptr;
+    if (curveName == "nistp256") { groupName = "secp256r1"; }
+    else if (curveName == "nistp384") { groupName = "secp384r1"; }
+    else if (curveName == "nistp521") { groupName = "secp521r1"; }
+    else
+    {
+        cdLog(LogLevel::Error) << "Unsupported ECDSA curve: " << curveName;
+        return ret;
+    }
+
+    try
+    {
+        Botan::EC_Group group = Botan::EC_Group::from_name(groupName);
+        std::optional<Botan::EC_AffinePoint> ap =
+            Botan::EC_AffinePoint::deserialize(group, std::span<const uint8_t>(point.data(), point.size()));
+        if (ap.has_value() == false)
+        {
+            cdLog(LogLevel::Error) << "Invalid ECDSA host key point.";
+        }
+        else
+        {
+            ret.reset(new Botan::ECDSA_PublicKey(group, *ap));
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
+    return ret;
+}
+
+std::shared_ptr<Botan::Public_Key> CppsshCrypto::getEd25519Key(const Botan::secure_vector<Botan::byte>& hostKey)
+{
+    std::shared_ptr<Botan::Public_Key> ret;
+    std::string algoName;
+    Botan::secure_vector<Botan::byte> pk;
+
+    const CppsshConstPacket hKeyPacket(&hostKey);
+
+    if (hKeyPacket.getString(&algoName) == false)
+    {
+        return ret;
+    }
+    if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(algoName, &_hostkeyMethod) == false)
+    {
+        cdLog(LogLevel::Error) << "Host key algorithm: '" << algoName << "' not defined.";
+        return ret;
+    }
+    if (hKeyPacket.getString(&pk) == false)
+    {
+        cdLog(LogLevel::Error) << "Malformed Ed25519 host key blob.";
+        return ret;
+    }
+    try
+    {
+        ret.reset(new Botan::Ed25519_PublicKey(std::vector<uint8_t>(pk.begin(), pk.end())));
+    }
+    catch (const std::exception& ex)
+    {
+        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+    }
+    return ret;
+}
+
+bool CppsshCrypto::ecdsaSshSigToRaw(const Botan::secure_vector<Botan::byte>& sigData,
+                                    size_t coordLen,
+                                    std::vector<Botan::byte>* raw)
+{
+    Botan::BigInt r, s;
+    const CppsshConstPacket sigPacket(&sigData);
+    if ((sigPacket.getBigInt(&r) == false) || (sigPacket.getBigInt(&s) == false))
+    {
+        cdLog(LogLevel::Error) << "Malformed ECDSA signature blob.";
+        return false;
+    }
+    if ((r.bytes() > coordLen) || (s.bytes() > coordLen))
+    {
+        cdLog(LogLevel::Error) << "ECDSA signature scalar too large for curve.";
+        return false;
+    }
+    raw->assign(2 * coordLen, 0);
+    r.serialize_to(std::span<Botan::byte>(raw->data() + coordLen - r.bytes(), r.bytes()));
+    s.serialize_to(std::span<Botan::byte>(raw->data() + 2 * coordLen - s.bytes(), s.bytes()));
+    return true;
 }
 
 size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods method) const

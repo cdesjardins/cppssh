@@ -53,9 +53,13 @@ CppsshKexAlgos CppsshImpl::KEX_ALGORITHMS(std::vector<CryptoStrings<kexMethods> 
 });
 CppsshHostkeyAlgos CppsshImpl::HOSTKEY_ALGORITHMS(std::vector<CryptoStrings<hostkeyMethods> >
 {
-    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_DSS, "ssh-dss", "EMSA1(SHA-1)"),
-    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA, "ssh-rsa", "EMSA3(SHA-1)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_ED25519, "ssh-ed25519", "Pure"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::ECDSA_SHA2_NISTP256, "ecdsa-sha2-nistp256", "EMSA1(SHA-256)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::ECDSA_SHA2_NISTP384, "ecdsa-sha2-nistp384", "EMSA1(SHA-384)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::ECDSA_SHA2_NISTP521, "ecdsa-sha2-nistp521", "EMSA1(SHA-512)"),
     CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA_SHA2_512, "rsa-sha2-512", "EMSA3(SHA-512)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA, "ssh-rsa", "EMSA3(SHA-1)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_DSS, "ssh-dss", "EMSA1(SHA-1)"),
 });
 CppsshCompressionAlgos CppsshImpl::COMPRESSION_ALGORITHMS(std::vector<CryptoStrings<compressionMethods> >
 {

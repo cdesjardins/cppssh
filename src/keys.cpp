@@ -29,6 +29,10 @@
 #include "botan/pkcs8.h"
 #include "botan/x509_key.h"
 #include "botan/data_src.h"
+#include "botan/ecdsa.h"
+#include "botan/ed25519.h"
+#include "botan/ec_group.h"
+#include "botan/ec_point.h"
 #include <fstream>
 #ifndef WIN32
 #include <sys/stat.h>
@@ -120,6 +124,14 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                             if (ret == true)
                             {
                                 _keyAlgo = hostkeyMethods::SSH_DSS;
+                            }
+                            else
+                            {
+                                ret = getECDSAKeys(privKey);
+                                if (ret == false)
+                                {
+                                    ret = getEd25519Keys(privKey);
+                                }
                             }
                         }
                     }
@@ -297,6 +309,76 @@ bool CppsshKeys::getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
     return ret;
 }
 
+namespace
+{
+// Map an EC private key's curve to the SSH "ecdsa-sha2-nistpNNN" identifier
+// suffix and the matching hostkeyMethods enum. Returns false if the curve is
+// not one of the three NIST curves SSH supports for ECDSA.
+bool ecdsaCurveInfo(const Botan::ECDSA_PrivateKey& key,
+                    std::string* sshCurve,
+                    hostkeyMethods* algo)
+{
+    switch (key.domain().get_p_bits())
+    {
+        case 256: *sshCurve = "nistp256"; *algo = hostkeyMethods::ECDSA_SHA2_NISTP256; return true;
+        case 384: *sshCurve = "nistp384"; *algo = hostkeyMethods::ECDSA_SHA2_NISTP384; return true;
+        case 521: *sshCurve = "nistp521"; *algo = hostkeyMethods::ECDSA_SHA2_NISTP521; return true;
+        default: return false;
+    }
+}
+}
+
+bool CppsshKeys::getECDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
+{
+    bool ret = false;
+    std::shared_ptr<Botan::ECDSA_PrivateKey> ecdsaKey =
+        std::dynamic_pointer_cast<Botan::ECDSA_PrivateKey>(privKey);
+    if (ecdsaKey != nullptr)
+    {
+        std::string sshCurve;
+        hostkeyMethods algo;
+        if (ecdsaCurveInfo(*ecdsaKey, &sshCurve, &algo) == false)
+        {
+            cdLog(LogLevel::Error) << "Unsupported ECDSA curve (only nistp256/384/521 are supported).";
+        }
+        else
+        {
+            // SSH wire format public key: string "ecdsa-sha2-nistpNNN",
+            // string "nistpNNN", string Q (uncompressed point 0x04||x||y).
+            std::vector<uint8_t> point = ecdsaKey->public_key_bits();
+            _publicKeyBlob.clear();
+            CppsshPacket publicKeyPacket(&_publicKeyBlob);
+            publicKeyPacket.addString(std::string("ecdsa-sha2-") + sshCurve);
+            publicKeyPacket.addString(sshCurve);
+            publicKeyPacket.addVectorField(Botan::secure_vector<Botan::byte>(point.begin(), point.end()));
+            _ecdsaPrivateKey = ecdsaKey;
+            _keyAlgo = algo;
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+bool CppsshKeys::getEd25519Keys(const std::shared_ptr<Botan::Private_Key>& privKey)
+{
+    bool ret = false;
+    std::shared_ptr<Botan::Ed25519_PrivateKey> edKey =
+        std::dynamic_pointer_cast<Botan::Ed25519_PrivateKey>(privKey);
+    if (edKey != nullptr)
+    {
+        // SSH wire format public key: string "ssh-ed25519", string pk (32 raw bytes).
+        std::vector<uint8_t> pk = edKey->raw_public_key_bits();
+        _publicKeyBlob.clear();
+        CppsshPacket publicKeyPacket(&_publicKeyBlob);
+        publicKeyPacket.addString("ssh-ed25519");
+        publicKeyPacket.addVectorField(Botan::secure_vector<Botan::byte>(pk.begin(), pk.end()));
+        _ed25519PrivateKey = edKey;
+        _keyAlgo = hostkeyMethods::SSH_ED25519;
+        ret = true;
+    }
+    return ret;
+}
+
 const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(
     const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData)
 {
@@ -312,8 +394,18 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(
             _signature = generateDSASignature(sessionID, signingData);
             break;
 
+        case hostkeyMethods::ECDSA_SHA2_NISTP256:
+        case hostkeyMethods::ECDSA_SHA2_NISTP384:
+        case hostkeyMethods::ECDSA_SHA2_NISTP521:
+            _signature = generateECDSASignature(sessionID, signingData);
+            break;
+
+        case hostkeyMethods::SSH_ED25519:
+            _signature = generateEd25519Signature(sessionID, signingData);
+            break;
+
         default:
-            cdLog(LogLevel::Error) << "Invalid key type (RSA, or DSA required).";
+            cdLog(LogLevel::Error) << "Invalid key type (RSA, DSA, ECDSA, or Ed25519 required).";
             break;
     }
 
@@ -398,6 +490,94 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::
             }
         }
     }
+    return ret;
+}
+
+Botan::secure_vector<Botan::byte> CppsshKeys::generateECDSASignature(
+    const Botan::secure_vector<Botan::byte>& sessionID,
+    const Botan::secure_vector<Botan::byte>& signingData)
+{
+    Botan::secure_vector<Botan::byte> ret;
+    Botan::secure_vector<Botan::byte> sigRaw;
+    CppsshPacket sigData(&sigRaw);
+
+    sigData.addVectorField(sessionID);
+    sigData.addVector(signingData);
+
+    std::shared_ptr<Botan::ECDSA_PrivateKey> ecdsaKey =
+        std::dynamic_pointer_cast<Botan::ECDSA_PrivateKey>(_ecdsaPrivateKey);
+    if (ecdsaKey == nullptr)
+    {
+        cdLog(LogLevel::Error) << "Private ECDSA key not initialized.";
+        return ret;
+    }
+
+    std::string sshCurve;
+    hostkeyMethods algo;
+    if (ecdsaCurveInfo(*ecdsaKey, &sshCurve, &algo) == false)
+    {
+        cdLog(LogLevel::Error) << "Unsupported ECDSA curve when signing.";
+        return ret;
+    }
+
+    // Botan returns ECDSA signatures as raw r||s, each padded to ceil(p_bits/8).
+    // SSH wants:  string "ecdsa-sha2-nistpNNN", string (mpint r || mpint s).
+    const std::string emsa = CppsshImpl::HOSTKEY_ALGORITHMS.enum2botan(algo);
+    std::unique_ptr<Botan::PK_Signer> signer(
+        new Botan::PK_Signer(*ecdsaKey, *CppsshImpl::RNG, emsa));
+    std::vector<Botan::byte> signedRaw = signer->sign_message(sigRaw, *CppsshImpl::RNG);
+
+    if ((signedRaw.size() == 0) || ((signedRaw.size() % 2) != 0))
+    {
+        cdLog(LogLevel::Error) << "Failure while generating ECDSA signature.";
+        return ret;
+    }
+
+    const size_t coordLen = signedRaw.size() / 2;
+    Botan::BigInt r(signedRaw.data(), coordLen);
+    Botan::BigInt s(signedRaw.data() + coordLen, coordLen);
+
+    Botan::secure_vector<Botan::byte> sigBlob;
+    CppsshPacket sigBlobPacket(&sigBlob);
+    sigBlobPacket.addBigInt(r);
+    sigBlobPacket.addBigInt(s);
+
+    CppsshPacket retPacket(&ret);
+    retPacket.addString(std::string("ecdsa-sha2-") + sshCurve);
+    retPacket.addVectorField(sigBlob);
+    return ret;
+}
+
+Botan::secure_vector<Botan::byte> CppsshKeys::generateEd25519Signature(
+    const Botan::secure_vector<Botan::byte>& sessionID,
+    const Botan::secure_vector<Botan::byte>& signingData)
+{
+    Botan::secure_vector<Botan::byte> ret;
+    Botan::secure_vector<Botan::byte> sigRaw;
+    CppsshPacket sigData(&sigRaw);
+
+    sigData.addVectorField(sessionID);
+    sigData.addVector(signingData);
+
+    if (_ed25519PrivateKey == nullptr)
+    {
+        cdLog(LogLevel::Error) << "Private Ed25519 key not initialized.";
+        return ret;
+    }
+
+    std::unique_ptr<Botan::PK_Signer> signer(
+        new Botan::PK_Signer(*_ed25519PrivateKey, *CppsshImpl::RNG, "Pure"));
+    std::vector<Botan::byte> signedRaw = signer->sign_message(sigRaw, *CppsshImpl::RNG);
+
+    if (signedRaw.size() != 64)
+    {
+        cdLog(LogLevel::Error) << "Ed25519 signature block was not 64 bytes (got " << signedRaw.size() << ").";
+        return ret;
+    }
+
+    CppsshPacket retPacket(&ret);
+    retPacket.addString("ssh-ed25519");
+    retPacket.addVectorField(Botan::secure_vector<Botan::byte>(signedRaw.begin(), signedRaw.end()));
     return ret;
 }
 

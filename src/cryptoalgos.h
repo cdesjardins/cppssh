@@ -224,6 +224,10 @@ enum class hostkeyMethods
     SSH_DSS,
     SSH_RSA,
     SSH_RSA_SHA2_512,
+    ECDSA_SHA2_NISTP256,
+    ECDSA_SHA2_NISTP384,
+    ECDSA_SHA2_NISTP521,
+    SSH_ED25519,
     MAX_VALS
 };
 
