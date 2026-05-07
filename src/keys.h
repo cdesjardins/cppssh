@@ -34,12 +34,10 @@ public:
     bool getKeyPairFromFile(const std::string& privKeyFileName, const char* keyPassword);
     const Botan::secure_vector<Botan::byte>& generateSignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateRSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
-    Botan::secure_vector<Botan::byte> generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateECDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateEd25519Signature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
 
     static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-    static bool generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
 
     hostkeyMethods getKeyAlgo()
     {
@@ -54,18 +52,14 @@ public:
 private:
     bool isKey(const Botan::secure_vector<Botan::byte>& buf, std::string header, std::string footer);
     bool getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey);
-    bool getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey);
     bool getECDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey);
     bool getEd25519Keys(const std::shared_ptr<Botan::Private_Key>& privKey);
     bool getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> privateKey);
-    bool getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey);
     bool checkPrivKeyFile(const std::string& privKeyFileName);
 
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyBegin(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& header);
     static Botan::secure_vector<Botan::byte>::const_iterator findKeyEnd(const Botan::secure_vector<Botan::byte>& privateKey, const std::string& footer);
 
-    static const std::string HEADER_DSA;
-    static const std::string FOOTER_DSA;
     static const std::string HEADER_RSA;
     static const std::string FOOTER_RSA;
     static const std::string PROC_TYPE;
@@ -73,7 +67,6 @@ private:
 
     hostkeyMethods _keyAlgo;
     std::shared_ptr<Botan::RSA_PrivateKey> _rsaPrivateKey;
-    std::shared_ptr<Botan::DSA_PrivateKey> _dsaPrivateKey;
     std::shared_ptr<Botan::Private_Key> _ecdsaPrivateKey;
     std::shared_ptr<Botan::Private_Key> _ed25519PrivateKey;
     Botan::secure_vector<Botan::byte> _publicKeyBlob;

@@ -39,8 +39,6 @@
 #endif
 #include "debug.h"
 
-const std::string CppsshKeys::HEADER_DSA = "-----BEGINDSAPRIVATEKEY-----";
-const std::string CppsshKeys::FOOTER_DSA = "-----ENDDSAPRIVATEKEY-----";
 const std::string CppsshKeys::HEADER_RSA = "-----BEGINRSAPRIVATEKEY-----";
 const std::string CppsshKeys::FOOTER_RSA = "-----ENDRSAPRIVATEKEY-----";
 const std::string CppsshKeys::PROC_TYPE = "Proc-Type:";
@@ -96,12 +94,7 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
             }
             else
             {
-                if (isKey(buf, HEADER_DSA, FOOTER_DSA))
-                {
-                    _keyAlgo = hostkeyMethods::SSH_DSS;
-                    ret = getUnencryptedDSAKeys(buf);
-                }
-                else if (isKey(buf, HEADER_RSA, FOOTER_RSA))
+                if (isKey(buf, HEADER_RSA, FOOTER_RSA))
                 {
                     _keyAlgo = hostkeyMethods::SSH_RSA_SHA2_512;
                     ret = getUnencryptedRSAKeys(buf);
@@ -120,18 +113,10 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                         }
                         else
                         {
-                            ret = getDSAKeys(privKey);
-                            if (ret == true)
+                            ret = getECDSAKeys(privKey);
+                            if (ret == false)
                             {
-                                _keyAlgo = hostkeyMethods::SSH_DSS;
-                            }
-                            else
-                            {
-                                ret = getECDSAKeys(privKey);
-                                if (ret == false)
-                                {
-                                    ret = getEd25519Keys(privKey);
-                                }
+                                ret = getEd25519Keys(privKey);
                             }
                         }
                     }
@@ -214,67 +199,6 @@ bool CppsshKeys::getUnencryptedRSAKeys(Botan::secure_vector<Botan::byte> private
     return ret;
 }
 
-bool CppsshKeys::getUnencryptedDSAKeys(Botan::secure_vector<Botan::byte> privateKey)
-{
-    bool ret = false;
-    Botan::secure_vector<Botan::byte> keyDataRaw;
-    Botan::BigInt p, q, g, y, x;
-    Botan::secure_vector<Botan::byte> key(findKeyBegin(privateKey, HEADER_DSA), findKeyEnd(privateKey, FOOTER_DSA));
-
-    Botan::Pipe base64dec(new Botan::Base64_Decoder);
-    base64dec.process_msg(key);
-    keyDataRaw = base64dec.read_all();
-
-    try
-    {
-        size_t version;
-        Botan::BER_Decoder decoder(keyDataRaw);
-        Botan::BER_Decoder sequence = decoder.start_sequence();
-        sequence.decode(version);
-
-        if (version)
-        {
-            cdLog(LogLevel::Error) << "Encountered unknown DSA key version.";
-        }
-        else
-        {
-            sequence.decode(p);
-            sequence.decode(q);
-            sequence.decode(g);
-            sequence.decode(y);
-            sequence.decode(x);
-
-            sequence.discard_remaining();
-            sequence.verify_end();
-
-            if (p.is_zero() || q.is_zero() || g.is_zero() || y.is_zero() || x.is_zero())
-            {
-                cdLog(LogLevel::Error) << "Could not decode the supplied DSA key.";
-            }
-            else
-            {
-                Botan::DL_Group dsaGroup(p, q, g);
-
-                _dsaPrivateKey.reset(new Botan::DSA_PrivateKey(dsaGroup, x));
-                _publicKeyBlob.clear();
-                CppsshPacket publicKeyPacket(&_publicKeyBlob);
-                publicKeyPacket.addString("ssh-dss");
-                publicKeyPacket.addBigInt(p);
-                publicKeyPacket.addBigInt(q);
-                publicKeyPacket.addBigInt(g);
-                publicKeyPacket.addBigInt(y);
-                ret = true;
-            }
-        }
-    }
-    catch (const Botan::BER_Decoding_Error& ex)
-    {
-        cdLog(LogLevel::Error) << "Error decoding private key: " << ex.what();
-        CppsshDebug::dumpStack(-1);
-    }
-    return ret;
-}
-
 bool CppsshKeys::getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
 {
     bool ret = false;
@@ -286,24 +210,6 @@ bool CppsshKeys::getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
         publicKeyPacket.addString("ssh-rsa");
         publicKeyPacket.addBigInt(_rsaPrivateKey->get_e());
         publicKeyPacket.addBigInt(_rsaPrivateKey->get_n());
-        ret = true;
-    }
-    return ret;
-}
-
-bool CppsshKeys::getDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
-{
-    bool ret = false;
-    _dsaPrivateKey = std::dynamic_pointer_cast<Botan::DSA_PrivateKey>(privKey);
-    if (_dsaPrivateKey != nullptr)
-    {
-        _publicKeyBlob.clear();
-        CppsshPacket publicKeyPacket(&_publicKeyBlob);
-        publicKeyPacket.addString("ssh-dss");
-        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("p"));
-        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("q"));
-        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("g"));
-        publicKeyPacket.addBigInt(_dsaPrivateKey->get_int_field("y"));
         ret = true;
     }
     return ret;
@@ -385,13 +291,9 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(
     _signature.clear();
     switch (_keyAlgo)
     {
-        case hostkeyMethods::SSH_RSA:
+        case hostkeyMethods::SSH_RSA_SHA2_256:
         case hostkeyMethods::SSH_RSA_SHA2_512:
             _signature = generateRSASignature(sessionID, signingData);
-            break;
-
-        case hostkeyMethods::SSH_DSS:
-            _signature = generateDSASignature(sessionID, signingData);
             break;
 
         case hostkeyMethods::ECDSA_SHA2_NISTP256:
@@ -405,7 +307,7 @@ const Botan::secure_vector<Botan::byte>& CppsshKeys::generateSignature(
             break;
 
         default:
-            cdLog(LogLevel::Error) << "Invalid key type (RSA, DSA, ECDSA, or Ed25519 required).";
+            cdLog(LogLevel::Error) << "Invalid key type (RSA, ECDSA, or Ed25519 required).";
             break;
     }
 
@@ -429,10 +331,10 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
     else
     {
         std::vector<Botan::byte> signedRaw;
-        const std::string emsa = (_keyAlgo == hostkeyMethods::SSH_RSA_SHA2_512)
-                                 ? "EMSA3(SHA-512)" : "EMSA3(SHA-1)";
-        const std::string sigAlgo = (_keyAlgo == hostkeyMethods::SSH_RSA_SHA2_512)
-                                    ? "rsa-sha2-512" : "ssh-rsa";
+        const std::string emsa = (_keyAlgo == hostkeyMethods::SSH_RSA_SHA2_256)
+                                 ? "EMSA3(SHA-256)" : "EMSA3(SHA-512)";
+        const std::string sigAlgo = (_keyAlgo == hostkeyMethods::SSH_RSA_SHA2_256)
+                                    ? "rsa-sha2-256" : "rsa-sha2-512";
 
         std::unique_ptr<Botan::PK_Signer> RSASigner(new Botan::PK_Signer(*_rsaPrivateKey, *CppsshImpl::RNG, emsa));
         signedRaw = RSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
@@ -445,49 +347,6 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateRSASignature(const Botan::
             CppsshPacket retPacket(&ret);
             retPacket.addString(sigAlgo);
             retPacket.addVectorField(Botan::secure_vector<Botan::byte>(signedRaw.begin(), signedRaw.end()));
-        }
-    }
-    return ret;
-}
-
-Botan::secure_vector<Botan::byte> CppsshKeys::generateDSASignature(const Botan::secure_vector<Botan::byte>& sessionID,
-                                                                   const Botan::secure_vector<Botan::byte>& signingData)
-{
-    Botan::secure_vector<Botan::byte> ret;
-    Botan::secure_vector<Botan::byte> sigRaw;
-    CppsshPacket sigData(&sigRaw);
-
-    sigData.addVectorField(sessionID);
-    sigData.addVector(signingData);
-
-    if (_dsaPrivateKey == nullptr)
-    {
-        cdLog(LogLevel::Error) << "Private DSA key not initialized.";
-    }
-    else
-    {
-        std::vector<Botan::byte> signedRaw;
-
-        std::unique_ptr<Botan::PK_Signer> DSASigner(new Botan::PK_Signer(*_dsaPrivateKey, *CppsshImpl::RNG,
-                                                                         "EMSA1(SHA-1)"));
-        signedRaw = DSASigner->sign_message(sigRaw, *CppsshImpl::RNG);
-        if (signedRaw.size() == 0)
-        {
-            cdLog(LogLevel::Error) << "Failure to generate DSA signature.";
-        }
-        else
-        {
-            if (signedRaw.size() != 40)
-            {
-                cdLog(LogLevel::Error) <<
-                    "DSS signature block <> 320 bits. Make sure you are using 1024 bit keys for authentication!";
-            }
-            else
-            {
-                CppsshPacket retPacket(&ret);
-                retPacket.addString("ssh-dss");
-                retPacket.addVectorField(Botan::secure_vector<Botan::byte>(signedRaw.begin(), signedRaw.end()));
-            }
         }
     }
     return ret;
@@ -677,92 +536,3 @@ bool CppsshKeys::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
     return ret;
 }
 
-bool CppsshKeys::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
-                                    short keySize)
-{
-    bool ret = false;
-    Botan::BigInt p, q, g, y, x;
-    std::ofstream pubKeyFile;
-    Botan::secure_vector<Botan::byte> buf;
-    CppsshPacket pubKeyBlob(&buf);
-
-    Botan::DL_Group dsaGroup(*CppsshImpl::RNG, Botan::DL_Group::DSA_Kosherizer, keySize);
-    Botan::DSA_PrivateKey privDsaKey(*CppsshImpl::RNG, dsaGroup);
-
-    p = dsaGroup.get_p();
-    q = dsaGroup.get_q();
-    g = dsaGroup.get_g();
-    y = privDsaKey.get_int_field("y");
-    x = privDsaKey.get_int_field("x");
-
-    pubKeyBlob.addString("ssh-dss");
-    pubKeyBlob.addBigInt(p);
-    pubKeyBlob.addBigInt(q);
-    pubKeyBlob.addBigInt(g);
-    pubKeyBlob.addBigInt(y);
-
-    Botan::Pipe base64it(new Botan::Base64_Encoder);
-    base64it.process_msg(buf);
-
-    Botan::secure_vector<Botan::byte> pubKeyBase64 = base64it.read_all();
-
-    pubKeyFile.open(pubKeyFileName);
-
-    if (pubKeyFile.is_open() == false)
-    {
-        cdLog(LogLevel::Error) << "Cannot open file where public key is stored. Filename: " << pubKeyFileName;
-    }
-    else
-    {
-        pubKeyFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-        try
-        {
-            pubKeyFile.write("ssh-dss ", 8);
-            pubKeyFile.write((char*)pubKeyBase64.data(), pubKeyBase64.size());
-            pubKeyFile.write(" ", 1);
-            pubKeyFile.write(fqdn, strlen(fqdn));
-            pubKeyFile.write("\n", 1);
-        }
-        catch (const std::ofstream::failure&)
-        {
-            cdLog(LogLevel::Error) << "I/O error while writting to file: " << pubKeyFileName;
-            CppsshDebug::dumpStack(-1);
-        }
-        if (pubKeyFile.fail() == false)
-        {
-            Botan::DER_Encoder encoder;
-            std::ofstream privKeyFile;
-            std::string privKeyEncoded;
-
-            encoder.start_sequence()
-            .encode((size_t)0U)
-            .encode(p)
-            .encode(q)
-            .encode(g)
-            .encode(y)
-            .encode(x)
-            .end_cons();
-            privKeyEncoded = Botan::PEM_Code::encode(encoder.get_contents(), "DSA PRIVATE KEY");
-
-            privKeyFile.open(privKeyFileName);
-
-            if (privKeyFile.is_open() == false)
-            {
-                cdLog(LogLevel::Error) << "Cannot open file where private key is stored. Filename: " << privKeyFileName;
-            }
-            else
-            {
-                privKeyFile.write(privKeyEncoded.c_str(), privKeyEncoded.length());
-                if (privKeyFile.fail() == true)
-                {
-                    cdLog(LogLevel::Error) << "I/O error while writting to file: " << privKeyFileName;
-                }
-                else
-                {
-                    ret = true;
-                }
-            }
-        }
-    }
-    return ret;
-}

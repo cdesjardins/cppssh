@@ -24,14 +24,8 @@ std::mutex CppsshImpl::_optionsMutex;
 
 CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
 {
-    CryptoStrings<macMethods>(macMethods::HMAC_SHA1, "hmac-sha1", "SHA-1"),
-    CryptoStrings<macMethods>(macMethods::HMAC_MD5, "hmac-md5", "MD5"),
-    CryptoStrings<macMethods>(macMethods::HMAC_NONE, "none", ""),
+    CryptoStrings<macMethods>(macMethods::HMAC_SHA512, "hmac-sha2-512", "SHA-512"),
     CryptoStrings<macMethods>(macMethods::HMAC_SHA256, "hmac-sha2-256", "SHA-256"),
-    CryptoStrings<macMethods>(macMethods::HMAC_SHA256, "hmac-ripemd160", "RIPEMD-160"),
-    // Removed hmac-sha2-512 support due to bugs in some older version of openssh
-    //   fatal: dh_gen_key: group too small: 1024 (2*need 1024) [preauth]
-    //CryptoStrings<macMethods>(macMethods::HMAC_SHA512, "hmac-sha2-512", "SHA-512"),
 });
 
 CppsshCryptoAlgos CppsshImpl::CIPHER_ALGORITHMS(std::vector<CryptoStrings<cryptoMethods> >
@@ -42,14 +36,12 @@ CppsshCryptoAlgos CppsshImpl::CIPHER_ALGORITHMS(std::vector<CryptoStrings<crypto
     CryptoStrings<cryptoMethods>(cryptoMethods::AES256_CBC, "aes256-cbc", "AES-256"),
     CryptoStrings<cryptoMethods>(cryptoMethods::AES192_CBC, "aes192-cbc", "AES-192"),
     CryptoStrings<cryptoMethods>(cryptoMethods::AES128_CBC, "aes128-cbc", "AES-128"),
-    CryptoStrings<cryptoMethods>(cryptoMethods::BLOWFISH_CBC, "blowfish-cbc", "Blowfish"),
-    CryptoStrings<cryptoMethods>(cryptoMethods::_3DES_CBC, "3des-cbc", "TripleDES"),
-    CryptoStrings<cryptoMethods>(cryptoMethods::CAST128_CBC, "cast128-cbc", "CAST-128"),
 });
 CppsshKexAlgos CppsshImpl::KEX_ALGORITHMS(std::vector<CryptoStrings<kexMethods> >
 {
-    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512, "diffie-hellman-group16-sha512", "modp/ietf/4096"),
     CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP18_SHA512, "diffie-hellman-group18-sha512", "modp/ietf/8192"),
+    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512, "diffie-hellman-group16-sha512", "modp/ietf/4096"),
+    CryptoStrings<kexMethods>(kexMethods::DIFFIE_HELLMAN_GROUP14_SHA256, "diffie-hellman-group14-sha256", "modp/ietf/2048"),
 });
 CppsshHostkeyAlgos CppsshImpl::HOSTKEY_ALGORITHMS(std::vector<CryptoStrings<hostkeyMethods> >
 {
@@ -58,8 +50,7 @@ CppsshHostkeyAlgos CppsshImpl::HOSTKEY_ALGORITHMS(std::vector<CryptoStrings<host
     CryptoStrings<hostkeyMethods>(hostkeyMethods::ECDSA_SHA2_NISTP384, "ecdsa-sha2-nistp384", "EMSA1(SHA-384)"),
     CryptoStrings<hostkeyMethods>(hostkeyMethods::ECDSA_SHA2_NISTP521, "ecdsa-sha2-nistp521", "EMSA1(SHA-512)"),
     CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA_SHA2_512, "rsa-sha2-512", "EMSA3(SHA-512)"),
-    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA, "ssh-rsa", "EMSA3(SHA-1)"),
-    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_DSS, "ssh-dss", "EMSA1(SHA-1)"),
+    CryptoStrings<hostkeyMethods>(hostkeyMethods::SSH_RSA_SHA2_256, "rsa-sha2-256", "EMSA3(SHA-256)"),
 });
 CppsshCompressionAlgos CppsshImpl::COMPRESSION_ALGORITHMS(std::vector<CryptoStrings<compressionMethods> >
 {
@@ -202,12 +193,6 @@ bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileNam
                                     short keySize)
 {
     return CppsshKeys::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
-}
-
-bool CppsshImpl::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
-                                    short keySize)
-{
-    return CppsshKeys::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
 std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connectionId)

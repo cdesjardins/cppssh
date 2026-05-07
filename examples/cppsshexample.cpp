@@ -87,11 +87,10 @@ int main(int argc, char** argv)
         Cppssh::getSupportedHmacs(hmacs.get());
         cdLog(LogLevel::Info) << "Supported ciphers: " << ciphers;
         cdLog(LogLevel::Info) << "Supported hmacs: " << hmacs;
-        Cppssh::setPreferredCipher("aes256-cbc");
-        Cppssh::setPreferredHmac("hmac-md5");
+        Cppssh::setPreferredCipher("aes256-ctr");
+        Cppssh::setPreferredHmac("hmac-sha2-256");
 
         //Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
-        //Cppssh::generateDsaKeyPair("test", "privDsa", "pubDsa", 1024);
 
         std::vector<std::thread> threads;
         for (int i = 0; i < NUM_THREADS; i++)

@@ -23,16 +23,6 @@
 #include "session.h"
 #include "botan/mac.h"
 #include "botan/dh.h"
-// Botan's dsa.h emits a "this header is deprecated" #pragma message via
-// BOTAN_DEPRECATED_HEADER. DSA_PublicKey/DSA_PrivateKey are still required
-// for SSH host-key support, so silence the message by neutering the macro
-// for this single include.
-#include "botan/api.h"
-#ifdef BOTAN_DEPRECATED_HEADER
-# undef BOTAN_DEPRECATED_HEADER
-# define BOTAN_DEPRECATED_HEADER(hdr)
-#endif
-#include "botan/dsa.h"
 #include "botan/rsa.h"
 #include "botan/dl_group.h"
 #include "botan/block_cipher.h"
@@ -96,7 +86,6 @@ private:
     bool buildCipherPipe(Botan::Cipher_Dir direction, Botan::byte ivID, Botan::byte keyID, Botan::byte macID, cryptoMethods cryptoMethod, macMethods macMethod, uint32_t* macDigestLen, uint32_t* blockSize, Botan::Keyed_Filter** filter, std::unique_ptr<Botan::Pipe>& pipe,
                          std::unique_ptr<Botan::MessageAuthenticationCode>& hmac, Botan::secure_vector<Botan::byte>& nonce) const;
 
-    std::shared_ptr<Botan::DSA_PublicKey> getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::RSA_PublicKey> getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::Public_Key> getECDSAKey(const Botan::secure_vector<Botan::byte>& hostKey);
     std::shared_ptr<Botan::Public_Key> getEd25519Key(const Botan::secure_vector<Botan::byte>& hostKey);

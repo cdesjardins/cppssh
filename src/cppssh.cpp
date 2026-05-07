@@ -166,12 +166,6 @@ bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, c
     return CppsshImpl::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
 }
 
-bool Cppssh::generateDsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
-                                short keySize)
-{
-    return CppsshImpl::generateDsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
-}
-
 CppsshMessage::CppsshMessage()
     : _message(nullptr),
     _len(0)

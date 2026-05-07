@@ -38,12 +38,12 @@ CppsshCrypto::CppsshCrypto(const std::shared_ptr<CppsshSession>& session)
     _decryptBlockSize(0),
     _c2sMacDigestLen(0),
     _s2cMacDigestLen(0),
-    _c2sMacMethod(macMethods::HMAC_MD5),
-    _s2cMacMethod(macMethods::HMAC_MD5),
+    _c2sMacMethod(macMethods::HMAC_SHA256),
+    _s2cMacMethod(macMethods::HMAC_SHA256),
     _kexMethod(kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512),
-    _hostkeyMethod(hostkeyMethods::SSH_DSS),
-    _c2sCryptoMethod(cryptoMethods::AES128_CBC),
-    _s2cCryptoMethod(cryptoMethods::AES128_CBC),
+    _hostkeyMethod(hostkeyMethods::SSH_ED25519),
+    _c2sCryptoMethod(cryptoMethods::AES256_CTR),
+    _s2cCryptoMethod(cryptoMethods::AES256_CTR),
     _c2sCmprsMethod(compressionMethods::NONE),
     _s2cCmprsMethod(compressionMethods::NONE)
 {
@@ -374,11 +374,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
             std::string emsa = CppsshImpl::HOSTKEY_ALGORITHMS.enum2botan(_hostkeyMethod);
             switch (_hostkeyMethod)
             {
-                case hostkeyMethods::SSH_DSS:
-                    publicKey = getDSAKey(hostKey);
-                    break;
-
-                case hostkeyMethods::SSH_RSA:
+                case hostkeyMethods::SSH_RSA_SHA2_256:
                 case hostkeyMethods::SSH_RSA_SHA2_512:
                     publicKey = getRSAKey(hostKey);
                     break;
@@ -406,6 +402,7 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
 
                 switch (_kexMethod)
                 {
+                    case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA256:
                     case kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512:
                     case kexMethods::DIFFIE_HELLMAN_GROUP18_SHA512:
                         verifier.reset(new Botan::PK_Verifier(*publicKey, emsa));
@@ -456,39 +453,6 @@ bool CppsshCrypto::verifySig(const Botan::secure_vector<Botan::byte>& hostKey,
         cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
     }
     return result;
-}
-
-std::shared_ptr<Botan::DSA_PublicKey> CppsshCrypto::getDSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
-{
-    std::shared_ptr<Botan::DSA_PublicKey> ret;
-    std::string field;
-    Botan::BigInt p, q, g, y;
-
-    const CppsshConstPacket hKeyPacket(&hostKey);
-
-    if (hKeyPacket.getString(&field) == true)
-    {
-        if (CppsshImpl::HOSTKEY_ALGORITHMS.ssh2enum(field, &_hostkeyMethod) == false)
-        {
-            cdLog(LogLevel::Error) << "Host key algorithm: '" << field << "' not defined.";
-        }
-        else if ((hKeyPacket.getBigInt(&p) == true) &&
-                 (hKeyPacket.getBigInt(&q) == true) &&
-                 (hKeyPacket.getBigInt(&g) == true) &&
-                 (hKeyPacket.getBigInt(&y) == true))
-        {
-            try
-            {
-                Botan::DL_Group keyDL(p, q, g);
-                ret.reset(new Botan::DSA_PublicKey(keyDL, y));
-            }
-            catch (const std::exception& ex)
-            {
-                cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
-            }
-        }
-    }
-    return ret;
 }
 
 std::shared_ptr<Botan::RSA_PublicKey> CppsshCrypto::getRSAKey(const Botan::secure_vector<Botan::byte>& hostKey)
@@ -643,11 +607,8 @@ size_t CppsshCrypto::maxKeyLengthOf(const std::string& name, cryptoMethods metho
         if (cipher != nullptr)
         {
             keyLen = cipher->key_spec().maximum_keylength();
-            if (method == cryptoMethods::BLOWFISH_CBC)
-            {
-                keyLen = 16;
-            }
         }
+        (void)method;
     }
     catch (const std::exception& ex)
     {
@@ -664,6 +625,9 @@ const char* CppsshCrypto::getHashAlgo() const
         case kexMethods::DIFFIE_HELLMAN_GROUP16_SHA512:
         case kexMethods::DIFFIE_HELLMAN_GROUP18_SHA512:
             return "SHA-512";
+
+        case kexMethods::DIFFIE_HELLMAN_GROUP14_SHA256:
+            return "SHA-256";
 
         default:
             cdLog(LogLevel::Error) << "DH Group: " << (int)_kexMethod << " was not defined.";

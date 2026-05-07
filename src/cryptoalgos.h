@@ -183,10 +183,6 @@ enum class macMethods
 {
     HMAC_SHA512,
     HMAC_SHA256,
-    HMAC_SHA1,
-    HMAC_MD5,
-    HMAC_RIPEMD160,
-    HMAC_NONE,
     MAX_VALS
 };
 
@@ -200,11 +196,6 @@ enum class cryptoMethods
     AES256_CBC,
     AES192_CBC,
     AES128_CBC,
-    BLOWFISH_CBC,
-    CAST128_CBC,
-    _3DES_CBC,
-    //TWOFISH_CBC,
-    //TWOFISH256_CBC,
     MAX_VALS
 };
 
@@ -212,8 +203,9 @@ typedef CppsshAlgos<cryptoMethods> CppsshCryptoAlgos;
 
 enum class kexMethods
 {
-    DIFFIE_HELLMAN_GROUP16_SHA512,
     DIFFIE_HELLMAN_GROUP18_SHA512,
+    DIFFIE_HELLMAN_GROUP16_SHA512,
+    DIFFIE_HELLMAN_GROUP14_SHA256,
     MAX_VALS,
 };
 
@@ -221,13 +213,12 @@ typedef CppsshAlgos<kexMethods> CppsshKexAlgos;
 
 enum class hostkeyMethods
 {
-    SSH_DSS,
-    SSH_RSA,
-    SSH_RSA_SHA2_512,
+    SSH_ED25519,
     ECDSA_SHA2_NISTP256,
     ECDSA_SHA2_NISTP384,
     ECDSA_SHA2_NISTP521,
-    SSH_ED25519,
+    SSH_RSA_SHA2_512,
+    SSH_RSA_SHA2_256,
     MAX_VALS
 };
 

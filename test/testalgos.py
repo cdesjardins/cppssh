@@ -10,23 +10,14 @@ class TestAlgos(unittest.TestCase):
         "aes256-cbc",
         "aes128-ctr",
         "aes192-ctr",
-        "aes256-ctr",
-        #"twofish-cbc",
-        #"twofish256-cbc",
-        "blowfish-cbc",
-        "3des-cbc",
-        "cast128-cbc"
+        "aes256-ctr"
     ]
     macs = [
-        "hmac-md5",
-        "hmac-sha1",
-        #"hmac-sha2-512",
         "hmac-sha2-256",
-        "none"
+        "hmac-sha2-512"
     ]
     keys = [
         "rsa",
-        "dsa",
         ""
     ]
     passwords = [
