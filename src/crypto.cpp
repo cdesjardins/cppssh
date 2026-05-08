@@ -90,27 +90,33 @@ bool CppsshCrypto::decryptPacket(Botan::secure_vector<Botan::byte>* decrypted,
 {
     bool ret = false;
     uint32_t decryptBlockSize = getDecryptBlockSize();
-    if (len % decryptBlockSize)
+    // RFC 4253 §6: the encrypted region of every SSH packet is a whole
+    // number of cipher blocks. A non-multiple length indicates either a
+    // malformed packet or a caller bug; either way, decrypting it would
+    // read past the supplied buffer on the final iteration.
+    if ((decryptBlockSize == 0) || (len % decryptBlockSize != 0))
     {
-        len = len + (len % decryptBlockSize);
+        cdLog(LogLevel::Error) << "decryptPacket: invalid length " << len <<
+            " for block size " << decryptBlockSize;
     }
-
-    try
+    else
     {
-        for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += decryptBlockSize)
+        try
         {
-            Botan::secure_vector<Botan::byte> e(encrypted + pktIndex, encrypted + pktIndex + decryptBlockSize);
-            _decrypt->process_msg(e);
-            *decrypted += _decrypt->read_all(_decrypt->message_count() - 1);
-            setNonce(_decryptFilter, _s2cNonce);
+            for (uint32_t pktIndex = 0; pktIndex < len; pktIndex += decryptBlockSize)
+            {
+                Botan::secure_vector<Botan::byte> e(encrypted + pktIndex, encrypted + pktIndex + decryptBlockSize);
+                _decrypt->process_msg(e);
+                *decrypted += _decrypt->read_all(_decrypt->message_count() - 1);
+                setNonce(_decryptFilter, _s2cNonce);
+            }
+            ret = true;
         }
-        ret = true;
+        catch (const std::exception& ex)
+        {
+            cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
+        }
     }
-    catch (const std::exception& ex)
-    {
-        cdLog(LogLevel::Error) << CPPSSH_EXCEPTION;
-    }
-
     return ret;
 }
 
