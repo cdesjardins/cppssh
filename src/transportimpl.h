@@ -69,7 +69,7 @@ protected:
     virtual bool establishLocalX11(const std::string& display) = 0;
     virtual bool setNonBlocking(bool on) = 0;
     void setupFd(fd_set* fd);
-    bool makeConnection(void* remoteAddr);
+    bool makeConnection(const struct sockaddr* remoteAddr, socklen_t addrLen);
     virtual bool isConnectInProgress() = 0;
     bool doSendKeepAlive();
 

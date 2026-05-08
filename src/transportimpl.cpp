@@ -26,45 +26,57 @@
 bool CppsshTransportImpl::establish(const std::string& host, uint16_t port)
 {
     bool ret = false;
-    sockaddr_in remoteAddr;
-    hostent* remoteHost;
+    addrinfo hints = {};
+    hints.ai_family = AF_UNSPEC;       // accept IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    remoteHost = gethostbyname(host.c_str());
-    if ((remoteHost == nullptr) || (remoteHost->h_length == 0))
+    char portStr[6];
+    snprintf(portStr, sizeof(portStr), "%u", static_cast<unsigned>(port));
+
+    addrinfo* result = nullptr;
+    int gaiErr = getaddrinfo(host.c_str(), portStr, &hints, &result);
+    if (gaiErr != 0)
     {
-        cdLog(LogLevel::Error) << "Host" << host << "not found.";
+        cdLog(LogLevel::Error) << "Host '" << host << "' lookup failed: " <<
+            gai_strerror(gaiErr);
     }
     else
     {
-        remoteAddr.sin_family = AF_INET;
-        remoteAddr.sin_addr.s_addr = *(long*)remoteHost->h_addr_list[0];
-        remoteAddr.sin_port = htons(port);
-
-        _sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (_sock < 0)
+        // Try each returned address in order; stop on the first that connects.
+        for (addrinfo* ai = result; (ai != nullptr) && (ret == false); ai = ai->ai_next)
         {
-            cdLog(LogLevel::Error) << "Failure to bind to socket.";
-        }
-        else
-        {
+            _sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+            if (_sock < 0)
+            {
+                continue;
+            }
             if (setNonBlocking(true) == true)
             {
-                ret = makeConnection(&remoteAddr);
-                if (ret == false)
-                {
-                    cdLog(LogLevel::Error) << "Unable to connect to remote server: '" << host << "'.";
-                }
+                ret = makeConnection(ai->ai_addr,
+                                     static_cast<socklen_t>(ai->ai_addrlen));
             }
+            if (ret == false)
+            {
+                close(_sock);
+                _sock = (SOCKET)-1;
+            }
+        }
+        freeaddrinfo(result);
+
+        if (ret == false)
+        {
+            cdLog(LogLevel::Error) << "Unable to connect to remote server: '" << host << "'.";
         }
     }
     return ret;
 }
 
-bool CppsshTransportImpl::makeConnection(void* remoteAddr)
+bool CppsshTransportImpl::makeConnection(const struct sockaddr* remoteAddr, socklen_t addrLen)
 {
     bool ret = false;
     // Non blocking connect needs some help from select and getsockopt to work
-    if (connect(_sock, (struct sockaddr*) remoteAddr, sizeof(sockaddr_in)) == -1)
+    if (connect(_sock, remoteAddr, addrLen) == -1)
     {
         if (isConnectInProgress() == true)
         {
