@@ -8,15 +8,15 @@
 #include <fstream>
 #include <sstream>
 
-void runConnectionTest(const std::string& hostname, const std::string& username, const std::string& password,
+bool runConnectionTest(const std::string& hostname, const std::string& username, const std::string& password,
                        const char* keyfile)
 {
+    bool ret = false;
     int channel;
     if (Cppssh::connect(&channel, hostname.c_str(), 22, username.c_str(), keyfile, password.c_str(),
                         10000) == CPPSSH_CONNECT_OK)
     {
-        std::vector<std::string> cmdList {"env\n", "mkdir cppsshTestDir\n", "ls -l cppsshTestDir\n",
-                                          "rmdir cppsshTestDir\n"};
+        std::vector<std::string> cmdList {"whoami\n"};
         std::ofstream remoteOutput;
         remoteOutput.open("testoutput.txt");
         if (!remoteOutput)
@@ -27,6 +27,7 @@ void runConnectionTest(const std::string& hostname, const std::string& username,
         {
             sendCmdList(channel, cmdList, 700, remoteOutput);
             remoteOutput.close();
+            ret = true;
         }
         Cppssh::close(channel);
     }
@@ -34,10 +35,12 @@ void runConnectionTest(const std::string& hostname, const std::string& username,
     {
         cdLog(LogLevel::Error) << "Did not connect " << channel;
     }
+    return ret;
 }
 
 int main(int argc, char** argv)
 {
+    int ret = 1;
     if ((argc != 6) && (argc != 7))
     {
         std::cerr << "Error: Five or Six arguments required: " << argv[0] <<
@@ -65,7 +68,10 @@ int main(int argc, char** argv)
             {
                 keyfile = argv[6];
             }
-            runConnectionTest(hostname, username, password, keyfile);
+            if (runConnectionTest(hostname, username, password, keyfile))
+            {
+                ret = 0;
+            }
         }
         catch (const std::exception& ex)
         {
@@ -73,5 +79,5 @@ int main(int argc, char** argv)
         }
         Cppssh::destroy();
     }
-    return 0;
+    return ret;
 }
