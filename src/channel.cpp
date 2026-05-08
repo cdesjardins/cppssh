@@ -330,7 +330,12 @@ bool CppsshChannel::getX11()
     {
         if (CppsshX11Channel::runXauth(display, &_X11Method, &_realX11Cookie) == false)
         {
-            getRandomString(16, &_fakeX11Cookie);
+            // 32 hex chars = 16 binary bytes, which is the standard
+            // MIT-MAGIC-COOKIE-1 size. The X server will only accept the
+            // forwarded connection if it tolerates this cookie (e.g. auth
+            // disabled), since with no xauth entry we have no real cookie
+            // to swap in on the rx path.
+            getRandomString(32, &_fakeX11Cookie);
             _X11Method = "MIT-MAGIC-COOKIE-1";
         }
         else
