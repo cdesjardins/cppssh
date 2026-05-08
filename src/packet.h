@@ -36,7 +36,7 @@ public:
     bool getString(Botan::secure_vector<Botan::byte>* result) const;
     bool getString(std::string* result) const;
     bool getBigInt(Botan::BigInt* result) const;
-    void getChannelData(CppsshMessage* result) const;
+    bool getChannelData(CppsshMessage* result) const;
     uint8_t getByte() const;
     uint32_t getInt() const;
     void skipHeader() const;

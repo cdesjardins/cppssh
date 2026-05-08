@@ -164,12 +164,25 @@ bool CppsshConstPacket::getBigInt(Botan::BigInt* result) const
     return ret;
 }
 
-void CppsshConstPacket::getChannelData(CppsshMessage* result) const
+bool CppsshConstPacket::getChannelData(CppsshMessage* result) const
 {
-    // hackery to avoid tons of memcpy
-    const Botan::byte* p = _cdata->data() + _index;
-    uint32_t len = ntohl(*((uint32_t*)p));
-    result->setMessage((uint8_t*)(p + sizeof(uint32_t)), len);
+    bool ret = false;
+    if ((_index >= 0) &&
+        (static_cast<size_t>(_index) + sizeof(uint32_t) <= _cdata->size()))
+    {
+        uint32_t len = getPacketLength();
+        size_t available = _cdata->size() - static_cast<size_t>(_index) - sizeof(uint32_t);
+        if (len <= available)
+        {
+            // hackery to avoid tons of memcpy: copy directly into the
+            // CppsshMessage rather than through an intermediate secure_vector.
+            const Botan::byte* p = _cdata->data() + _index;
+            result->setMessage((const uint8_t*)(p + sizeof(uint32_t)), len);
+            _index += sizeof(uint32_t) + len;
+            ret = true;
+        }
+    }
+    return ret;
 }
 
 uint32_t CppsshConstPacket::getInt() const

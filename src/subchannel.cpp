@@ -97,13 +97,19 @@ void CppsshSubChannel::handleIncomingChannelData(const Botan::secure_vector<Bota
     packet.skipHeader();
     // rx channel
     /*uint32_t rxChannel = */ packet.getInt();
-    packet.getChannelData(message.get());
-    _windowRecv -= message->length();
-    if (_windowRecv < (CPPSSH_RX_WINDOW_SIZE / 2))
+    if (packet.getChannelData(message.get()) == true)
     {
-        sendAdjustWindow();
+        _windowRecv -= message->length();
+        if (_windowRecv < (CPPSSH_RX_WINDOW_SIZE / 2))
+        {
+            sendAdjustWindow();
+        }
+        _incomingChannelData.enqueue(message);
     }
-    _incomingChannelData.enqueue(message);
+    else
+    {
+        cdLog(LogLevel::Error) << "Malformed channel data packet";
+    }
 }
 
 void CppsshSubChannel::handleIncomingControlData(const Botan::secure_vector<Botan::byte>& buf)
