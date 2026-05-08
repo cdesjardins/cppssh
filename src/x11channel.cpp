@@ -62,9 +62,38 @@ bool CppsshX11Channel::startChannel()
     return ret;
 }
 
+// X11 connection setup wire format (from X protocol spec):
+//   [0]      byte order: 'B' (MSB-first) or 'l' (LSB-first)
+//   [1]      unused
+//   [2..3]   protocol-major-version
+//   [4..5]   protocol-minor-version
+//   [6..7]   length of authorization-protocol-name
+//   [8..9]   length of authorization-protocol-data (the cookie)
+//   [10..11] unused
+//   [12..]   auth name (padded to 4), then auth data (padded to 4)
+namespace {
+constexpr size_t kX11SetupHeaderLen = 12;
+constexpr size_t kX11NameLenOffset = 6;
+constexpr size_t kX11DataLenOffset = 8;
+constexpr Botan::byte kX11ByteOrderMsb = 'B';
+constexpr size_t kX11FieldAlign = 4;
+inline size_t padTo(size_t n, size_t align)
+{
+    return (n + align - 1) & ~(align - 1);
+}
+}
+
 void CppsshX11Channel::x11RxThread()
 {
+    // The X11 connection setup may not arrive in a single SSH channel
+    // message. Accumulate until we have the fixed header (which tells us
+    // the full size), then until we have the whole setup, then rewrite
+    // the auth cookie at its exact offset and forward.
     bool first = true;
+    Botan::secure_vector<Botan::byte> setupBuf;
+    size_t expectedSetupLen = 0;
+    size_t cookieOffset = 0;
+    size_t cookieLen = 0;
     cdLog(LogLevel::Debug) << "starting x11 rx thread";
     while (_x11transport->isRunning() == true)
     {
@@ -73,14 +102,44 @@ void CppsshX11Channel::x11RxThread()
         {
             Botan::secure_vector<Botan::byte> buf((Botan::byte*)message.message(),
                                                   (Botan::byte*)message.message() + message.length());
-            if (first == true)
+            if (first == false)
             {
-                CppsshPacket magicPacket(&buf);
-                magicPacket.replace(
-                    message.length() - _session->_channel->_realX11Cookie.size(), _session->_channel->_realX11Cookie);
-                first = false;
+                _x11transport->sendMessage(buf);
+                continue;
             }
-            _x11transport->sendMessage(buf);
+            setupBuf.insert(setupBuf.end(), buf.begin(), buf.end());
+            if ((expectedSetupLen == 0) && (setupBuf.size() >= kX11SetupHeaderLen))
+            {
+                bool msbFirst = (setupBuf[0] == kX11ByteOrderMsb);
+                auto u16 = [&](size_t off) -> uint16_t {
+                    return msbFirst
+                        ? (uint16_t)((setupBuf[off] << 8) | setupBuf[off + 1])
+                        : (uint16_t)((setupBuf[off + 1] << 8) | setupBuf[off]);
+                };
+                uint16_t nameLen = u16(kX11NameLenOffset);
+                cookieLen = u16(kX11DataLenOffset);
+                cookieOffset = kX11SetupHeaderLen + padTo(nameLen, kX11FieldAlign);
+                expectedSetupLen = cookieOffset + padTo(cookieLen, kX11FieldAlign);
+            }
+            if ((expectedSetupLen == 0) || (setupBuf.size() < expectedSetupLen))
+            {
+                continue;
+            }
+            const Botan::secure_vector<Botan::byte>& realCookie = _session->_channel->_realX11Cookie;
+            if ((realCookie.size() > 0) && (realCookie.size() == cookieLen) &&
+                (cookieOffset + realCookie.size() <= setupBuf.size()))
+            {
+                std::copy(realCookie.begin(), realCookie.end(),
+                          setupBuf.begin() + cookieOffset);
+            }
+            else if (realCookie.size() != cookieLen)
+            {
+                cdLog(LogLevel::Error) << "x11 setup cookie size mismatch: real=" << realCookie.size()
+                                       << " setup=" << cookieLen;
+            }
+            _x11transport->sendMessage(setupBuf);
+            setupBuf.clear();
+            first = false;
         }
     }
     cdLog(LogLevel::Debug) << "x11 rx thread done";
