@@ -10,8 +10,6 @@
 #include "impl.h"
 #include "keys.h"
 
-std::mutex CppsshImpl::_optionsMutex;
-
 CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
 {
     CryptoStrings<macMethods>(macMethods::HMAC_SHA512, "hmac-sha2-512", "SHA-512"),
@@ -141,13 +139,11 @@ bool CppsshImpl::close(int connectionId)
 
 bool CppsshImpl::setPreferredCipher(const char* prefCipher)
 {
-    std::unique_lock<std::mutex> lock(_optionsMutex);
     return CppsshImpl::CIPHER_ALGORITHMS.setPref(prefCipher);
 }
 
 bool CppsshImpl::setPreferredHmac(const char* prefHmac)
 {
-    std::unique_lock<std::mutex> lock(_optionsMutex);
     return CppsshImpl::MAC_ALGORITHMS.setPref(prefHmac);
 }
 

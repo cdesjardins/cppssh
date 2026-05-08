@@ -13,6 +13,7 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <mutex>
 #include "CDLogger/Logger.h"
 #include "strtrim.h"
 
@@ -86,23 +87,32 @@ public:
     {
     }
 
+    // All accessors below take _algosMutex so that setPref (which mutates
+    // _algos via iter_swap) cannot race with readers running on connection
+    // threads during KEX.
     bool ssh2enum(const std::string& sshAlgo, T* method) const
     {
+        std::lock_guard<std::mutex> lock(_algosMutex);
         return CryptoStrings<T>::ssh2enum(sshAlgo, _algos, method);
     }
 
-    const std::string& enum2botan(const T method) const
+    // Returns by value: enum2name yields a reference to a string inside
+    // _algos, which would dangle once the lock is released.
+    std::string enum2botan(const T method) const
     {
+        std::lock_guard<std::mutex> lock(_algosMutex);
         return CryptoStrings<T>::enum2name(method, _algos, false);
     }
 
-    const std::string& enum2ssh(const T method) const
+    std::string enum2ssh(const T method) const
     {
+        std::lock_guard<std::mutex> lock(_algosMutex);
         return CryptoStrings<T>::enum2name(method, _algos, true);
     }
 
     bool setPref(const char* pref)
     {
+        std::lock_guard<std::mutex> lock(_algosMutex);
         bool ret = false;
         typename std::vector<CryptoStrings<T> >::iterator it = findSshName(pref);
         if (it != _algos.end())
@@ -119,6 +129,7 @@ public:
 
     bool agree(std::string* result, const std::string& remote) const
     {
+        std::lock_guard<std::mutex> lock(_algosMutex);
         bool ret = false;
         std::vector<std::string>::iterator agreedAlgo;
         std::vector<std::string> remoteVec;
@@ -142,6 +153,7 @@ public:
 
     void toString(std::string* outstr) const
     {
+        std::lock_guard<std::mutex> lock(_algosMutex);
         for (const CryptoStrings<T>& algo : _algos)
         {
             if (outstr->length() > 0)
@@ -153,6 +165,7 @@ public:
     }
 
 protected:
+    // Caller must hold _algosMutex.
     typename std::vector<CryptoStrings<T> >::iterator findSshName(const std::string& sshName)
     {
         for (typename std::vector<CryptoStrings<T> >::iterator it = _algos.begin(); it != _algos.end(); it++)
@@ -167,6 +180,7 @@ protected:
 
     std::vector<CryptoStrings<T> > _algos;
 private:
+    mutable std::mutex _algosMutex;
 };
 
 enum class macMethods
