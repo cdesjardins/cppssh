@@ -32,7 +32,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
         //Cppssh::windowSize(channel, 80, 40);
 
         while ((Cppssh::isConnected(channel) == true) &&
-               (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(1))))
+               (std::chrono::steady_clock::now() < (txTime + std::chrono::seconds(20))))
         {
             CppsshMessage message;
             if (Cppssh::read(channel, &message) == true)
@@ -48,7 +48,7 @@ void runConnectionTest(char* hostname, char* username, char* password)
 
                 if ((sentGvim == false) && (txCount > 5))
                 {
-                    Cppssh::writeString(channel, "xterm&\n");
+                    Cppssh::writeString(channel, "gvim&\n");
                     sentGvim = true;
                 }
 
