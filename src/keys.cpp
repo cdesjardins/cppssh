@@ -25,6 +25,7 @@
 #include "botan/ec_point.h"
 #include <fstream>
 #include <filesystem>
+#include <string_view>
 #ifndef WIN32
 #include <sys/stat.h>
 #endif
@@ -212,33 +213,36 @@ bool CppsshKeys::getRSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey)
 
 namespace
 {
-// Map an EC private key's curve to the SSH "ecdsa-sha2-nistpNNN" identifier
-// suffix and the matching hostkeyMethods enum. Returns false if the curve is
-// not one of the three NIST curves SSH supports for ECDSA.
-bool ecdsaCurveInfo(const Botan::ECDSA_PrivateKey& key,
-                    std::string* sshCurve,
-                    hostkeyMethods* algo)
+// SSH names the three ECDSA host-key algorithms "ecdsa-sha2-nistpNNN".
+// The curve identifier carried separately on the wire is just the suffix
+// after this prefix, so callers strip it from HOSTKEY_ALGORITHMS.enum2ssh().
+constexpr std::string_view ECDSA_SSH_PREFIX = "ecdsa-sha2-";
+
+// Map an EC private key's curve to the matching hostkeyMethods enum.
+// Returns false if the curve is not one of the three NIST curves SSH
+// supports for ECDSA.
+bool ecdsaCurveAlgo(const Botan::ECDSA_PrivateKey& key, hostkeyMethods* algo)
 {
+    bool ret = true;
     switch (key.domain().get_p_bits())
     {
         case 256:
-            *sshCurve = "nistp256";
             *algo = hostkeyMethods::ECDSA_SHA2_NISTP256;
-            return true;
+            break;
 
         case 384:
-            *sshCurve = "nistp384";
             *algo = hostkeyMethods::ECDSA_SHA2_NISTP384;
-            return true;
+            break;
 
         case 521:
-            *sshCurve = "nistp521";
             *algo = hostkeyMethods::ECDSA_SHA2_NISTP521;
-            return true;
+            break;
 
         default:
-            return false;
+            ret = false;
+            break;
     }
+    return ret;
 }
 }
 
@@ -249,9 +253,8 @@ bool CppsshKeys::getECDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey
         std::dynamic_pointer_cast<Botan::ECDSA_PrivateKey>(privKey);
     if (ecdsaKey != nullptr)
     {
-        std::string sshCurve;
         hostkeyMethods algo;
-        if (ecdsaCurveInfo(*ecdsaKey, &sshCurve, &algo) == false)
+        if (ecdsaCurveAlgo(*ecdsaKey, &algo) == false)
         {
             cdLog(LogLevel::Error) << "Unsupported ECDSA curve (only nistp256/384/521 are supported).";
         }
@@ -259,11 +262,12 @@ bool CppsshKeys::getECDSAKeys(const std::shared_ptr<Botan::Private_Key>& privKey
         {
             // SSH wire format public key: string "ecdsa-sha2-nistpNNN",
             // string "nistpNNN", string Q (uncompressed point 0x04||x||y).
+            const std::string sshAlgo = CppsshImpl::HOSTKEY_ALGORITHMS.enum2ssh(algo);
             std::vector<uint8_t> point = ecdsaKey->public_key_bits();
             _publicKeyBlob.clear();
             CppsshPacket publicKeyPacket(&_publicKeyBlob);
-            publicKeyPacket.addString(std::string("ecdsa-sha2-") + sshCurve);
-            publicKeyPacket.addString(sshCurve);
+            publicKeyPacket.addString(sshAlgo);
+            publicKeyPacket.addString(sshAlgo.substr(ECDSA_SSH_PREFIX.size()));
             publicKeyPacket.addVectorField(Botan::secure_vector<Botan::byte>(point.begin(), point.end()));
             _ecdsaPrivateKey = ecdsaKey;
             _keyAlgo = algo;
@@ -379,9 +383,8 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateECDSASignature(
         return ret;
     }
 
-    std::string sshCurve;
     hostkeyMethods algo;
-    if (ecdsaCurveInfo(*ecdsaKey, &sshCurve, &algo) == false)
+    if (ecdsaCurveAlgo(*ecdsaKey, &algo) == false)
     {
         cdLog(LogLevel::Error) << "Unsupported ECDSA curve when signing.";
         return ret;
@@ -389,6 +392,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateECDSASignature(
 
     // Botan returns ECDSA signatures as raw r||s, each padded to ceil(p_bits/8).
     // SSH wants:  string "ecdsa-sha2-nistpNNN", string (mpint r || mpint s).
+    const std::string sshAlgo = CppsshImpl::HOSTKEY_ALGORITHMS.enum2ssh(algo);
     const std::string emsa = CppsshImpl::HOSTKEY_ALGORITHMS.enum2botan(algo);
     std::unique_ptr<Botan::PK_Signer> signer(
         new Botan::PK_Signer(*ecdsaKey, *CppsshImpl::RNG, emsa));
@@ -410,7 +414,7 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateECDSASignature(
     sigBlobPacket.addBigInt(s);
 
     CppsshPacket retPacket(&ret);
-    retPacket.addString(std::string("ecdsa-sha2-") + sshCurve);
+    retPacket.addString(sshAlgo);
     retPacket.addVectorField(sigBlob);
     return ret;
 }
