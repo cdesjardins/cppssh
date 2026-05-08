@@ -116,19 +116,21 @@ Botan::secure_vector<Botan::byte>::const_iterator CppsshConstPacket::getPayloadE
 
 bool CppsshConstPacket::getString(Botan::secure_vector<Botan::byte>* result) const
 {
-    bool ret = true;
-    uint32_t len = getPacketLength();
-
-    if (len > (_cdata->size() + _index))
+    bool ret = false;
+    // Need at least 4 bytes available at _index for the length prefix itself.
+    if ((_index >= 0) &&
+        (static_cast<size_t>(_index) + sizeof(uint32_t) <= _cdata->size()))
     {
-        ret = false;
-    }
-    else
-    {
-        *result =
-            Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index,
-                                              _cdata->begin() + (sizeof(uint32_t) + len + _index));
-        _index += sizeof(uint32_t) + len;
+        uint32_t len = getPacketLength();
+        size_t available = _cdata->size() - static_cast<size_t>(_index) - sizeof(uint32_t);
+        if (len <= available)
+        {
+            *result =
+                Botan::secure_vector<Botan::byte>(_cdata->begin() + sizeof(uint32_t) + _index,
+                                                  _cdata->begin() + (sizeof(uint32_t) + len + _index));
+            _index += sizeof(uint32_t) + len;
+            ret = true;
+        }
     }
     return ret;
 }
@@ -145,18 +147,19 @@ bool CppsshConstPacket::getString(std::string* result) const
 
 bool CppsshConstPacket::getBigInt(Botan::BigInt* result) const
 {
-    bool ret = true;
-    uint32_t len = getPacketLength();
-
-    if (len > _cdata->size())
+    bool ret = false;
+    if ((_index >= 0) &&
+        (static_cast<size_t>(_index) + sizeof(uint32_t) <= _cdata->size()))
     {
-        ret = false;
-    }
-    else
-    {
-        Botan::BigInt tmpBI(_cdata->data() + sizeof(uint32_t) + _index, len);
-        result->swap(tmpBI);
-        _index += sizeof(uint32_t) + len;
+        uint32_t len = getPacketLength();
+        size_t available = _cdata->size() - static_cast<size_t>(_index) - sizeof(uint32_t);
+        if (len <= available)
+        {
+            Botan::BigInt tmpBI(_cdata->data() + sizeof(uint32_t) + _index, len);
+            result->swap(tmpBI);
+            _index += sizeof(uint32_t) + len;
+            ret = true;
+        }
     }
     return ret;
 }
