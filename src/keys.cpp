@@ -95,8 +95,10 @@ bool CppsshKeys::getKeyPairFromFile(const std::string& privKeyFileName, const ch
                 else
                 {
                     Botan::DataSource_Stream privKeySrc(privKeyFileName);
+                    // keyPassword may be nullptr (caller has an unencrypted
+                    // PEM key); std::string(nullptr) is UB, so coalesce to "".
                     std::shared_ptr<Botan::Private_Key> privKey(Botan::PKCS8::load_key(privKeySrc,
-                                                                                       std::string(keyPassword)));
+                                                                                       std::string(keyPassword != nullptr ? keyPassword : "")));
                     if (privKey != nullptr)
                     {
                         ret = getRSAKeys(privKey);
