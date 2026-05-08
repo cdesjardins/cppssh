@@ -9,6 +9,61 @@
 
 #include "impl.h"
 #include "keys.h"
+#include <mutex>
+#include <span>
+
+namespace
+{
+// Thread-safe wrapper around AutoSeeded_RNG. Botan's AutoSeeded_RNG is
+// documented as not thread-safe, but multiple connection threads call
+// CppsshImpl::RNG concurrently (key signing, KEX, channel cookies, etc.).
+// All virtuals delegate to the inner RNG under a mutex.
+class ThreadSafeRng final : public Botan::RandomNumberGenerator
+{
+public:
+    ThreadSafeRng()
+        : _inner(new Botan::AutoSeeded_RNG())
+    {
+    }
+
+    bool accepts_input() const override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _inner->accepts_input();
+    }
+
+    std::string name() const override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _inner->name();
+    }
+
+    void clear() override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _inner->clear();
+    }
+
+    bool is_seeded() const override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _inner->is_seeded();
+    }
+
+    void fill_bytes_with_input(std::span<uint8_t> output,
+                               std::span<const uint8_t> input) override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        // fill_bytes_with_input is private in AutoSeeded_RNG, but the public
+        // randomize_with_input on the base class is a thin wrapper for it.
+        _inner->randomize_with_input(output, input);
+    }
+
+private:
+    mutable std::mutex _mutex;
+    std::unique_ptr<Botan::AutoSeeded_RNG> _inner;
+};
+}
 
 CppsshMacAlgos CppsshImpl::MAC_ALGORITHMS(std::vector<CryptoStrings<macMethods> >
 {
@@ -50,7 +105,7 @@ std::shared_ptr<Botan::RandomNumberGenerator> CppsshImpl::RNG;
 CppsshImpl::CppsshImpl()
     : _connectionId(0)
 {
-    RNG.reset(new Botan::AutoSeeded_RNG());
+    RNG.reset(new ThreadSafeRng());
 }
 
 CppsshImpl::~CppsshImpl()
