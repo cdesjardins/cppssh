@@ -15,6 +15,7 @@
 #include "botan/secmem.h"
 #include <memory>
 #include <condition_variable>
+#include <atomic>
 
 #define CPPSSH_MAX_PACKET_LEN 0x4000
 class CppsshSession;
@@ -75,7 +76,7 @@ protected:
     std::shared_ptr<CppsshSession> _session;
     bool wait(bool isWrite);
     SOCKET _sock;
-    volatile bool _running;
+    std::atomic<bool> _running;
     bool _sendKeepAlives;
     std::chrono::steady_clock::time_point _lastMsgTime;
 };
