@@ -335,7 +335,12 @@ bool CppsshChannel::getX11()
         }
         else
         {
-            getRandomString(_realX11Cookie.size(), &_fakeX11Cookie);
+            // getRandomString(N) returns N hex chars (= N/2 binary bytes).
+            // The server hex-decodes the cookie, so the fake cookie's byte
+            // length must match the real cookie's byte length — otherwise the
+            // tail-replace in CppsshX11Channel::x11RxThread overwrites part of
+            // the auth-protocol name and the X server rejects the connection.
+            getRandomString(_realX11Cookie.size() * 2, &_fakeX11Cookie);
         }
         int displayNum;
         int screenNum;
