@@ -11,6 +11,22 @@
 #include "channel.h"
 #include "debug.h"
 
+namespace
+{
+// Constant-time byte comparison: runs in time independent of where (or
+// whether) the inputs differ. The OR-accumulate over XORed bytes prevents
+// the compiler from short-circuiting.
+bool constantTimeEquals(const Botan::byte* a, const Botan::byte* b, size_t n)
+{
+    Botan::byte diff = 0;
+    for (size_t i = 0; i < n; i++)
+    {
+        diff |= a[i] ^ b[i];
+    }
+    return diff == 0;
+}
+}
+
 CppsshTransportCrypto::CppsshTransportCrypto(const std::shared_ptr<CppsshSession>& session, SOCKET sock)
     : CppsshTransportThreaded(session),
     _txSeq(3),
@@ -117,7 +133,11 @@ bool CppsshTransportCrypto::computeMac(const Botan::secure_vector<Botan::byte>& 
             Botan::secure_vector<Botan::byte> ourMac;
             _session->_crypto->computeMac(&ourMac, decrypted, _rxSeq);
 
-            if (std::equal(_in.begin() + (*cryptoLen), _in.begin() + (*cryptoLen) + macSize, ourMac.begin()) == false)
+            // Constant-time compare: do not short-circuit on first mismatch,
+            // otherwise the timing of this check leaks information about how
+            // many leading bytes of the MAC the attacker guessed correctly.
+            if (constantTimeEquals(_in.data() + (*cryptoLen),
+                                   ourMac.data(), macSize) == false)
             {
                 cdLog(LogLevel::Error) << "Mismatched HMACs.";
                 ret = false;
