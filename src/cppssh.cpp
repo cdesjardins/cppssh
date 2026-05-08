@@ -155,12 +155,6 @@ size_t Cppssh::getSupportedHmacs(char* hmacs)
     return CppsshImpl::getSupportedHmacs(hmacs);
 }
 
-bool Cppssh::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
-                                short keySize)
-{
-    return CppsshImpl::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
-}
-
 CppsshMessage::CppsshMessage()
     : _message(nullptr),
     _len(0)

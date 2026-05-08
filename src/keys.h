@@ -27,8 +27,6 @@ public:
     Botan::secure_vector<Botan::byte> generateECDSASignature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
     Botan::secure_vector<Botan::byte> generateEd25519Signature(const Botan::secure_vector<Botan::byte>& sessionID, const Botan::secure_vector<Botan::byte>& signingData);
 
-    static bool generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName, short keySize);
-
     hostkeyMethods getKeyAlgo()
     {
         return _keyAlgo;

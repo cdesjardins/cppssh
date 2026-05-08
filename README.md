@@ -1,6 +1,6 @@
 # cppssh
 
-A C++ SSH-2 client library built on top of the [Botan](https://botan.randombit.net/) cryptography toolkit. cppssh exposes a small, opaque, integer-handle based C++ API for opening interactive SSH shell sessions, exchanging data, forwarding X11, and generating RSA key pairs.
+A C++ SSH-2 client library built on top of the [Botan](https://botan.randombit.net/) cryptography toolkit. cppssh exposes a small, opaque, integer-handle based C++ API for opening interactive SSH shell sessions, exchanging data, and forwarding X11.
 
 The public surface is a single class — `Cppssh` — plus a `CppsshMessage` value type and a `CppsshConnectStatus_t` enum (see `include/cppssh.h`).
 
@@ -20,7 +20,6 @@ The public surface is a single class — `Cppssh` — plus a `CppsshMessage` val
   - [Terminal control](#terminal-control)
   - [Closing connections](#closing-connections)
   - [Algorithm selection](#algorithm-selection)
-  - [RSA key pair generation](#rsa-key-pair-generation)
   - [`CppsshMessage`](#cppsshmessage)
   - [`CppsshConnectStatus_t`](#cppsshconnectstatus_t)
 - [Supported algorithms](#supported-algorithms)
@@ -48,7 +47,6 @@ The public surface is a single class — `Cppssh` — plus a `CppsshMessage` val
 - **X11 forwarding.** Optional, on by default. Reads `$DISPLAY`, runs `xauth` to obtain a real cookie, and tunnels X traffic over the SSH connection.
 - **TCP keepalives.** Optional periodic keepalive messages.
 - **Multiple concurrent connections.** Each call to `Cppssh::connect` returns a distinct integer connection id; all entry points are thread-safe with respect to that id.
-- **RSA key pair generation.** Helper for creating new OpenSSH-compatible RSA private/public key files.
 - **Run-time algorithm preference.** Reorder the cipher and HMAC priority lists at run time.
 - **API level guard.** A compile-time API level macro is checked at `Cppssh::create()` against the linked library; mismatches abort fast.
 - **POSIX and Windows transports.** Sockets are abstracted; both platforms ship in-tree.
@@ -244,23 +242,6 @@ Cppssh::getSupportedCiphers(buf.data());          // fill buffer
 ```
 
 Both lists are global to the process; they are guarded by an internal mutex but are *not* per-connection. Set them before issuing connect calls if the order matters.
-
-### RSA key pair generation
-
-```cpp
-static bool Cppssh::generateRsaKeyPair(
-    const char* fqdn,
-    const char* privKeyFileName,
-    const char* pubKeyFileName,
-    short       keySize);
-```
-
-Generates a new RSA key pair using Botan's RNG and writes:
-
-- `privKeyFileName` — PEM-encoded RSA private key (unencrypted).
-- `pubKeyFileName`  — OpenSSH-format public key (`ssh-rsa AAAA… <fqdn>`), suitable for appending to `~/.ssh/authorized_keys`.
-
-`keySize` is the modulus length in bits (e.g. `2048`, `4096`). Returns `true` on success.
 
 ### `CppsshMessage`
 

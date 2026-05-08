@@ -90,8 +90,6 @@ int main(int argc, char** argv)
         Cppssh::setPreferredCipher("aes256-ctr");
         Cppssh::setPreferredHmac("hmac-sha2-256");
 
-        //Cppssh::generateRsaKeyPair("test", "privRsa", "pubRsa", 1024);
-
         std::vector<std::thread> threads;
         for (int i = 0; i < NUM_THREADS; i++)
         {

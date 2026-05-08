@@ -230,12 +230,6 @@ size_t CppsshImpl::getSupportedHmacs(char* hmacs)
     return CppsshImpl::getSupportedAlogs(CppsshImpl::MAC_ALGORITHMS, hmacs);
 }
 
-bool CppsshImpl::generateRsaKeyPair(const char* fqdn, const char* privKeyFileName, const char* pubKeyFileName,
-                                    short keySize)
-{
-    return CppsshKeys::generateRsaKeyPair(fqdn, privKeyFileName, pubKeyFileName, keySize);
-}
-
 std::shared_ptr<CppsshConnection> CppsshImpl::getConnection(const int connectionId)
 {
     std::shared_ptr<CppsshConnection> con;
