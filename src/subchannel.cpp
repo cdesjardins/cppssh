@@ -130,6 +130,23 @@ bool CppsshSubChannel::flushOutgoingChannelData()
     bool ret = true;
     while (_outgoingChannelData.size() > 0)
     {
+        // Peek the front message's size without removing it, so we can
+        // honor the server's send window before committing to a dequeue.
+        // Sending past _windowSend is a protocol violation that causes
+        // sshd to reset the TCP connection.
+        size_t frontSize = 0;
+        _outgoingChannelData.iterate(
+            [&frontSize](std::list<std::shared_ptr<Botan::secure_vector<Botan::byte> > >& q) {
+            if (q.empty() == false)
+            {
+                frontSize = q.front()->size();
+            }
+            return 0;
+        });
+        if ((frontSize == 0) || (_windowSend < frontSize))
+        {
+            break;
+        }
         std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
         if ((_outgoingChannelData.dequeue(message, 1) == true) && (message->size() > 0))
         {
