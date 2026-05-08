@@ -1,7 +1,7 @@
 /*
     cppssh - C++ ssh library
     Copyright (c) 2015-2026, Chris Desjardins
-    http://blog.chrisd.info cjd@chrisd.info
+    https://github.com/cdesjardins/ComBomb cjd@chrisd.info
 
     SPDX-License-Identifier: BSD-3-Clause
     See the LICENSE file at the project root for the full license text.
