@@ -11,6 +11,13 @@
 #include "cppssh.h"
 #include "unparam.h"
 #include <iterator>
+#include <sstream>
+#ifndef WIN32
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <cerrno>
+#endif
 
 CppsshX11Channel::CppsshX11Channel(const std::shared_ptr<CppsshSession>& session, const std::string& channelName)
     : CppsshSubChannel(session, channelName)
@@ -106,61 +113,109 @@ void CppsshX11Channel::getDisplay(std::string* display)
     }
 }
 
+#ifndef WIN32
+// Run `xauth list <display>` without going through a shell.
+// `display` is passed as an exec argv element so it cannot inject commands.
+// stdout is captured via a pipe; stderr is redirected to /dev/null.
+// Returns the child's stdout in `out` and true on a clean exit(0).
+static bool runXauthCommand(const std::string& display, std::string* out)
+{
+    bool ret = false;
+    int pipefd[2] = { -1, -1 };
+    if (pipe(pipefd) != 0)
+    {
+        cdLog(LogLevel::Error) << "xauth: pipe() failed";
+    }
+    else
+    {
+        pid_t pid = fork();
+        if (pid < 0)
+        {
+            cdLog(LogLevel::Error) << "xauth: fork() failed";
+            close(pipefd[0]);
+            close(pipefd[1]);
+        }
+        else if (pid == 0)
+        {
+            // Child: wire stdout to the pipe, stderr to /dev/null, then exec.
+            close(pipefd[0]);
+            dup2(pipefd[1], STDOUT_FILENO);
+            close(pipefd[1]);
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull >= 0)
+            {
+                dup2(devnull, STDERR_FILENO);
+                close(devnull);
+            }
+            execlp("xauth", "xauth", "list", display.c_str(), (char*)nullptr);
+            _exit(127);
+        }
+        else
+        {
+            // Parent: drain stdout, then reap.
+            close(pipefd[1]);
+            char buf[256];
+            ssize_t n;
+            while ((n = read(pipefd[0], buf, sizeof(buf))) > 0)
+            {
+                out->append(buf, n);
+            }
+            close(pipefd[0]);
+            int status = 0;
+            while ((waitpid(pid, &status, 0) == -1) && (errno == EINTR))
+            {
+            }
+            if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
+            {
+                ret = true;
+            }
+            else
+            {
+                cdLog(LogLevel::Error) << "xauth exited with status " << status;
+            }
+        }
+    }
+    return ret;
+}
+#endif
+
 bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,
                                 Botan::secure_vector<Botan::byte>* cookie)
 {
     bool ret = false;
 #ifndef WIN32
-    std::stringstream xauth;
-    std::string tmpname;
-    CppsshChannel::getRandomString(16, &tmpname);
-    xauth << "/usr/bin/xauth list " << display << " 2> /dev/null" << " 1> " << tmpname;
-    if (system(xauth.str().c_str()) == 0)
+    std::string magic;
+    if (runXauthCommand(display, &magic) == true)
     {
-        Botan::secure_vector<Botan::byte> buf;
-        CppsshPacket packet(&buf);
-        if (packet.addFile(tmpname) == true)
+        std::istringstream iss(magic);
+        std::vector<std::string> cookies;
+        std::copy(std::istream_iterator<std::string>(iss),
+                  std::istream_iterator<std::string>(),
+                  std::back_inserter(cookies));
+        // If there are multiple xauth entries for the display
+        // then just take the first one.
+        if (cookies.size() > 3)
         {
-            std::string magic(buf.begin(), buf.end());
-            std::istringstream iss(magic);
-            std::vector<std::string> cookies;
-            std::copy(std::istream_iterator<std::string>(iss),
-                      std::istream_iterator<std::string>(),
-                      std::back_inserter(cookies));
-            // If there are multiple xauth entries for the display
-            // then just take the first one.
-            if (cookies.size() > 3)
+            cookies.erase(cookies.begin() + 3, cookies.end());
+        }
+        if (cookies.size() == 3)
+        {
+            *method = cookies[1];
+            std::string c(cookies[2]);
+            for (size_t i = 0; i < c.length(); i += 2)
             {
-                cookies.erase(cookies.begin() + 3, cookies.end());
+                int x;
+                std::istringstream css(c.substr(i, 2));
+                css >> std::hex >> x;
+                cookie->push_back((Botan::byte)x);
             }
-            if (cookies.size() == 3)
-            {
-                *method = cookies[1];
-                std::string c(cookies[2]);
-                for (size_t i = 0; i < c.length(); i += 2)
-                {
-                    int x;
-                    std::istringstream css(c.substr(i, 2));
-                    css >> std::hex >> x;
-                    cookie->push_back((Botan::byte)x);
-                }
-                ret = true;
-            }
-            else
-            {
-                cdLog(LogLevel::Error) << "Invalid magic string from \"" << xauth.str() << "\": " << magic;
-            }
+            ret = true;
         }
         else
         {
-            cdLog(LogLevel::Error) << "Unable to read magic file: " << tmpname;
+            cdLog(LogLevel::Error) << "Invalid xauth output: " << magic;
         }
     }
-    else
-    {
-        cdLog(LogLevel::Error) << "Unable to run command: " << xauth.str();
-    }
-    remove(tmpname.c_str());
 #else
     UNREF_PARAM(display);
     UNREF_PARAM(method);
