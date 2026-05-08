@@ -83,7 +83,12 @@ bool Cppssh::isConnected(const int connectionId)
 
 bool Cppssh::writeString(const int connectionId, const char* data)
 {
-    return write(connectionId, (const uint8_t*)data, strlen(data));
+    bool ret = false;
+    if (data != nullptr)
+    {
+        ret = write(connectionId, (const uint8_t*)data, strlen(data));
+    }
+    return ret;
 }
 
 bool Cppssh::write(const int connectionId, const uint8_t* data, size_t bytes)
