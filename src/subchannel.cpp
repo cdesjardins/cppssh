@@ -157,14 +157,16 @@ bool CppsshSubChannel::flushOutgoingChannelData()
 bool CppsshSubChannel::writeChannel(const uint8_t* data, uint32_t bytes)
 {
     uint32_t totalBytesSent = 0;
-    std::shared_ptr<Botan::secure_vector<Botan::byte> > message;
     uint32_t maxPacketSize = _maxPacket - 64;
     while (totalBytesSent < bytes)
     {
-        uint32_t bytesSent = std::min(bytes, maxPacketSize);
-        message.reset(new Botan::secure_vector<Botan::byte>());
+        // Slice from the unread portion of `data` and advance — the previous
+        // version always read from the start, duplicating the prefix and
+        // dropping the tail when bytes > maxPacketSize.
+        uint32_t bytesSent = std::min(bytes - totalBytesSent, maxPacketSize);
+        std::shared_ptr<Botan::secure_vector<Botan::byte> > message(new Botan::secure_vector<Botan::byte>());
         CppsshPacket packet(message.get());
-        packet.addRawData(data, bytesSent);
+        packet.addRawData(data + totalBytesSent, bytesSent);
         totalBytesSent += bytesSent;
         _outgoingChannelData.enqueue(message);
     }
