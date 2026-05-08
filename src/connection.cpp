@@ -38,7 +38,7 @@ CppsshConnection::~CppsshConnection()
     _session.reset();
 }
 
-CppsshConnectStatus_t CppsshConnection::connect(const char* host, const short port, const char* username,
+CppsshConnectStatus_t CppsshConnection::connect(const char* host, const uint16_t port, const char* username,
                                                 const char* privKeyFile, const char* password, const bool x11Forwarded,
                                                 const bool keepAlives, const char* term)
 {

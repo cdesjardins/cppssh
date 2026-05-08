@@ -162,7 +162,7 @@ static int         Cppssh::getApiLevel();
 static CppsshConnectStatus_t Cppssh::connect(
     int*         connectionId,
     const char*  host,
-    short        port,
+    uint16_t     port,
     const char*  username,
     const char*  privKeyFile,
     const char*  password,

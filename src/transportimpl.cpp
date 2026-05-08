@@ -23,7 +23,7 @@
 #include <unistd.h>
 #endif
 
-bool CppsshTransportImpl::establish(const std::string& host, short port)
+bool CppsshTransportImpl::establish(const std::string& host, uint16_t port)
 {
     bool ret = false;
     sockaddr_in remoteAddr;

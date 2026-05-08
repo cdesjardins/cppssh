@@ -10,6 +10,7 @@
 #define _CPPSSH_Hxx
 
 #include "export.h"
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -46,7 +47,7 @@ public:
     CPPSSH_EXPORT static int getApiLevel();
     // Timeout is in milliseconds
     // term is the TERM environment variable value (nullptr for no shell)
-    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const bool x11Forwarded = true, const bool keepAlives = false,
+    CPPSSH_EXPORT static CppsshConnectStatus_t connect(int* connectionId, const char* host, const uint16_t port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout = 1000, const bool x11Forwarded = true, const bool keepAlives = false,
                                                        const char* term = "xterm-color");
     CPPSSH_EXPORT static bool isConnected(const int connectionId);
     CPPSSH_EXPORT static bool writeString(const int connectionId, const char* data);

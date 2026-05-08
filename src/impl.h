@@ -26,7 +26,7 @@ public:
 
     CppsshImpl();
     ~CppsshImpl();
-    CppsshConnectStatus_t connect(int* connectionId, const char* host, const short port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const bool x11Forwarded, const bool keepAlives, const char* term);
+    CppsshConnectStatus_t connect(int* connectionId, const char* host, const uint16_t port, const char* username, const char* privKeyFile, const char* password, unsigned int timeout, const bool x11Forwarded, const bool keepAlives, const char* term);
     bool isConnected(const int connectionId);
     bool write(const int connectionId, const uint8_t* data, size_t bytes);
     bool read(const int connectionId, CppsshMessage* data);

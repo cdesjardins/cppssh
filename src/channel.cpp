@@ -30,7 +30,7 @@ CppsshChannel::~CppsshChannel()
     disconnect();
 }
 
-bool CppsshChannel::establish(const std::string& host, short port)
+bool CppsshChannel::establish(const std::string& host, uint16_t port)
 {
     bool ret = false;
     std::string channelName("session");

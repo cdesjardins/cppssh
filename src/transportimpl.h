@@ -31,7 +31,7 @@ public:
     virtual bool receiveMessage(Botan::secure_vector<Botan::byte>* buffer);
     virtual bool sendMessage(const Botan::secure_vector<Botan::byte>& buffer);
 
-    bool establish(const std::string& host, short port);
+    bool establish(const std::string& host, uint16_t port);
     bool establishX11();
     void disconnect();
     SOCKET getSocket()

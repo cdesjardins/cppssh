@@ -113,7 +113,7 @@ CppsshImpl::~CppsshImpl()
     RNG.reset();
 }
 
-CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const short port, const char* username,
+CppsshConnectStatus_t CppsshImpl::connect(int* connectionId, const char* host, const uint16_t port, const char* username,
                                           const char* privKeyFile, const char* password, unsigned int timeout,
                                           const bool x11Forwarded, const bool keepAlives, const char* term)
 {

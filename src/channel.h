@@ -23,7 +23,7 @@ class CppsshChannel
 public:
     CppsshChannel(const std::shared_ptr<CppsshSession>& session);
     ~CppsshChannel();
-    bool establish(const std::string& host, short port);
+    bool establish(const std::string& host, uint16_t port);
     bool openChannel();
     bool writeMainChannel(const uint8_t* data, uint32_t bytes);
     bool readMainChannel(CppsshMessage* data);
