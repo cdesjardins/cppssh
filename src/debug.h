@@ -11,6 +11,7 @@
 
 #ifndef WIN32
 #include <execinfo.h>
+#include <cstdlib>
 #endif
 
 class CppsshDebug
@@ -22,12 +23,17 @@ public:
 #ifdef WIN32
 #else
         void* buffer[100];
-        int size;
-        size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
+        int size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
+        // backtrace_symbols returns a malloc'd buffer that the caller must
+        // free, and may return nullptr on allocation failure.
         char** stack = backtrace_symbols(buffer, size);
-        for (int i = 0; i < size; i++)
+        if (stack != nullptr)
         {
-            cdLog(LogLevel::Debug) << stack[i];
+            for (int i = 0; i < size; i++)
+            {
+                cdLog(LogLevel::Debug) << stack[i];
+            }
+            free(stack);
         }
 #endif
     }
