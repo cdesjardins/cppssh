@@ -76,7 +76,8 @@ int main(int argc, char** argv)
     try
     {
         Cppssh::create();
-        Logger::getLogger().addStream(std::shared_ptr<std::ostream>(&std::cout, [](void*) {
+        Logger::getLogger().addStream(std::shared_ptr<std::ostream>(&std::cout, [](void*)
+        {
         }));
         Logger::getLogger().setMinLogLevel(LogLevel::Debug);
         size_t cipherLen = Cppssh::getSupportedCiphers(nullptr);

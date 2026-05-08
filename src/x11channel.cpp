@@ -111,7 +111,8 @@ void CppsshX11Channel::x11RxThread()
             if ((expectedSetupLen == 0) && (setupBuf.size() >= kX11SetupHeaderLen))
             {
                 bool msbFirst = (setupBuf[0] == kX11ByteOrderMsb);
-                auto u16 = [&](size_t off) -> uint16_t {
+                auto u16 = [&](size_t off) -> uint16_t
+                {
                     return msbFirst
                         ? (uint16_t)((setupBuf[off] << 8) | setupBuf[off + 1])
                         : (uint16_t)((setupBuf[off + 1] << 8) | setupBuf[off]);
@@ -236,6 +237,7 @@ static bool runXauthCommand(const std::string& display, std::string* out)
     }
     return ret;
 }
+
 #endif
 
 bool CppsshX11Channel::runXauth(const std::string& display, std::string* method,

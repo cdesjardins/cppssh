@@ -136,7 +136,8 @@ bool CppsshSubChannel::flushOutgoingChannelData()
         // sshd to reset the TCP connection.
         size_t frontSize = 0;
         _outgoingChannelData.iterate(
-            [&frontSize](std::list<std::shared_ptr<Botan::secure_vector<Botan::byte> > >& q) {
+            [&frontSize](std::list<std::shared_ptr<Botan::secure_vector<Botan::byte> > >& q)
+        {
             if (q.empty() == false)
             {
                 frontSize = q.front()->size();

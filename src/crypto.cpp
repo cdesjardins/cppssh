@@ -505,9 +505,18 @@ std::shared_ptr<Botan::Public_Key> CppsshCrypto::getECDSAKey(const Botan::secure
 
     // Map the SSH curve identifier to the Botan EC group name.
     const char* groupName = nullptr;
-    if (curveName == "nistp256") { groupName = "secp256r1"; }
-    else if (curveName == "nistp384") { groupName = "secp384r1"; }
-    else if (curveName == "nistp521") { groupName = "secp521r1"; }
+    if (curveName == "nistp256")
+    {
+        groupName = "secp256r1";
+    }
+    else if (curveName == "nistp384")
+    {
+        groupName = "secp384r1";
+    }
+    else if (curveName == "nistp521")
+    {
+        groupName = "secp521r1";
+    }
     else
     {
         cdLog(LogLevel::Error) << "Unsupported ECDSA curve: " << curveName;

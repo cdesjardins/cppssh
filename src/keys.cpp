@@ -221,10 +221,23 @@ bool ecdsaCurveInfo(const Botan::ECDSA_PrivateKey& key,
 {
     switch (key.domain().get_p_bits())
     {
-        case 256: *sshCurve = "nistp256"; *algo = hostkeyMethods::ECDSA_SHA2_NISTP256; return true;
-        case 384: *sshCurve = "nistp384"; *algo = hostkeyMethods::ECDSA_SHA2_NISTP384; return true;
-        case 521: *sshCurve = "nistp521"; *algo = hostkeyMethods::ECDSA_SHA2_NISTP521; return true;
-        default: return false;
+        case 256:
+            *sshCurve = "nistp256";
+            *algo = hostkeyMethods::ECDSA_SHA2_NISTP256;
+            return true;
+
+        case 384:
+            *sshCurve = "nistp384";
+            *algo = hostkeyMethods::ECDSA_SHA2_NISTP384;
+            return true;
+
+        case 521:
+            *sshCurve = "nistp521";
+            *algo = hostkeyMethods::ECDSA_SHA2_NISTP521;
+            return true;
+
+        default:
+            return false;
     }
 }
 }
@@ -434,4 +447,3 @@ Botan::secure_vector<Botan::byte> CppsshKeys::generateEd25519Signature(
     retPacket.addVectorField(Botan::secure_vector<Botan::byte>(signedRaw.begin(), signedRaw.end()));
     return ret;
 }
-
