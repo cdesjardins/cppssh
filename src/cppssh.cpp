@@ -177,12 +177,16 @@ const uint8_t* CppsshMessage::message() const
 
 CppsshMessage& CppsshMessage::operator=(const CppsshMessage& other)
 {
-    setMessage(other._message, other._len);
+    if (this != &other)
+    {
+        setMessage(other._message, other._len);
+    }
     return *this;
 }
 
 void CppsshMessage::setMessage(const uint8_t* message, size_t bytes)
 {
+    delete[] _message;
     _message = new uint8_t[bytes + 1];
     _len = bytes;
     memcpy(_message, message, _len);
