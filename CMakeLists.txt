@@ -24,6 +24,40 @@ if ((NOT HAVE_CDLOGGER_LIB) AND (NOT HAVE_CDLOGGER_DBG_LIB))
     MESSAGE(FATAL_ERROR "Could not find CDLogger library")
 endif()
 
+# Wrap the external static libraries as IMPORTED targets. This is the
+# CMake-blessed way to express per-configuration external libraries; it
+# survives transitive propagation through INTERFACE_LINK_LIBRARIES on every
+# generator (Ninja, Visual Studio, Xcode), which raw paths in generator
+# expressions don't always do under multi-config generators.
+add_library(cppssh::botan STATIC IMPORTED GLOBAL)
+set_target_properties(cppssh::botan PROPERTIES
+    IMPORTED_CONFIGURATIONS "RELEASE;DEBUG"
+    IMPORTED_LOCATION_RELEASE        "${HAVE_BOTAN_LIB}"
+    IMPORTED_LOCATION_RELWITHDEBINFO "${HAVE_BOTAN_LIB}"
+    IMPORTED_LOCATION_MINSIZEREL     "${HAVE_BOTAN_LIB}"
+    IMPORTED_LOCATION_DEBUG          "${HAVE_BOTAN_DBG_LIB}"
+    INTERFACE_INCLUDE_DIRECTORIES    "${HAVE_BOTAN}"
+)
+
+if (HAVE_CDLOGGER_LIB OR HAVE_CDLOGGER_DBG_LIB)
+    add_library(cppssh::cdlogger STATIC IMPORTED GLOBAL)
+    set(_cdlogger_release "${HAVE_CDLOGGER_LIB}")
+    set(_cdlogger_debug   "${HAVE_CDLOGGER_DBG_LIB}")
+    if (NOT _cdlogger_release)
+        set(_cdlogger_release "${HAVE_CDLOGGER_DBG_LIB}")
+    endif()
+    if (NOT _cdlogger_debug)
+        set(_cdlogger_debug "${HAVE_CDLOGGER_LIB}")
+    endif()
+    set_target_properties(cppssh::cdlogger PROPERTIES
+        IMPORTED_CONFIGURATIONS "RELEASE;DEBUG"
+        IMPORTED_LOCATION_RELEASE        "${_cdlogger_release}"
+        IMPORTED_LOCATION_RELWITHDEBINFO "${_cdlogger_release}"
+        IMPORTED_LOCATION_MINSIZEREL     "${_cdlogger_release}"
+        IMPORTED_LOCATION_DEBUG          "${_cdlogger_debug}"
+    )
+endif()
+
 file(GLOB cppssh_INCLUDES "include/*.h")
 install(FILES ${cppssh_INCLUDES} DESTINATION include/cppssh/)
 

@@ -36,18 +36,22 @@ message(STATUS "Using version numbers: ${FULL_VERSION} and ${SHORT_VERSION}")
 add_definitions(-DCPPSSH_EXPORTS -DCPPSSH_FULL_VERSION="${FULL_VERSION}" -DCPPSSH_SHORT_VERSION="${SHORT_VERSION}")
 add_library(cppssh STATIC ${cppssh_LIB_SRCS} ${platform_LIB_SRCS})
 if(MSVC)
-    target_link_libraries(cppssh ws2_32)
+    target_link_libraries(cppssh PRIVATE ws2_32)
 endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(cppssh rt pthread)
+    target_link_libraries(cppssh PRIVATE rt pthread)
 endif()
-target_link_libraries(cppssh optimized ${HAVE_BOTAN_LIB} debug ${HAVE_BOTAN_DBG_LIB})
 
-if (HAVE_CDLOGGER_LIB)
-    target_link_libraries(cppssh optimized ${HAVE_CDLOGGER_LIB})
-endif()
-if (HAVE_CDLOGGER_DBG_LIB)
-    target_link_libraries(cppssh debug ${HAVE_CDLOGGER_DBG_LIB})
+# Botan and CDLogger are referenced by cppssh's public API (headers expose
+# their types in some places), so consumers of cppssh must link them too.
+# We use IMPORTED targets defined in the parent CMakeLists; they carry
+# per-config IMPORTED_LOCATION_* and propagate cleanly through
+# INTERFACE_LINK_LIBRARIES on every generator, including multi-config ones
+# where raw library paths inside generator expressions can fail to survive
+# transitive propagation.
+target_link_libraries(cppssh PUBLIC cppssh::botan)
+if (TARGET cppssh::cdlogger)
+    target_link_libraries(cppssh PUBLIC cppssh::cdlogger)
 endif()
 
 include(deffilename)
