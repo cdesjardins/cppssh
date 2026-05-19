@@ -4,7 +4,7 @@ project(cppssh CXX)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../include")
 include(compilerflags)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../install")
-set(BOTAN_BASE_DIR "${CMAKE_SOURCE_DIR}/../botan/install")
+set(BOTAN_BASE_DIR "${CMAKE_SOURCE_DIR}/../external/botan/install")
 
 find_path(HAVE_BOTAN "botan-3" PATHS "${BOTAN_BASE_DIR}/include/")
 if (NOT HAVE_BOTAN)
