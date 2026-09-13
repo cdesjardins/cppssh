@@ -57,23 +57,40 @@ The public surface is a single class — `Cppssh` — plus a `CppsshMessage` val
 
 - **Botan 3.x** — the cryptographic primitives (DH, AES, HMAC, Ed25519, ECDSA, RSA, RNG, PEM, …). Built locally via the `makebotan.py` helper.
 - **CDLogger** — logging façade used internally and by the example program.
+- **include** — the shared cmake modules (`compilerflags.cmake`) and header-only utilities, expected as a sibling checkout.
 - **CMake ≥ 3.5** and a C++ compiler with C++20 support.
+- **west** — the multi-repo tool that assembles the workspace (`pip install west`).
 
 ---
 
 ## Building
 
-The project is normally consumed inside the `cppsshManifest` repo workspace, which fetches Botan and CDLogger alongside cppssh:
+cppssh is the manifest repository of a [west](https://docs.zephyrproject.org/latest/develop/west/index.html) workspace. `west.yml` lists the projects the library needs, and `west update` fetches them as siblings of the cppssh checkout:
 
 ```sh
-repo init -u https://github.com/cdesjardins/cppsshManifest.git
-repo sync
+west init -m ssh://git@github.com/cdesjardins/cppssh.git cppssh-ws
+cd cppssh-ws
+west update
 cd build
 [./]makebotan.py
 [./]build.py --CDLogger --cppssh
 ```
 
-`makebotan.py` builds and stages Botan under `../botan/install`; `build.py` then drives CMake for CDLogger and cppssh. The cppssh `CMakeLists.txt` looks for Botan headers at `<botan/install>/include/botan-3` and the Botan library under `<botan/install>/lib/botan/{debug,release}`.
+That produces the layout the cmake files assume:
+
+```
+cppssh-ws/
+|-- cppssh/            this repository
+|-- CDLogger/
+|-- include/           shared cmake modules and headers
+|-- build/             makebotan.py, build.py
+|-- external/botan/
+`-- install/           staged headers and libraries, created by the build
+```
+
+The build project also contributes these as west commands, runnable from anywhere in the workspace: `west cb-botan` and `west cb-build --CDLogger --cppssh`. See `build/README.md`.
+
+`makebotan.py` builds and stages Botan under `../external/botan/install`; `build.py` then drives CMake for CDLogger and cppssh. The cppssh `CMakeLists.txt` looks for Botan headers at `<botan/install>/include/botan-3` and the Botan library under `<botan/install>/lib/botan/{debug,release}`.
 
 The build produces:
 
@@ -378,4 +395,4 @@ cppssh is distributed under the **BSD 3-Clause License**. See the [`LICENSE`](LI
 ## Related projects
 
 - [Botan](https://botan.randombit.net/) — cryptography backend.
-- [cppsshManifest](https://github.com/cdesjardins/cppsshManifest) — `repo` manifest pulling cppssh, Botan, CDLogger, and the build scripts together.
+- [ComBomb](https://github.com/cdesjardins/ComBomb) — terminal emulator built on cppssh. Its west manifest imports this repository's `west.yml`, so cppssh's dependencies are declared once and shared by both workspaces.
